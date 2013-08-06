@@ -31,16 +31,16 @@ int main (int argc, char *argv[])
   g_signal_connect (win, "destroy", gtk_main_quit, NULL);
 
   /* Create a vertical box with buttons */
-  vbox = gtk_vbox_new (TRUE, 6);
+  vbox = gtk_grid_new ();
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
   button = gtk_button_new_from_stock (GTK_STOCK_DIALOG_INFO);
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (helloWorld), (gpointer) win);
-  gtk_box_pack_start (GTK_BOX (vbox), button, TRUE, TRUE, 0);
+  gtk_grid_attach(GTK_GRID(vbox), button, 0, 0, 1, 1);
 
   button = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
   g_signal_connect (button, "clicked", gtk_main_quit, NULL);
-  gtk_box_pack_start (GTK_BOX (vbox), button, TRUE, TRUE, 0);
+  gtk_grid_attach(GTK_GRID(vbox), button, 0, 1, 1, 1);
 
   /* Enter the main loop */
   gtk_widget_show_all (win);
