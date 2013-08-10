@@ -25,8 +25,8 @@ void LoadFile(const char *fileName, GtkTextBuffer *dest) {
 	auto end = input.tellg();
 	input.seekg (0, ios::beg);
 	auto size = end - begin;
-	if (size > 1000)
-		size = 1000;
+	if (size > 10000)
+		size = 10000;
 	char *buff = new char[size+1];
 	input.read(buff, size);
 	buff[size] = 0;
@@ -51,10 +51,14 @@ int main (int argc, char *argv[])
 	gtk_window_set_title (GTK_WINDOW (win), "LPglog");
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
+	gtk_window_set_default_size(GTK_WINDOW (win), 800, 640);
+
+	auto mainbox = gtk_vbox_new (FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (win), mainbox);
 
 	/* Create a vertical box with buttons */
 	auto hbox = gtk_hbox_new (FALSE, 0);
-	gtk_container_add (GTK_CONTAINER (win), hbox);
+	gtk_box_pack_end (GTK_BOX (mainbox), hbox, TRUE, TRUE, 0);
 
 	button = gtk_button_new_from_stock (GTK_STOCK_DIALOG_INFO);
 	g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (helloWorld), (gpointer) win);
@@ -64,15 +68,19 @@ int main (int argc, char *argv[])
 	g_signal_connect (button, "clicked", gtk_main_quit, NULL);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
+	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
+
 	auto textview = gtk_text_view_new();
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
 	gtk_widget_set_size_request(textview, 5, 5);
 	auto buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
-	gtk_text_buffer_set_text(buffer, "hej hopp\nadasdasdada\nnew lines\n and\n more text", -1);
 	if (argc > 1) {
 		LoadFile(argv [1], buffer);
+	} else {
+		gtk_text_buffer_set_text(buffer, "hej hopp\nadasdasdada\nnew lines\n and\n more text", -1);
 	}
-	gtk_box_pack_start(GTK_BOX(hbox), textview, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER (scrollview), textview);
+	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);
