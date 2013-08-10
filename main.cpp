@@ -74,8 +74,28 @@ int main (int argc, char *argv[])
 	g_signal_connect (button, "clicked", gtk_main_quit, NULL);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
-	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
+	// Create the tree model
+	auto treeModel = gtk_tree_store_new(1, G_TYPE_STRING);
+	GtkTreeIter iter;
+	gtk_tree_store_append(treeModel, &iter, 0);
+	GValue tmp = G_VALUE_INIT;
+	g_value_init(&tmp, G_TYPE_STRING);
+	g_value_set_string(&tmp, "TEST");
+	gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
 
+	gtk_tree_store_append(treeModel, &iter, &iter);
+	g_value_set_string(&tmp, "apa");
+	gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
+
+	// Create the tree view
+	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
+	auto renderer = gtk_cell_renderer_text_new();
+	auto column = gtk_tree_view_column_new_with_attributes ("Author", renderer, "text", 0, NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
+
+	// Create the text display window
+	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
 	auto textview = gtk_text_view_new();
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
 	gtk_widget_set_size_request(textview, 5, 5);
