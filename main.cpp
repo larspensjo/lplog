@@ -34,11 +34,11 @@ int main (int argc, char *argv[])
 
 	button = gtk_button_new_from_stock (GTK_STOCK_DIALOG_INFO);
 	g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (helloWorld), (gpointer) win);
-	gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
 	button = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
 	g_signal_connect (button, "clicked", gtk_main_quit, NULL);
-	gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
 	auto textview = gtk_text_view_new();
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
