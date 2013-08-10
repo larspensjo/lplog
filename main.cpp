@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include <iostream>
+#include <fstream>
 
 static void helloWorld (GtkWidget *wid, GtkWidget *win)
 {
@@ -9,6 +11,28 @@ static void helloWorld (GtkWidget *wid, GtkWidget *win)
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
+}
+
+void LoadFile(const char *fileName, GtkTextBuffer *dest) {
+	using std::ios;
+	std::ifstream input(fileName);
+	if (!input.is_open()) {
+		std::cerr << "Failed to open " << fileName << std::endl;
+		exit(1);
+	}
+	auto begin = input.tellg();
+	input.seekg (0, ios::end);
+	auto end = input.tellg();
+	input.seekg (0, ios::beg);
+	auto size = end - begin;
+	if (size > 1000)
+		size = 1000;
+	char *buff = new char[size+1];
+	input.read(buff, size);
+	buff[size] = 0;
+	std::cout << "Read " << size << " characters from " << fileName << std::endl;
+	gtk_text_buffer_set_text(dest, buff, -1);
+	delete [] buff;
 }
 
 int main (int argc, char *argv[])
@@ -45,6 +69,9 @@ int main (int argc, char *argv[])
 	gtk_widget_set_size_request(textview, 5, 5);
 	auto buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
 	gtk_text_buffer_set_text(buffer, "hej hopp\nadasdasdada\nnew lines\n and\n more text", -1);
+	if (argc > 1) {
+		LoadFile(argv [1], buffer);
+	}
 	gtk_box_pack_start(GTK_BOX(hbox), textview, TRUE, TRUE, 0);
 
 	/* Enter the main loop */
