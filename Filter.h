@@ -3,6 +3,8 @@
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <string>
 
 class Filter
 {
@@ -14,4 +16,5 @@ public:
 protected:
 private:
 	const char *mSource;
+	std::vector<std::string> mLines;
 };
