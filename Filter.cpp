@@ -1,13 +1,12 @@
 #include "Filter.h"
 
-Filter::Filter() : mSource(0)
+Filter::Filter()
 {
 	//ctor
 }
 
 Filter::~Filter()
 {
-	delete[] mSource;
 }
 
 bool findNL(const char *source, unsigned &length, const char *&next) {
@@ -64,22 +63,24 @@ void Filter::AddSource(const char *fileName) {
 	}
 	buff[size] = 0;
 	std::cout << "Read " << size << " characters from " << fileName << endl;
-	delete [] mSource;
-	mSource = buff;
 
 	// Split the source into list of lines
-	for (const char *p=mSource;;) {
+	for (const char *p=buff;;) {
 		unsigned len;
 		const char *next;
 		if (!findNL(p, len, next))
 			break;
-		std::string line(p, len);
-		mLines.push_back(line);
+		mLines.push_back(std::string(p, len));
 		p = next;
 	}
 	cout << "Parsed " << mLines.size() << " lines." << endl;
+	delete [] buff;
 }
 
 void Filter::Apply(GtkTextBuffer *dest) {
-	gtk_text_buffer_set_text(dest, mSource, -1);
+	std::string result;
+	for (auto it = mLines.begin(); it != mLines.end(); ++it) {
+		result += *it + '\n';
+	}
+	gtk_text_buffer_set_text(dest, result.c_str(), -1);
 }

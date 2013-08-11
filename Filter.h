@@ -13,8 +13,6 @@ public:
 	~Filter();
 	void AddSource(const char *fileName);
 	void Apply(GtkTextBuffer *dest);
-protected:
 private:
-	const char *mSource;
 	std::vector<std::string> mLines;
 };
