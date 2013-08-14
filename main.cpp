@@ -54,12 +54,12 @@ int main (int argc, char *argv[])
 	gtk_tree_store_append(treeModel, &iter, 0);
 	GValue tmp = G_VALUE_INIT;
 	g_value_init(&tmp, G_TYPE_STRING);
-	g_value_set_string(&tmp, "Search");
+	g_value_set_static_string(&tmp, "@");
 	gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
 
-	gtk_tree_store_append(treeModel, &iter, 0);
-	g_value_set_string(&tmp, "mark");
-	gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
+	// gtk_tree_store_append(treeModel, &iter, 0);
+	// g_value_set_string(&tmp, "mark");
+	// gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
 
 	// Create the tree view
 	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
 	Filter filter;
 	if (argc > 1) {
 		filter.AddSource(argv [1]);
-		filter.Apply(buffer);
+		filter.Apply(buffer, GTK_TREE_MODEL(treeModel));
 	} else {
 		gtk_text_buffer_set_text(buffer, "hej hopp\nadasdasdada\nnew lines\n and\n more text", -1);
 	}

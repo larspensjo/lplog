@@ -9,10 +9,9 @@
 class Filter
 {
 public:
-	Filter();
-	~Filter();
 	void AddSource(const char *fileName);
-	void Apply(GtkTextBuffer *dest);
+	void Apply(GtkTextBuffer *dest, GtkTreeModel *pattern);
 private:
+	bool isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
 	std::vector<std::string> mLines;
 };

@@ -1,14 +1,5 @@
 #include "Filter.h"
 
-Filter::Filter()
-{
-	//ctor
-}
-
-Filter::~Filter()
-{
-}
-
 bool findNL(const char *source, unsigned &length, const char *&next) {
 	const char *p = source;
 	for (; *p != 0; ++p) {
@@ -77,10 +68,31 @@ void Filter::AddSource(const char *fileName) {
 	delete [] buff;
 }
 
-void Filter::Apply(GtkTextBuffer *dest) {
+void Filter::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
+	GtkTreeIter iter;
+	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
 	std::string result;
 	for (auto it = mLines.begin(); it != mLines.end(); ++it) {
-		result += *it + '\n';
+		if (empty || isShown(*it, pattern, &iter))
+			result += *it + '\n';
 	}
 	gtk_text_buffer_set_text(dest, result.c_str(), -1);
+}
+
+bool Filter::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
+	GValue val = G_VALUE_INIT;
+	gtk_tree_model_get_value(pattern, iter, 0, &val);
+	auto type = G_VALUE_TYPE(&val);
+	bool ret = false;
+	switch (type) {
+	case G_TYPE_STRING:
+		{
+			auto str = g_value_get_string(&val);
+			auto pos = line.find(str);
+			if (pos != std::string::npos)
+				ret = true;
+		}
+	}
+	if (type == G_TYPE_STRING)	g_value_unset(&val);
+	return ret;
 }
