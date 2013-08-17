@@ -50,16 +50,15 @@ int main (int argc, char *argv[])
 
 	// Create the tree model
 	auto treeModel = gtk_tree_store_new(1, G_TYPE_STRING);
-	GtkTreeIter iter;
-	gtk_tree_store_append(treeModel, &iter, 0);
-	GValue tmp = G_VALUE_INIT;
-	g_value_init(&tmp, G_TYPE_STRING);
-	g_value_set_static_string(&tmp, "@");
-	gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
 
-	// gtk_tree_store_append(treeModel, &iter, 0);
-	// g_value_set_string(&tmp, "mark");
-	// gtk_tree_store_set_value(treeModel, &iter, 0, &tmp);
+	// Add some test data to it
+	GtkTreeIter iter;
+	gtk_tree_store_append(treeModel, &iter, NULL);
+	gtk_tree_store_set(treeModel, &iter, 0, "!", -1);
+
+	GtkTreeIter child;
+	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
+	gtk_tree_store_set(treeModel, &child, 0, "lars", -1);
 
 	// Create the tree view
 	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));

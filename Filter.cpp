@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "Filter.h"
 
 bool findNL(const char *source, unsigned &length, const char *&next) {
@@ -82,17 +84,16 @@ void Filter::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 bool Filter::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
 	GValue val = G_VALUE_INIT;
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
-	auto type = G_VALUE_TYPE(&val);
 	bool ret = false;
-	switch (type) {
-	case G_TYPE_STRING:
-		{
-			auto str = g_value_get_string(&val);
-			auto pos = line.find(str);
-			if (pos != std::string::npos)
-				ret = true;
-		}
+	auto str = g_value_get_string(&val);
+	GtkTreeIter child;
+	if (strcmp(str, "!") == 0 && gtk_tree_model_iter_children(pattern, &child, iter)) {
+		ret = !isShown(line, pattern, &child);
+	} else {
+		auto pos = line.find(str);
+		if (pos != std::string::npos)
+			ret = true;
 	}
-	if (type == G_TYPE_STRING)	g_value_unset(&val);
+	g_value_unset(&val);
 	return ret;
 }
