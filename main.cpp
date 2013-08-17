@@ -2,8 +2,12 @@
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
+#include <assert.h>
 
 #include "Filter.h"
+
+Filter filter;
+GtkTextBuffer *buffer = 0;
 
 static void helloWorld (GtkWidget *wid, GtkWidget *win)
 {
@@ -13,6 +17,17 @@ static void helloWorld (GtkWidget *wid, GtkWidget *win)
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
+}
+
+static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkTreeStore *pattern)
+{
+	assert(pattern != 0);
+	GtkTreeIter iter;
+	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( pattern ), &iter, path );
+	assert(found);
+	gtk_tree_store_set(pattern, &iter, 0, newString, 1, true, -1);
+	assert(buffer != 0);
+	filter.Apply(buffer, GTK_TREE_MODEL(pattern));
 }
 
 int main (int argc, char *argv[])
@@ -49,7 +64,7 @@ int main (int argc, char *argv[])
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
 	// Create the tree model
-	auto treeModel = gtk_tree_store_new(1, G_TYPE_STRING);
+	auto treeModel = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
 	// Add some test data to it
 	GtkTreeIter iter;
@@ -58,13 +73,15 @@ int main (int argc, char *argv[])
 
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
-	gtk_tree_store_set(treeModel, &child, 0, "lars", -1);
+	gtk_tree_store_set(treeModel, &child, 0, "lars", 1, true, -1);
 	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
-	gtk_tree_store_set(treeModel, &child, 0, "Dis", -1);
+	gtk_tree_store_set(treeModel, &child, 0, "Dis", 1, true, -1);
 
 	// Create the tree view
 	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
 	auto renderer = gtk_cell_renderer_text_new();
+	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
+	g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(editCell), treeModel );
 	auto column = gtk_tree_view_column_new_with_attributes ("Configure", renderer, "text", 0, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
@@ -74,8 +91,7 @@ int main (int argc, char *argv[])
 	auto textview = gtk_text_view_new();
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
 	gtk_widget_set_size_request(textview, 5, 5);
-	auto buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
-	Filter filter;
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
 	if (argc > 1) {
 		filter.AddSource(argv [1]);
 		filter.Apply(buffer, GTK_TREE_MODEL(treeModel));
