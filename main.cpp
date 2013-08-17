@@ -43,7 +43,7 @@ int main (int argc, char *argv[])
 	/* Create the main window */
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width (GTK_CONTAINER (win), 8);
-	gtk_window_set_title (GTK_WINDOW (win), "LPglog");
+	gtk_window_set_title (GTK_WINDOW (win), "LPlog");
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
 	gtk_window_set_default_size(GTK_WINDOW (win), 800, 640);
