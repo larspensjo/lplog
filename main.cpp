@@ -54,11 +54,13 @@ int main (int argc, char *argv[])
 	// Add some test data to it
 	GtkTreeIter iter;
 	gtk_tree_store_append(treeModel, &iter, NULL);
-	gtk_tree_store_set(treeModel, &iter, 0, "!", -1);
+	gtk_tree_store_set(treeModel, &iter, 0, "&", -1);
 
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
 	gtk_tree_store_set(treeModel, &child, 0, "lars", -1);
+	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
+	gtk_tree_store_set(treeModel, &child, 0, "Dis", -1);
 
 	// Create the tree view
 	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
