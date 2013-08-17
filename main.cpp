@@ -9,16 +9,6 @@
 Filter filter;
 GtkTextBuffer *buffer = 0;
 
-static void helloWorld (GtkWidget *wid, GtkWidget *win)
-{
-	GtkWidget *dialog = NULL;
-
-	dialog = gtk_message_dialog_new (GTK_WINDOW (win), GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_CLOSE, "Hello World!");
-	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-}
-
 static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkTreeStore *pattern)
 {
 	assert(pattern != 0);
@@ -42,7 +32,7 @@ int main (int argc, char *argv[])
 
 	/* Create the main window */
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	gtk_container_set_border_width (GTK_CONTAINER (win), 8);
+	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
 	gtk_window_set_title (GTK_WINDOW (win), "LPlog");
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
@@ -54,10 +44,6 @@ int main (int argc, char *argv[])
 	/* Create a vertical box with buttons */
 	auto hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_end (GTK_BOX (mainbox), hbox, TRUE, TRUE, 0);
-
-	button = gtk_button_new_from_stock (GTK_STOCK_DIALOG_INFO);
-	g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (helloWorld), (gpointer) win);
-	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
 	button = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
 	g_signal_connect (button, "clicked", gtk_main_quit, NULL);
@@ -88,6 +74,7 @@ int main (int argc, char *argv[])
 
 	// Create the text display window
 	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
+	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
 	gtk_widget_set_size_request(textview, 5, 5);
