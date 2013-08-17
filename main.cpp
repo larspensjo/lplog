@@ -8,6 +8,7 @@
 
 Filter filter;
 GtkTextBuffer *buffer = 0;
+GtkLabel *statusBar = 0;
 
 static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkTreeStore *pattern)
 {
@@ -40,6 +41,9 @@ int main (int argc, char *argv[])
 
 	auto mainbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
+
+	statusBar = GTK_LABEL(gtk_label_new("Status"));
+	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(statusBar), FALSE, FALSE, 0);
 
 	/* Create a vertical box with buttons */
 	auto hbox = gtk_hbox_new (FALSE, 0);
