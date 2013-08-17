@@ -88,7 +88,16 @@ bool Filter::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter
 	auto str = g_value_get_string(&val);
 	GtkTreeIter child;
 	bool childFound = gtk_tree_model_iter_children(pattern, &child, iter);
-	if (strcmp(str, "&") == 0 && childFound) {
+	if (strcmp(str, "|") == 0 && childFound) {
+		ret = false;
+		do {
+			if (isShown(line, pattern, &child)) {
+				ret = true;
+				break;
+			}
+			childFound = gtk_tree_model_iter_next(pattern, &child);
+		} while (childFound);
+	} else if (strcmp(str, "&") == 0 && childFound) {
 		ret = true;
 		do {
 			if (!isShown(line, pattern, &child)) {
