@@ -58,6 +58,7 @@
 		</Linker>
 		<Unit filename="Filter.cpp" />
 		<Unit filename="Filter.h" />
+		<Unit filename="Makefile" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
