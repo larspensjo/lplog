@@ -6,9 +6,13 @@
 
 #include "Filter.h"
 
+// TODO: Move these into an instance class, to enable multiple files.
 Filter filter;
 GtkTextBuffer *buffer = 0;
 GtkLabel *statusBar = 0;
+
+using std::cout;
+using std::endl;
 
 static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkTreeStore *pattern)
 {
@@ -19,6 +23,20 @@ static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 	gtk_tree_store_set(pattern, &iter, 0, newString, 1, true, -1);
 	assert(buffer != 0);
 	filter.Apply(buffer, GTK_TREE_MODEL(pattern));
+}
+
+static void clickCell(GtkTreeView *treeView, gpointer user_data)
+{
+	auto selection = gtk_tree_view_get_selection(treeView);
+	GtkTreeIter iter;
+	GtkTreeModel *pattern;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &iter);
+	assert(found);
+	GValue val = G_VALUE_INIT;
+	gtk_tree_model_get_value(pattern, &iter, 0, &val);
+	auto str = g_value_get_string(&val);
+	// cout << "clickCell: " << str << endl;
+	g_value_unset(&val);
 }
 
 int main (int argc, char *argv[])
@@ -69,6 +87,7 @@ int main (int argc, char *argv[])
 
 	// Create the tree view
 	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
+	g_signal_connect(G_OBJECT(tree), "cursor-changed", G_CALLBACK(clickCell), treeModel );
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
 	g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(editCell), treeModel );
