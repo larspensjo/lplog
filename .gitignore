@@ -1,4 +1,5 @@
 /bin
 /obj
-lpglog.depend
-lpglog.layout
+/*.depend
+/*.layout
+*~
