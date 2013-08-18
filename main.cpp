@@ -4,10 +4,10 @@
 #include <fstream>
 #include <assert.h>
 
-#include "Filter.h"
+#include "Document.h"
 
 // TODO: Move these into an instance class, to enable multiple files.
-Filter filter;
+Document doc;
 GtkTextBuffer *buffer = 0;
 GtkLabel *statusBar = 0;
 
@@ -22,7 +22,7 @@ static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 	assert(found);
 	gtk_tree_store_set(pattern, &iter, 0, newString, 1, true, -1);
 	assert(buffer != 0);
-	filter.Apply(buffer, GTK_TREE_MODEL(pattern));
+	doc.Apply(buffer, GTK_TREE_MODEL(pattern));
 }
 
 static void clickCell(GtkTreeView *treeView, gpointer user_data)
@@ -103,8 +103,8 @@ int main (int argc, char *argv[])
 	gtk_widget_set_size_request(textview, 5, 5);
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
 	if (argc > 1) {
-		filter.AddSource(argv [1]);
-		filter.Apply(buffer, GTK_TREE_MODEL(treeModel));
+		doc.AddSource(argv [1]);
+		doc.Apply(buffer, GTK_TREE_MODEL(treeModel));
 	} else {
 		gtk_text_buffer_set_text(buffer, "hej hopp\nadasdasdada\nnew lines\n and\n more text", -1);
 	}

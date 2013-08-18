@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "Filter.h"
+#include "Document.h"
 
 bool findNL(const char *source, unsigned &length, const char *&next) {
 	const char *p = source;
@@ -32,7 +32,7 @@ bool findNL(const char *source, unsigned &length, const char *&next) {
 	return true;
 }
 
-void Filter::AddSource(const char *fileName) {
+void Document::AddSource(const char *fileName) {
 	using std::ios;
 	using std::cout;
 	using std::endl;
@@ -70,7 +70,7 @@ void Filter::AddSource(const char *fileName) {
 	delete [] buff;
 }
 
-void Filter::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
+void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
 	std::string result;
@@ -81,7 +81,7 @@ void Filter::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 	gtk_text_buffer_set_text(dest, result.c_str(), -1);
 }
 
-bool Filter::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
+bool Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
 	GValue val = G_VALUE_INIT;
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
 	bool ret = false;

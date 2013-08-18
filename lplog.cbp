@@ -56,8 +56,8 @@
 			<Add library="pango-1.0" />
 			<Add library="cairo" />
 		</Linker>
-		<Unit filename="Filter.cpp" />
-		<Unit filename="Filter.h" />
+		<Unit filename="Document.cpp" />
+		<Unit filename="Document.h" />
 		<Unit filename="Makefile" />
 		<Unit filename="main.cpp" />
 		<Extensions>

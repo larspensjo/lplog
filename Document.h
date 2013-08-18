@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-class Filter
+class Document
 {
 public:
 	void AddSource(const char *fileName);
