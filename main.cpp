@@ -14,6 +14,12 @@ GtkLabel *statusBar = 0;
 using std::cout;
 using std::endl;
 
+static gboolean Timeout(Document *doc)
+{
+	doc->Update();
+	return true;
+}
+
 static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkTreeStore *pattern)
 {
 	assert(pattern != 0);
@@ -72,7 +78,7 @@ int main (int argc, char *argv[])
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
 	// Create the tree model
-	auto treeModel = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+	GtkTreeStore *treeModel = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
 	// Add some test data to it
 	GtkTreeIter iter;
@@ -110,6 +116,8 @@ int main (int argc, char *argv[])
 	}
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
+
+	g_timeout_add(1000, (GSourceFunc)Timeout, &doc);
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);
