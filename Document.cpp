@@ -57,6 +57,8 @@ bool Document::Update() {
 		mLines.clear();
 	}
 	auto size = end - mCurrentPosition;
+	if (size == 0)
+		return false;
 	input.seekg (mCurrentPosition, ios::beg);
 	mCurrentPosition = end;
 	char *buff = new char[size+1];

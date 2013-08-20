@@ -14,9 +14,10 @@ GtkLabel *statusBar = 0;
 using std::cout;
 using std::endl;
 
-static gboolean Timeout(Document *doc)
+static gboolean Timeout(GtkTreeStore *pattern)
 {
-	doc->Update();
+	if (doc.Update())
+		doc.Apply(buffer, GTK_TREE_MODEL(pattern));
 	return true;
 }
 
@@ -117,7 +118,7 @@ int main (int argc, char *argv[])
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
-	g_timeout_add(1000, (GSourceFunc)Timeout, &doc);
+	g_timeout_add(1000, (GSourceFunc)Timeout, treeModel);
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);
