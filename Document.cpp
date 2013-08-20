@@ -2,6 +2,10 @@
 
 #include "Document.h"
 
+using std::ios;
+using std::cout;
+using std::endl;
+
 bool findNL(const char *source, unsigned &length, const char *&next) {
 	const char *p = source;
 	for (; *p != 0; ++p) {
@@ -32,20 +36,29 @@ bool findNL(const char *source, unsigned &length, const char *&next) {
 	return true;
 }
 
-void Document::AddSource(const char *fileName) {
-	using std::ios;
-	using std::cout;
-	using std::endl;
-	std::ifstream input(fileName);
+void Document::AddSource(const std::string &fileName) {
+	mFileName = fileName;
+	mCurrentPosition = 0;
+	mLines.clear();
+	Update();
+}
+
+bool Document::Update() {
+	std::ifstream input(mFileName);
 	if (!input.is_open()) {
-		std::cerr << "Failed to open " << fileName << endl;
-		exit(1);
+		mCurrentPosition = 0;
+		return false;
 	}
-	auto begin = input.tellg();
 	input.seekg (0, ios::end);
 	auto end = input.tellg();
-	input.seekg (0, ios::beg);
-	auto size = end - begin;
+	if (end < mCurrentPosition) {
+		// There is a new file
+		mCurrentPosition = end;
+		mLines.clear();
+	}
+	auto size = end - mCurrentPosition;
+	input.seekg (mCurrentPosition, ios::beg);
+	mCurrentPosition = end;
 	char *buff = new char[size+1];
 	input.read(buff, size);
 	const char *last;
@@ -55,8 +68,9 @@ void Document::AddSource(const char *fileName) {
 		size = last - buff;
 	}
 	buff[size] = 0;
-	std::cout << "Read " << size << " characters from " << fileName << endl;
+	std::cout << "Read " << size << " characters from " << mFileName << endl;
 
+	auto oldSize = mLines.size();
 	// Split the source into list of lines
 	for (const char *p=buff;;) {
 		unsigned len;
@@ -66,8 +80,9 @@ void Document::AddSource(const char *fileName) {
 		mLines.push_back(std::string(p, len));
 		p = next;
 	}
-	cout << "Parsed " << mLines.size() << " lines." << endl;
 	delete [] buff;
+	cout << "Added " << mLines.size() - oldSize << " lines." << endl;
+	return true;
 }
 
 void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
