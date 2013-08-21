@@ -39,7 +39,7 @@ static void clickCell(GtkTreeView *treeView, gpointer user_data)
 	GtkTreeModel *pattern;
 	bool found = gtk_tree_selection_get_selected(selection, &pattern, &iter);
 	assert(found);
-	GValue val = G_VALUE_INIT;
+	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, &iter, 0, &val);
 	auto str = g_value_get_string(&val);
 	// cout << "clickCell: " << str << endl;

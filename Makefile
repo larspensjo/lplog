@@ -60,10 +60,10 @@
 MY_CFLAGS =
 
 # The linker options.
-MY_LIBS   = $(shell pkg-config --libs gtk+-3.0)
+MY_LIBS   = $(shell pkg-config --libs gtk+-2.0)
 
 # The pre-processor options used by the cpp (man cpp for more).
-CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags gtk+-3.0)
+CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags gtk+-2.0)
 
 # The options used in linking as well as in any direct use of ld.
 LDFLAGS   =
@@ -146,6 +146,8 @@ LINK.cxx    = $(CXX) $(MY_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 .SUFFIXES:
 
 all: $(PROGRAM)
+
+Debug: $(PROGRAM)
 
 # Rules for creating dependency files (.d).
 #------------------------------------------

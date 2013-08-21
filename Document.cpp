@@ -99,7 +99,7 @@ void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 }
 
 bool Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
-	GValue val = G_VALUE_INIT;
+	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
 	bool ret = false;
 	auto str = g_value_get_string(&val);
