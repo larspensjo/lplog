@@ -12,9 +12,18 @@ GtkTextBuffer *buffer = 0;
 GtkLabel *statusBar = 0;
 GtkTreeIter selectedPatternIter;
 bool validSelectedPatternIter = false;
+GtkTreeIter root;
 
 using std::cout;
 using std::endl;
+
+bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
+	// I know, the proper way is to compare the iter to a path first.
+	return a->stamp == b->stamp &&
+		a->user_data == b->user_data &&
+		a->user_data2 == b->user_data2 &&
+		a->user_data3 == b->user_data3;
+}
 
 static gboolean TestForeChanges(GtkTreeStore *pattern)
 {
@@ -60,15 +69,19 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 	switch(event->key.keyval) {
 	case GDK_KEY_Delete:
 	case GDK_KEY_KP_Delete:
+		if (IterEqual(&root, &selectedPatternIter))
+			return false;
 		if (!gtk_tree_store_remove(pattern, &selectedPatternIter))
 			validSelectedPatternIter = false;
 		doc.Apply(buffer, GTK_TREE_MODEL(pattern));
 		gtk_label_set_text(statusBar, doc.Status().c_str());
 		return true;
-	case GDK_KEY_Return:
-	case GDK_KEY_KP_Enter:
+	case GDK_KEY_plus:
+	case GDK_KEY_KP_Add:
+		if (IterEqual(&root, &selectedPatternIter))
+			return false;
 		gtk_tree_store_insert_after(pattern, &child, NULL, &selectedPatternIter);
-		gtk_tree_store_set(pattern, &child, 0, "lars", 1, true, -1);
+		// gtk_tree_store_set(pattern, &child, 0, "lars", 1, true, -1);
 		return true;
 	}
 	return false; // Let event propagate
@@ -110,14 +123,13 @@ int main (int argc, char *argv[])
 	GtkTreeStore *treeModel = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
 	// Add some test data to it
-	GtkTreeIter iter;
-	gtk_tree_store_append(treeModel, &iter, NULL);
-	gtk_tree_store_set(treeModel, &iter, 0, "&", -1);
+	gtk_tree_store_append(treeModel, &root, NULL);
+	gtk_tree_store_set(treeModel, &root, 0, "&", -1);
 
 	GtkTreeIter child;
-	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
+	gtk_tree_store_insert_after(treeModel, &child, &root, NULL);
 	gtk_tree_store_set(treeModel, &child, 0, "lars", 1, true, -1);
-	gtk_tree_store_insert_after(treeModel, &child, &iter, NULL);
+	gtk_tree_store_insert_after(treeModel, &child, &root, NULL);
 	gtk_tree_store_set(treeModel, &child, 0, "Dis", 1, true, -1);
 
 	// Create the tree view
