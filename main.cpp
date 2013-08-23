@@ -56,12 +56,19 @@ static void clickCell(GtkTreeView *treeView, gpointer user_data)
 gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *pattern) {
 	if (!validSelectedPatternIter)
 		return false;
+	GtkTreeIter child;
 	switch(event->key.keyval) {
 	case GDK_KEY_Delete:
+	case GDK_KEY_KP_Delete:
 		if (!gtk_tree_store_remove(pattern, &selectedPatternIter))
 			validSelectedPatternIter = false;
 		doc.Apply(buffer, GTK_TREE_MODEL(pattern));
 		gtk_label_set_text(statusBar, doc.Status().c_str());
+		return true;
+	case GDK_KEY_Return:
+	case GDK_KEY_KP_Enter:
+		gtk_tree_store_insert_after(pattern, &child, NULL, &selectedPatternIter);
+		gtk_tree_store_set(pattern, &child, 0, "lars", 1, true, -1);
 		return true;
 	}
 	return false; // Let event propagate
