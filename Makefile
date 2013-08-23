@@ -56,14 +56,17 @@
 ## Customizable Section: adapt those variables to suit your program.
 ##==========================================================================
 
+# Use gtk+-3.0 if it exists, otherwise gtk+2.0
+GTK := $(shell if pkg-config --exists gtk+-3.0; then echo gtk+-3.0; else echo gtk+-2.0; fi)
+
 # The pre-processor and compiler options.
 MY_CFLAGS =
 
 # The linker options.
-MY_LIBS   = $(shell pkg-config --libs gtk+-2.0)
+MY_LIBS   := $(shell pkg-config --libs $(GTK))
 
 # The pre-processor options used by the cpp (man cpp for more).
-CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags gtk+-2.0)
+CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags $(GTK))
 
 # The options used in linking as well as in any direct use of ld.
 LDFLAGS   =
@@ -74,7 +77,7 @@ SRCDIRS   =
 
 # The executable file name.
 # If not specified, current directory name or `a.out' will be used.
-PROGRAM   =
+PROGRAM   = lplog
 
 ## Implicit Section: change the following only when necessary.
 ##==========================================================================
