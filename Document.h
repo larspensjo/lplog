@@ -13,9 +13,11 @@ public:
 	void Apply(GtkTextBuffer *dest, GtkTreeModel *pattern);
 	// Update from file, return true if there were any changes.
 	bool Update();
+	std::string Status() const;
 private:
 	bool isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
 	std::vector<std::string> mLines;
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;
+	unsigned mFoundLines;
 };

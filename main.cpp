@@ -14,10 +14,12 @@ GtkLabel *statusBar = 0;
 using std::cout;
 using std::endl;
 
-static gboolean Timeout(GtkTreeStore *pattern)
+static gboolean TestForeChanges(GtkTreeStore *pattern)
 {
-	if (doc.Update())
+	if (doc.Update()) {
 		doc.Apply(buffer, GTK_TREE_MODEL(pattern));
+		gtk_label_set_text(statusBar, doc.Status().c_str());
+	}
 	return true;
 }
 
@@ -30,6 +32,7 @@ static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 	gtk_tree_store_set(pattern, &iter, 0, newString, 1, true, -1);
 	assert(buffer != 0);
 	doc.Apply(buffer, GTK_TREE_MODEL(pattern));
+	gtk_label_set_text(statusBar, doc.Status().c_str());
 }
 
 static void clickCell(GtkTreeView *treeView, gpointer user_data)
@@ -115,10 +118,11 @@ int main (int argc, char *argv[])
 	} else {
 		gtk_text_buffer_set_text(buffer, "hej hopp\nadasdasdada\nnew lines\n and\n more text", -1);
 	}
+	gtk_label_set_text(statusBar, doc.Status().c_str());
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
-	g_timeout_add(1000, (GSourceFunc)Timeout, treeModel);
+	g_timeout_add(1000, (GSourceFunc)TestForeChanges, treeModel);
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);

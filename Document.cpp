@@ -1,4 +1,5 @@
 #include <string.h>
+#include <sstream>
 
 #include "Document.h"
 
@@ -91,9 +92,12 @@ void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
 	std::string result;
+	mFoundLines = 0;
 	for (auto it = mLines.begin(); it != mLines.end(); ++it) {
-		if (empty || isShown(*it, pattern, &iter))
+		if (empty || isShown(*it, pattern, &iter)) {
 			result += *it + '\n';
+			++mFoundLines;
+		}
 	}
 	gtk_text_buffer_set_text(dest, result.c_str(), -1);
 }
@@ -132,4 +136,10 @@ bool Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *it
 	}
 	g_value_unset(&val);
 	return ret;
+}
+
+std::string Document::Status() const {
+	std::stringstream ss;
+	ss << mFileName << ": " << mFoundLines << " (" << mLines.size() << ")";
+	return ss.str();
 }
