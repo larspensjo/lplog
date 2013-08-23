@@ -10,6 +10,8 @@
 Document doc;
 GtkTextBuffer *buffer = 0;
 GtkLabel *statusBar = 0;
+GtkTreeIter selectedPatternIter;
+bool validSelectedPatternIter = false;
 
 using std::cout;
 using std::endl;
@@ -37,16 +39,32 @@ static void editCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 
 static void clickCell(GtkTreeView *treeView, gpointer user_data)
 {
-	auto selection = gtk_tree_view_get_selection(treeView);
-	GtkTreeIter iter;
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(treeView);
 	GtkTreeModel *pattern;
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &iter);
-	assert(found);
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPatternIter);
+	validSelectedPatternIter = false;
+	if (!found)
+		return;
+	validSelectedPatternIter = true;
 	GValue val = { 0 };
-	gtk_tree_model_get_value(pattern, &iter, 0, &val);
+	gtk_tree_model_get_value(pattern, &selectedPatternIter, 0, &val);
 	auto str = g_value_get_string(&val);
-	// cout << "clickCell: " << str << endl;
+	cout << "clickCell: " << str << endl;
 	g_value_unset(&val);
+}
+
+gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *pattern) {
+	if (!validSelectedPatternIter)
+		return false;
+	switch(event->key.keyval) {
+	case GDK_KEY_Delete:
+		if (!gtk_tree_store_remove(pattern, &selectedPatternIter))
+			validSelectedPatternIter = false;
+		doc.Apply(buffer, GTK_TREE_MODEL(pattern));
+		gtk_label_set_text(statusBar, doc.Status().c_str());
+		return true;
+	}
+	return false; // Let event propagate
 }
 
 int main (int argc, char *argv[])
@@ -98,6 +116,7 @@ int main (int argc, char *argv[])
 	// Create the tree view
 	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
 	g_signal_connect(G_OBJECT(tree), "cursor-changed", G_CALLBACK(clickCell), treeModel );
+	g_signal_connect(G_OBJECT(tree), "key-press-event", G_CALLBACK(keyPressed), treeModel );
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
 	g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(editCell), treeModel );
