@@ -78,11 +78,16 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 		return true;
 	case GDK_KEY_plus:
 	case GDK_KEY_KP_Add:
-		if (IterEqual(&root, &selectedPatternIter))
-			return false;
-		gtk_tree_store_insert_after(pattern, &child, NULL, &selectedPatternIter);
-		// gtk_tree_store_set(pattern, &child, 0, "lars", 1, true, -1);
-		return true;
+		{
+			if (IterEqual(&root, &selectedPatternIter))
+				return false;
+			gtk_tree_store_insert_after(pattern, &child, NULL, &selectedPatternIter);
+			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(pattern), &child);
+			gtk_tree_view_set_cursor(treeView, path, 0, false);
+			gtk_tree_path_free(path);
+			// gtk_tree_store_set(pattern, &child, 0, "lars", 1, true, -1);
+			return true;
+		}
 	}
 	return false; // Let event propagate
 }
