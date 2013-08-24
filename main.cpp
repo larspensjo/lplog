@@ -105,6 +105,18 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 	return stopEvent; // Stop event from propagating
 }
 
+void ButtonClicked(GtkButton *button, gpointer user_data) {
+	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
+	if (name == "quit")
+		exit(1);
+	else if (name == "line")
+		;
+	else if (name == "remove")
+		;
+	else if (name == "child")
+		;
+}
+
 int main (int argc, char *argv[])
 {
 	GtkWidget *button = NULL;
@@ -123,19 +135,42 @@ int main (int argc, char *argv[])
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
 	gtk_window_set_default_size(GTK_WINDOW (win), 800, 640);
 
-	auto mainbox = gtk_vbox_new (FALSE, 0);
+	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
 
 	statusBar = GTK_LABEL(gtk_label_new("Status"));
 	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(statusBar), FALSE, FALSE, 0);
 
 	/* Create a vertical box with buttons */
-	auto hbox = gtk_hbox_new (FALSE, 0);
+	GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_end (GTK_BOX (mainbox), hbox, TRUE, TRUE, 0);
 
-	button = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
-	g_signal_connect (button, "clicked", gtk_main_quit, NULL);
-	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+	GtkWidget *buttonBox = gtk_vbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), buttonBox, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_mnemonic("_Quit");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), "quit");
+	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
+	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_mnemonic("_Line add");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), "line");
+	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
+	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_mnemonic("_Remove");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), "remove");
+	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
+	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_mnemonic("_Child add");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), "child");
+	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
+	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
 
 	// Create the tree model
 	GtkTreeStore *treeModel = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
