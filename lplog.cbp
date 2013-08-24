@@ -62,6 +62,8 @@
 		<Unit filename="Document.h" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
+		<Unit filename="View.cpp" />
+		<Unit filename="View.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />

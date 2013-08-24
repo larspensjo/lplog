@@ -19,5 +19,5 @@ private:
 	std::vector<std::string> mLines;
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;
-	unsigned mFoundLines;
+	unsigned mFoundLines = 0;
 };
