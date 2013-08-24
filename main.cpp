@@ -85,9 +85,10 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(pattern), &child);
 			gtk_tree_view_set_cursor(treeView, path, 0, false);
 			gtk_tree_path_free(path);
-			// gtk_tree_store_set(pattern, &child, 0, "lars", 1, true, -1);
-			return true;
 		}
+		return true;
+	case GDK_KEY_i:
+		return true;
 	}
 	return false; // Let event propagate
 }
@@ -138,7 +139,8 @@ int main (int argc, char *argv[])
 	gtk_tree_store_set(treeModel, &child, 0, "Dis", 1, true, -1);
 
 	// Create the tree view
-	auto tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
+	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (treeModel));
+	gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tree), false);
 	g_signal_connect(G_OBJECT(tree), "cursor-changed", G_CALLBACK(clickCell), treeModel );
 	g_signal_connect(G_OBJECT(tree), "key-press-event", G_CALLBACK(keyPressed), treeModel );
 	auto renderer = gtk_cell_renderer_text_new();
