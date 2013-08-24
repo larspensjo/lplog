@@ -13,7 +13,8 @@ public:
 	bool Update();
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void ClickCell(GtkTreeSelection *selection);
-	gboolean KeyPressed(GtkTreeView *treeView, GdkEvent *event);
+	gboolean KeyEvent(GdkEvent *event);
+	gboolean KeyPressed(guint keyval);
 private:
 	GtkLabel *mStatusBar = 0;
 	Document *mDoc = 0;
@@ -22,6 +23,7 @@ private:
 	GtkTreeIter mRoot = { 0 };
 	bool mValidSelectedPatternIter = false;
 	GtkTextBuffer *mBuffer = 0;
+	GtkTreeView *mTreeView = 0;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
 };

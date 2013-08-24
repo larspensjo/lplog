@@ -20,16 +20,20 @@ static void ClickCell(GtkTreeView *treeView, View *view)
 	view->ClickCell(gtk_tree_view_get_selection(treeView));
 }
 
-gboolean KeyPressed(GtkTreeView *treeView, GdkEvent *event, View *view) {
-	return view->KeyPressed(treeView, event);
+static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, View *view) {
+	return view->KeyEvent(event);
 }
 
-gboolean View::KeyPressed(GtkTreeView *treeView, GdkEvent *event) {
+gboolean View::KeyEvent(GdkEvent *event) {
+	return this->KeyPressed(event->key.keyval);
+}
+
+gboolean View::KeyPressed(guint keyval) {
 	if (!mValidSelectedPatternIter)
 		return false;
 	GtkTreeIter child;
 	bool stopEvent = false;
-	switch(event->key.keyval) {
+	switch(keyval) {
 	case GDK_KEY_Delete:
 	case GDK_KEY_KP_Delete:
 		if (IterEqual(&mRoot, &mSelectedPatternIter))
@@ -45,7 +49,7 @@ gboolean View::KeyPressed(GtkTreeView *treeView, GdkEvent *event) {
 				return false;
 			gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
-			gtk_tree_view_set_cursor(treeView, path, 0, false);
+			gtk_tree_view_set_cursor(mTreeView, path, 0, false);
 			gtk_tree_path_free(path);
 			stopEvent = true;
 		}
@@ -54,8 +58,8 @@ gboolean View::KeyPressed(GtkTreeView *treeView, GdkEvent *event) {
 		{
 			gtk_tree_store_insert_after(mPattern, &child, &mSelectedPatternIter, NULL);
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
-			gtk_tree_view_expand_to_path(treeView, path);
-			gtk_tree_view_set_cursor(treeView, path, 0, false);
+			gtk_tree_view_expand_to_path(mTreeView, path);
+			gtk_tree_view_set_cursor(mTreeView, path, 0, false);
 			gtk_tree_path_free(path);
 			stopEvent = true;
 		}
@@ -63,20 +67,20 @@ gboolean View::KeyPressed(GtkTreeView *treeView, GdkEvent *event) {
 	}
 	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
-	this->ClickCell(gtk_tree_view_get_selection(treeView));
+	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
 	return stopEvent; // Stop event from propagating
 }
 
-void ButtonClicked(GtkButton *button, gpointer user_data) {
+static void ButtonClicked(GtkButton *button, View *view) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
 	if (name == "quit")
 		exit(1);
 	else if (name == "line")
-		;
+		view->KeyPressed(GDK_KEY_plus);
 	else if (name == "remove")
-		;
+		view->KeyPressed(GDK_KEY_Delete);
 	else if (name == "child")
-		;
+		view->KeyPressed(GDK_KEY_a);
 }
 
 static gboolean TestForeChanges(View *view)
@@ -147,6 +151,7 @@ void View::Create(Document *doc)
 
 	// Create the tree view
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (mPattern));
+	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tree), false);
 	g_signal_connect(G_OBJECT(tree), "cursor-changed", G_CALLBACK(::ClickCell), this );
 	g_signal_connect(G_OBJECT(tree), "key-press-event", G_CALLBACK(::KeyPressed), this );
