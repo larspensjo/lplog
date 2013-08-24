@@ -66,6 +66,7 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 	if (!validSelectedPatternIter)
 		return false;
 	GtkTreeIter child;
+	bool stopEvent = false;
 	switch(event->key.keyval) {
 	case GDK_KEY_Delete:
 	case GDK_KEY_KP_Delete:
@@ -73,9 +74,8 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 			return false;
 		if (!gtk_tree_store_remove(pattern, &selectedPatternIter))
 			validSelectedPatternIter = false;
-		doc.Apply(buffer, GTK_TREE_MODEL(pattern));
-		gtk_label_set_text(statusBar, doc.Status().c_str());
-		return true;
+		stopEvent = true;
+		break;
 	case GDK_KEY_plus:
 	case GDK_KEY_KP_Add:
 		{
@@ -85,12 +85,24 @@ gboolean keyPressed(GtkTreeView *treeView, GdkEvent *event, GtkTreeStore *patter
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(pattern), &child);
 			gtk_tree_view_set_cursor(treeView, path, 0, false);
 			gtk_tree_path_free(path);
+			stopEvent = true;
 		}
-		return true;
-	case GDK_KEY_i:
-		return true;
+		break;
+	case GDK_KEY_a:
+		{
+			gtk_tree_store_insert_after(pattern, &child, &selectedPatternIter, NULL);
+			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(pattern), &child);
+			gtk_tree_view_expand_to_path(treeView, path);
+			gtk_tree_view_set_cursor(treeView, path, 0, false);
+			gtk_tree_path_free(path);
+			stopEvent = true;
+		}
+		break;
 	}
-	return false; // Let event propagate
+	doc.Apply(buffer, GTK_TREE_MODEL(pattern));
+	gtk_label_set_text(statusBar, doc.Status().c_str());
+	clickCell(treeView, 0);
+	return stopEvent; // Stop event from propagating
 }
 
 int main (int argc, char *argv[])

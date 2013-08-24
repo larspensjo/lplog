@@ -106,10 +106,12 @@ bool Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *it
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
 	bool ret = false;
-	auto str = g_value_get_string(&val);
+	const gchar *str = g_value_get_string(&val);
 	GtkTreeIter child;
 	bool childFound = gtk_tree_model_iter_children(pattern, &child, iter);
-	if (strcmp(str, "|") == 0 && childFound) {
+	if (str == 0) {
+		ret = true;
+	} else if (strcmp(str, "|") == 0 && childFound) {
 		ret = false;
 		do {
 			if (isShown(line, pattern, &child)) {
