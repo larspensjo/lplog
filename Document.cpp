@@ -1,3 +1,18 @@
+// Copyright 2013 Lars Pensjö
+//
+// Lplog is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, version 3.
+//
+// Lplog is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include <string.h>
 #include <sstream>
 
@@ -65,10 +80,10 @@ bool Document::Update() {
 	char *buff = new char[size+1];
 	input.read(buff, size);
 	const char *last;
-	bool ok = g_utf8_validate(buff, size, &last);
-	if (!ok) {
-		cout << "Bad character at pos " << last - buff << endl;
-		size = last - buff;
+	while(!g_utf8_validate(buff, size, &last)) {
+		unsigned pos = last - buff;
+		cout << "Bad character at pos " << pos << endl;
+		buff[pos] = ' ';
 	}
 	buff[size] = 0;
 	std::cout << "Read " << size << " characters from " << mFileName << endl;

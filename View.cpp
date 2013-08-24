@@ -1,3 +1,18 @@
+// Copyright 2013 Lars Pensjö
+//
+// Lplog is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, version 3.
+//
+// Lplog is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include <assert.h>
 #include <iostream>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
@@ -163,10 +178,13 @@ void View::Create(Document *doc)
 	gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
 
+	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 12");
+
 	// Create the text display window
 	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
+	gtk_widget_modify_font(textview, font);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
 	gtk_widget_set_size_request(textview, 5, 5);
 	mBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
@@ -204,11 +222,13 @@ void View::ClickCell(GtkTreeSelection *selection) {
 	mValidSelectedPatternIter = true;
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, &mSelectedPatternIter, 0, &val);
+#ifdef DEBUG
 	const gchar *str = g_value_get_string(&val);
 	if (str != nullptr) {
 		cout << "ClickCell: " << str << endl;
 	}
 	g_value_unset(&val);
+#endif
 }
 
 void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name) {
