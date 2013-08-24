@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <iostream>
+#include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
 #include "Document.h"
 #include "View.h"
@@ -74,7 +75,7 @@ gboolean View::KeyPressed(guint keyval) {
 static void ButtonClicked(GtkButton *button, View *view) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
 	if (name == "quit")
-		exit(1);
+		gtk_main_quit();
 	else if (name == "line")
 		view->KeyPressed(GDK_KEY_plus);
 	else if (name == "remove")
