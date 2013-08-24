@@ -104,7 +104,6 @@ void View::Create(Document *doc)
 {
 	mDoc = doc;
 
-	GtkWidget *button = NULL;
 	GtkWidget *win = NULL;
 
 	/* Create the main window */
@@ -128,29 +127,10 @@ void View::Create(Document *doc)
 	GtkWidget *buttonBox = gtk_vbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), buttonBox, FALSE, FALSE, 0);
 
-	button = gtk_button_new_with_mnemonic("_Quit");
-	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
-	gtk_widget_set_name(GTK_WIDGET(button), "quit");
-	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
-	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
-
-	button = gtk_button_new_with_mnemonic("_Line add");
-	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
-	gtk_widget_set_name(GTK_WIDGET(button), "line");
-	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
-	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
-
-	button = gtk_button_new_with_mnemonic("_Remove");
-	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
-	gtk_widget_set_name(GTK_WIDGET(button), "remove");
-	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
-	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
-
-	button = gtk_button_new_with_mnemonic("_Child add");
-	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
-	gtk_widget_set_name(GTK_WIDGET(button), "child");
-	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), NULL);
-	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
+	AddButton(buttonBox, "_Quit", "quit");
+	AddButton(buttonBox, "_Line add", "line");
+	AddButton(buttonBox, "_Remove", "remove");
+	AddButton(buttonBox, "_Child add", "child");
 
 	// Create the tree model
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
@@ -223,4 +203,12 @@ void View::ClickCell(GtkTreeSelection *selection) {
 		cout << "ClickCell: " << str << endl;
 	}
 	g_value_unset(&val);
+}
+
+void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name) {
+	GtkWidget *button = gtk_button_new_with_mnemonic(label);
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), name);
+	g_signal_connect (button, "clicked", G_CALLBACK(ButtonClicked), this);
+	gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
 }

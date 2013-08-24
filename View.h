@@ -22,4 +22,6 @@ private:
 	GtkTreeIter mRoot = { 0 };
 	bool mValidSelectedPatternIter = false;
 	GtkTextBuffer *mBuffer = 0;
+
+	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
 };
