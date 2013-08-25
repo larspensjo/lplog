@@ -101,7 +101,8 @@ static void ButtonClicked(GtkButton *button, View *view) {
 
 static gboolean TestForeChanges(View *view)
 {
-	return view->Update();
+	(void)view->Update();
+	return true; // Keep timer going for ever
 }
 
 static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, View *view)
@@ -161,9 +162,7 @@ void View::Create(Document *doc)
 
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(mPattern, &child, &mRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "lars", 1, true, -1);
-	gtk_tree_store_insert_after(mPattern, &child, &mRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "Dis", 1, true, -1);
+	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 
 	// Create the tree view
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (mPattern));
@@ -177,8 +176,9 @@ void View::Create(Document *doc)
 	auto column = gtk_tree_view_column_new_with_attributes ("Configure", renderer, "text", 0, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
+	gtk_tree_view_expand_all(mTreeView);
 
-	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 12");
+	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 10");
 
 	// Create the text display window
 	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
