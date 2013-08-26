@@ -30,6 +30,7 @@ public:
 	void ClickCell(GtkTreeSelection *selection);
 	gboolean KeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
+	void ToggleButton();
 private:
 	GtkLabel *mStatusBar = 0;
 	Document *mDoc = 0;
@@ -40,6 +41,7 @@ private:
 	GtkTextBuffer *mBuffer = 0;
 	GtkTreeView *mTreeView = 0;
 	GtkTextView *mTextView = 0;
+	GtkWidget *mAutoScroll = 0;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
 };

@@ -121,6 +121,14 @@ void View::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
 
+static void ToggleButton(GtkToggleButton *togglebutton, View *view) {
+	view->ToggleButton();
+}
+
+void View::ToggleButton() {
+	SetStatus(mDoc->Status());
+}
+
 void View::Create(Document *doc)
 {
 	mDoc = doc;
@@ -152,6 +160,10 @@ void View::Create(Document *doc)
 	AddButton(buttonBox, "_Line add", "line");
 	AddButton(buttonBox, "_Remove", "remove");
 	AddButton(buttonBox, "_Child add", "child");
+
+	mAutoScroll = gtk_check_button_new_with_label("Autoscroll");
+	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(::ToggleButton), this );
+	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
 	// Create the tree model
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
@@ -203,10 +215,12 @@ void View::Create(Document *doc)
 }
 
 void View::SetStatus(const std::string &str) {
-	GtkTextIter lastLine;
-	gtk_text_buffer_get_end_iter(mBuffer, &lastLine);
-	GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, false);
-	gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll))) {
+		GtkTextIter lastLine;
+		gtk_text_buffer_get_end_iter(mBuffer, &lastLine);
+		GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, false);
+		gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
+	}
 	gtk_label_set_text(mStatusBar, str.c_str());
 }
 
