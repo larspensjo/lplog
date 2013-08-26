@@ -39,6 +39,7 @@ private:
 	bool mValidSelectedPatternIter = false;
 	GtkTextBuffer *mBuffer = 0;
 	GtkTreeView *mTreeView = 0;
+	GtkTextView *mTextView = 0;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
 };

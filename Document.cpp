@@ -86,7 +86,7 @@ bool Document::Update() {
 		buff[pos] = ' ';
 	}
 	buff[size] = 0;
-	std::cout << "Read " << size << " characters from " << mFileName << endl;
+	// std::cout << "Read " << size << " characters from " << mFileName << endl;
 
 	auto oldSize = mLines.size();
 	// Split the source into list of lines
@@ -99,7 +99,7 @@ bool Document::Update() {
 		p = next;
 	}
 	delete [] buff;
-	cout << "Added " << mLines.size() - oldSize << " lines." << endl;
+	// cout << "Added " << mLines.size() - oldSize << " lines." << endl;
 	return true;
 }
 

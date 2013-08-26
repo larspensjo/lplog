@@ -184,11 +184,12 @@ void View::Create(Document *doc)
 	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(textview), GTK_WRAP_CHAR);
+	mTextView = GTK_TEXT_VIEW(textview);
+	gtk_text_view_set_wrap_mode(mTextView, GTK_WRAP_CHAR);
 	gtk_widget_modify_font(textview, font);
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(textview), false);
+	gtk_text_view_set_editable(mTextView, false);
 	gtk_widget_set_size_request(textview, 5, 5);
-	mBuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
+	mBuffer = gtk_text_view_get_buffer(mTextView);
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
@@ -202,6 +203,10 @@ void View::Create(Document *doc)
 }
 
 void View::SetStatus(const std::string &str) {
+	GtkTextIter lastLine;
+	gtk_text_buffer_get_end_iter(mBuffer, &lastLine);
+	GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, false);
+	gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
 	gtk_label_set_text(mStatusBar, str.c_str());
 }
 
