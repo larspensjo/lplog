@@ -178,7 +178,7 @@ void View::Create(Document *doc)
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_expand_all(mTreeView);
 
-	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 10");
+	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 
 	// Create the text display window
 	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
