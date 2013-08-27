@@ -38,6 +38,7 @@ int main (int argc, char *argv[])
 		doc.AddSource(argv [1]);
 	}
 	view.Create(&doc);
+	view.Update();
 	gtk_main ();
 	return 0;
 }

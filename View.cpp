@@ -170,7 +170,7 @@ void View::Create(Document *doc)
 
 	// Add some test data to it
 	gtk_tree_store_append(mPattern, &mRoot, NULL);
-	gtk_tree_store_set(mPattern, &mRoot, 0, "&", -1);
+	gtk_tree_store_set(mPattern, &mRoot, 0, "|", -1);
 
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(mPattern, &child, &mRoot, NULL);

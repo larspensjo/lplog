@@ -56,27 +56,33 @@ void Document::AddSource(const std::string &fileName) {
 	mFileName = fileName;
 	mCurrentPosition = 0;
 	mLines.clear();
-	Update();
 }
 
 bool Document::Update() {
 	std::ifstream input(mFileName);
 	if (!input.is_open()) {
-		mCurrentPosition = 0;
+		// There is no file to open
+		if (mCurrentPosition != 0) {
+			// There was a file last time we tried
+			mCurrentPosition = 0;
+			mLines.clear();
+			return true;
+		}
 		return false;
 	}
+	std::ifstream::pos_type startPos = mCurrentPosition;
 	input.seekg (0, ios::end);
-	auto end = input.tellg();
-	if (end < mCurrentPosition) {
+	std::ifstream::pos_type end = input.tellg();
+	if (end == mCurrentPosition)
+		return false; // No change.
+	mCurrentPosition = end;
+	if (mCurrentPosition <= startPos) {
 		// There is a new file
-		mCurrentPosition = end;
+		startPos = 0;
 		mLines.clear();
 	}
-	auto size = end - mCurrentPosition;
-	if (size == 0)
-		return false;
-	input.seekg (mCurrentPosition, ios::beg);
-	mCurrentPosition = end;
+	auto size = mCurrentPosition - startPos;
+	input.seekg (startPos, ios::beg);
 	char *buff = new char[size+1];
 	input.read(buff, size);
 	const char *last;
