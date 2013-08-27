@@ -194,6 +194,7 @@ void View::Create(Document *doc)
 
 	// Create the text display window
 	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollview), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
 	mTextView = GTK_TEXT_VIEW(textview);
