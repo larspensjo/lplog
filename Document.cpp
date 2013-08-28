@@ -125,6 +125,11 @@ void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 
 bool Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
 	GValue val = { 0 };
+	gtk_tree_model_get_value(pattern, iter, 1, &val);
+	bool active = g_value_get_boolean(&val);
+	g_value_unset(&val);
+	if (!active)
+		return true;
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
 	bool ret = false;
 	const gchar *str = g_value_get_string(&val);

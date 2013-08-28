@@ -115,7 +115,27 @@ void View::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	GtkTreeIter iter;
 	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
 	assert(found);
-	gtk_tree_store_set(mPattern, &iter, 0, newString, 1, true, -1);
+	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
+	assert(mBuffer != 0);
+	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
+}
+
+static void ToggleCell(GtkCellRendererToggle *renderer, gchar *path, View *view)
+{
+	view->ToggleCell(renderer, path);
+}
+
+void View::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
+	assert(mPattern != 0);
+	GtkTreeIter iter;
+	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
+	assert(found);
+	GValue val = { 0 };
+	gtk_tree_model_get_value(GTK_TREE_MODEL(mPattern), &iter, 1, &val);
+	bool current = g_value_get_boolean(&val);
+	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
+	g_value_unset(&val);
 	assert(mBuffer != 0);
 	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
@@ -170,7 +190,7 @@ void View::Create(Document *doc)
 
 	// Add some test data to it
 	gtk_tree_store_append(mPattern, &mRoot, NULL);
-	gtk_tree_store_set(mPattern, &mRoot, 0, "|", -1);
+	gtk_tree_store_set(mPattern, &mRoot, 0, "|", 1, true, -1);
 
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(mPattern, &child, &mRoot, NULL);
@@ -179,14 +199,22 @@ void View::Create(Document *doc)
 	// Create the tree view
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (mPattern));
 	mTreeView = GTK_TREE_VIEW(tree);
-	gtk_tree_view_set_enable_search(GTK_TREE_VIEW(tree), false);
+	gtk_tree_view_set_enable_search(mTreeView, false);
 	g_signal_connect(G_OBJECT(tree), "cursor-changed", G_CALLBACK(::ClickCell), this );
 	g_signal_connect(G_OBJECT(tree), "key-press-event", G_CALLBACK(::KeyPressed), this );
+
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
 	g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(::EditCell), this );
-	auto column = gtk_tree_view_column_new_with_attributes ("Configure", renderer, "text", 0, NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+	auto column = gtk_tree_view_column_new_with_attributes("Configure", renderer, "text", 0, NULL);
+	gtk_tree_view_append_column(mTreeView, column);
+
+	renderer = gtk_cell_renderer_toggle_new();
+	// g_object_set(G_OBJECT(renderer), "activatable", TRUE, NULL);
+	g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(::ToggleCell), this );
+	column = gtk_tree_view_column_new_with_attributes(NULL, renderer, "active", 1, NULL);
+	gtk_tree_view_append_column(mTreeView, column);
+
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_expand_all(mTreeView);
 

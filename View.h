@@ -27,6 +27,7 @@ public:
 	void SetStatus(const std::string &);
 	bool Update();
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
+	void ToggleCell(GtkCellRendererToggle *renderer, gchar *path);
 	void ClickCell(GtkTreeSelection *selection);
 	gboolean KeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
