@@ -90,7 +90,7 @@ bool Document::Update() {
 	const char *last;
 	while(!g_utf8_validate(buff, size, &last)) {
 		unsigned pos = last - buff;
-		cout << "Bad character at pos " << pos << endl;
+		// cout << "Bad character at pos " << pos << endl;
 		buff[pos] = ' ';
 	}
 	buff[size] = 0;
