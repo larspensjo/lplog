@@ -158,7 +158,7 @@ void View::Create(Document *doc)
 	/* Create the main window */
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
-	gtk_window_set_title (GTK_WINDOW (win), "LPlog");
+	gtk_window_set_title (GTK_WINDOW (win), ("LPlog " + mDoc->FileName()).c_str());
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
 	gtk_window_set_default_size(GTK_WINDOW (win), 800, 640);
@@ -206,7 +206,7 @@ void View::Create(Document *doc)
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
 	g_signal_connect(G_OBJECT(renderer), "edited", G_CALLBACK(::EditCell), this );
-	auto column = gtk_tree_view_column_new_with_attributes("Configure", renderer, "text", 0, NULL);
+	auto column = gtk_tree_view_column_new_with_attributes("Pattern", renderer, "text", 0, NULL);
 	gtk_tree_view_append_column(mTreeView, column);
 
 	renderer = gtk_cell_renderer_toggle_new();

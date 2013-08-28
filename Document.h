@@ -29,6 +29,7 @@ public:
 	// Update from file, return true if there were any changes.
 	bool Update();
 	std::string Status() const;
+	const std::string &FileName() const;
 private:
 	bool isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
 	std::vector<std::string> mLines;

@@ -59,6 +59,8 @@ void Document::AddSource(const std::string &fileName) {
 }
 
 bool Document::Update() {
+	if (mFileName == "")
+		return false;
 	std::ifstream input(mFileName);
 	if (!input.is_open()) {
 		// There is no file to open
@@ -94,7 +96,7 @@ bool Document::Update() {
 	buff[size] = 0;
 	// std::cout << "Read " << size << " characters from " << mFileName << endl;
 
-	auto oldSize = mLines.size();
+	// auto oldSize = mLines.size();
 	// Split the source into list of lines
 	for (const char *p=buff;;) {
 		unsigned len;
@@ -170,4 +172,8 @@ std::string Document::Status() const {
 	std::stringstream ss;
 	ss << mFileName << ": " << mFoundLines << " (" << mLines.size() << ")";
 	return ss.str();
+}
+
+const std::string &Document::FileName() const {
+	return mFileName;
 }
