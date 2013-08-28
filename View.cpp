@@ -47,9 +47,18 @@ gboolean View::KeyEvent(GdkEvent *event) {
 gboolean View::KeyPressed(guint keyval) {
 	if (!mValidSelectedPatternIter)
 		return false;
+	GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
 	GtkTreeIter child;
 	bool stopEvent = false;
 	switch(keyval) {
+	case GDK_KEY_F2:
+		{
+			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &mSelectedPatternIter);
+			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
+			gtk_tree_path_free(path);
+			stopEvent = true;
+		}
+		break;
 	case GDK_KEY_Delete:
 	case GDK_KEY_KP_Delete:
 		if (IterEqual(&mRoot, &mSelectedPatternIter))
@@ -65,7 +74,7 @@ gboolean View::KeyPressed(guint keyval) {
 				return false;
 			gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
-			gtk_tree_view_set_cursor(mTreeView, path, 0, false);
+			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
 			gtk_tree_path_free(path);
 			stopEvent = true;
 		}
@@ -75,7 +84,7 @@ gboolean View::KeyPressed(guint keyval) {
 			gtk_tree_store_insert_after(mPattern, &child, &mSelectedPatternIter, NULL);
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
 			gtk_tree_view_expand_to_path(mTreeView, path);
-			gtk_tree_view_set_cursor(mTreeView, path, 0, false);
+			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
 			gtk_tree_path_free(path);
 			stopEvent = true;
 		}
