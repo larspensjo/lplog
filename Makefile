@@ -69,7 +69,11 @@ MY_LIBS   := $(shell pkg-config --libs $(GTK))
 CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags $(GTK))
 
 # The options used in linking as well as in any direct use of ld.
+ifeq ($(OS), Windows_NT)
+LDFLAGS   = -mwindows
+else
 LDFLAGS   =
+endif
 
 # The directories in which source files reside.
 # If not specified, only the current directory will be serached.
