@@ -262,8 +262,9 @@ void View::Create(Document *doc)
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 
 	// Create the text display window
-	auto scrollview = gtk_scrolled_window_new( NULL, NULL );
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollview), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	GtkWidget *scrollview = gtk_scrolled_window_new( NULL, NULL );
+	mScrolledView = GTK_SCROLLED_WINDOW(scrollview);
+	gtk_scrolled_window_set_policy(mScrolledView, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
 	mTextView = GTK_TEXT_VIEW(textview);
@@ -288,7 +289,7 @@ void View::SetStatus(const std::string &str) {
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll))) {
 		GtkTextIter lastLine;
 		gtk_text_buffer_get_end_iter(mBuffer, &lastLine);
-		GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, false);
+		GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, true);
 		gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
 	}
 	gtk_label_set_text(mStatusBar, str.c_str());
@@ -296,7 +297,11 @@ void View::SetStatus(const std::string &str) {
 
 bool View::Update() {
 	if (mDoc->Update()) {
+		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
+		gdouble pos = gtk_adjustment_get_value(adj);
 		mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
+			gtk_adjustment_set_value(adj, pos+0.1); // A change is needed!
 		SetStatus(mDoc->Status());
 		return true;
 	}
@@ -324,7 +329,7 @@ void View::ClickCell(GtkTreeSelection *selection) {
 }
 
 void View::FileOpenDialog() {
-	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open File",
 						  mWindow,
 						  GTK_FILE_CHOOSER_ACTION_OPEN,
 						  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,

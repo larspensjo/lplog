@@ -46,6 +46,7 @@ private:
 	GtkTextView *mTextView = 0;
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
+	GtkScrolledWindow *mScrolledView = 0;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
 };
