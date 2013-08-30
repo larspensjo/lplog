@@ -186,25 +186,25 @@ void View::Create(Document *doc)
 	GtkWidget *fileMenu = gtk_menu_new();
 	GtkWidget *menuItem = gtk_menu_item_new_with_label("File");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), fileMenu);
-	gtk_menu_bar_append(GTK_MENU_BAR(menubar), menuItem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuItem);
 
 	menuItem = gtk_menu_item_new_with_label("Open");
-	gtk_menu_append(GTK_MENU(fileMenu), menuItem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "open");
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
 	menuItem = gtk_menu_item_new_with_label("Exit");
-	gtk_menu_append(GTK_MENU(fileMenu), menuItem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "quit");
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
 	GtkWidget *helpMenu = gtk_menu_new();
 	menuItem = gtk_menu_item_new_with_label("Help");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), helpMenu);
-	gtk_menu_bar_append(GTK_MENU_BAR(menubar), menuItem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuItem);
 
 	menuItem = gtk_menu_item_new_with_label("About");
-	gtk_menu_append(GTK_MENU(helpMenu), menuItem);
+	gtk_menu_shell_append(GTK_MENU_SHELL(helpMenu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "about");
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
@@ -350,7 +350,7 @@ void View::About() {
 		"GNU General Public License for more details.\n";
 
 	const char *authors[] = {
-		"Lars Pensjö <lars.pensjo@gmail.com>",
+		"Lars Pensjo <lars.pensjo@gmail.com>",
 		NULL
 	};
 
