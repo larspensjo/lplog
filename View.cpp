@@ -350,11 +350,11 @@ void View::About() {
 		"GNU General Public License for more details.\n";
 
 	const char *authors[] = {
-		"Lars Pensjo <lars.pensjo@gmail.com>",
+		"Lars Pensj\303\266 <lars.pensjo@gmail.com>",
 		NULL
 	};
 
-	const gchar* copyright = { "Copyright (c) Lars Pensjo" };
+	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
 
 	gtk_show_about_dialog(NULL,
 		"version", "1.0",
