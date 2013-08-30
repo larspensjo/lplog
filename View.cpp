@@ -175,6 +175,27 @@ void View::Create(Document *doc)
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
 
+	GtkWidget *menubar = gtk_menu_bar_new();
+	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
+
+	GtkWidget *fileMenu = gtk_menu_new();
+	GtkWidget *menuItem = gtk_menu_item_new_with_label("File");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), fileMenu);
+	gtk_menu_bar_append(GTK_MENU_BAR(menubar), menuItem);
+
+	menuItem = gtk_menu_item_new_with_label("Exit");
+	gtk_menu_append(GTK_MENU(fileMenu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "quit");
+	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
+
+	GtkWidget *helpMenu = gtk_menu_new();
+	menuItem = gtk_menu_item_new_with_label("Help");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), helpMenu);
+	gtk_menu_bar_append(GTK_MENU_BAR(menubar), menuItem);
+
+	menuItem = gtk_menu_item_new_with_label("About");
+	gtk_menu_append(GTK_MENU(helpMenu), menuItem);
+
 	mStatusBar = GTK_LABEL(gtk_label_new("Status"));
 	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(mStatusBar), FALSE, FALSE, 0);
 
@@ -185,7 +206,6 @@ void View::Create(Document *doc)
 	GtkWidget *buttonBox = gtk_vbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), buttonBox, FALSE, FALSE, 0);
 
-	AddButton(buttonBox, "_Quit", "quit");
 	AddButton(buttonBox, "_Line add", "line");
 	AddButton(buttonBox, "_Remove", "remove");
 	AddButton(buttonBox, "_Child add", "child");
