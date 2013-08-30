@@ -108,6 +108,8 @@ static void ButtonClicked(GtkButton *button, View *view) {
 		view->KeyPressed(GDK_KEY_a);
 	else if (name == "about")
 		view->About();
+	else if (name == "open")
+		view->FileOpenDialog();
 }
 
 static gboolean TestForeChanges(View *view)
@@ -185,6 +187,11 @@ void View::Create(Document *doc)
 	GtkWidget *menuItem = gtk_menu_item_new_with_label("File");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), fileMenu);
 	gtk_menu_bar_append(GTK_MENU_BAR(menubar), menuItem);
+
+	menuItem = gtk_menu_item_new_with_label("Open");
+	gtk_menu_append(GTK_MENU(fileMenu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "open");
+	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
 	menuItem = gtk_menu_item_new_with_label("Exit");
 	gtk_menu_append(GTK_MENU(fileMenu), menuItem);
@@ -314,6 +321,24 @@ void View::ClickCell(GtkTreeSelection *selection) {
 #endif
 }
 
+void View::FileOpenDialog() {
+	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open File",
+						  mWindow,
+						  GTK_FILE_CHOOSER_ACTION_OPEN,
+						  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+						  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+						  NULL);
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		mDoc->AddSource(filename);
+		gtk_window_set_title (mWindow, ("LPlog " + mDoc->FileName()).c_str());
+		Update();
+		g_free (filename);
+	}
+	gtk_widget_destroy (dialog);
+}
+
 void View::About() {
 	const char *license =
 		"LPlog is free software: you can redistribute it and/or modify\n"
@@ -329,6 +354,8 @@ void View::About() {
 		NULL
 	};
 
+	const gchar* copyright = { "Copyright (c) Lars Pensjo" };
+
 	gtk_show_about_dialog(NULL,
 		"version", "1.0",
 		"website", "https://github.com/larspensjo/lplog",
@@ -336,6 +363,7 @@ void View::About() {
 		"authors", authors,
 		"license", license,
 		"program-name", "LPlog",
+		"copyright", copyright,
 		NULL);
 }
 

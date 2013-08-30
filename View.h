@@ -33,6 +33,7 @@ public:
 	gboolean KeyPressed(guint keyval);
 	void ToggleButton();
 	void About();
+	void FileOpenDialog();
 private:
 	GtkLabel *mStatusBar = 0;
 	Document *mDoc = 0;
