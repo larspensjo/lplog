@@ -106,6 +106,8 @@ static void ButtonClicked(GtkButton *button, View *view) {
 		view->KeyPressed(GDK_KEY_Delete);
 	else if (name == "child")
 		view->KeyPressed(GDK_KEY_a);
+	else if (name == "about")
+		view->About();
 }
 
 static gboolean TestForeChanges(View *view)
@@ -166,11 +168,12 @@ void View::Create(Document *doc)
 
 	/* Create the main window */
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	mWindow = GTK_WINDOW(win);
 	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
-	gtk_window_set_title (GTK_WINDOW (win), ("LPlog " + mDoc->FileName()).c_str());
+	gtk_window_set_title (mWindow, ("LPlog " + mDoc->FileName()).c_str());
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
-	gtk_window_set_default_size(GTK_WINDOW (win), 800, 640);
+	gtk_window_set_default_size(mWindow, 800, 640);
 
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
@@ -195,6 +198,8 @@ void View::Create(Document *doc)
 
 	menuItem = gtk_menu_item_new_with_label("About");
 	gtk_menu_append(GTK_MENU(helpMenu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "about");
+	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
 	mStatusBar = GTK_LABEL(gtk_label_new("Status"));
 	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(mStatusBar), FALSE, FALSE, 0);
@@ -307,6 +312,31 @@ void View::ClickCell(GtkTreeSelection *selection) {
 	}
 	g_value_unset(&val);
 #endif
+}
+
+void View::About() {
+	const char *license =
+		"LPlog is free software: you can redistribute it and/or modify\n"
+		"it under the terms of the GNU General Public License as published by\n"
+		"the Free Software Foundation, version 3.\n\n"
+		"LPlog is distributed in the hope that it will be useful\n"
+		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+		"GNU General Public License for more details.\n";
+
+	const char *authors[] = {
+		"Lars Pensjö <lars.pensjo@gmail.com>",
+		NULL
+	};
+
+	gtk_show_about_dialog(NULL,
+		"version", "1.0",
+		"website", "https://github.com/larspensjo/lplog",
+		"comments", "A program to display and filter a log file.",
+		"authors", authors,
+		"license", license,
+		"program-name", "LPlog",
+		NULL);
 }
 
 void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name) {
