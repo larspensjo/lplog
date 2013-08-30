@@ -31,7 +31,13 @@ public:
 	std::string Status() const;
 	const std::string &FileName() const;
 private:
-	bool isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
+	enum class Evaluation {
+		Match,
+		Nomatch,
+		Neither,
+	};
+
+	Evaluation isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
 	std::vector<std::string> mLines;
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;

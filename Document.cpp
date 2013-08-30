@@ -117,7 +117,7 @@ void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 	std::string result;
 	mFoundLines = 0;
 	for (auto it = mLines.begin(); it != mLines.end(); ++it) {
-		if (empty || isShown(*it, pattern, &iter)) {
+		if (empty || isShown(*it, pattern, &iter) == Evaluation::Match) {
 			result += *it + '\n';
 			++mFoundLines;
 		}
@@ -125,44 +125,61 @@ void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
 	gtk_text_buffer_set_text(dest, result.c_str(), -1);
 }
 
-bool Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
+Document::Evaluation Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, iter, 1, &val);
 	bool active = g_value_get_boolean(&val);
 	g_value_unset(&val);
 	if (!active)
-		return true;
+		return Evaluation::Neither;
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
-	bool ret = false;
+	Evaluation ret = Evaluation::Neither; // Use this as default
 	const gchar *str = g_value_get_string(&val);
 	GtkTreeIter child;
 	bool childFound = gtk_tree_model_iter_children(pattern, &child, iter);
 	if (str == 0) {
-		ret = true;
 	} else if (strcmp(str, "|") == 0 && childFound) {
-		ret = false;
 		do {
-			if (isShown(line, pattern, &child)) {
-				ret = true;
+			auto current = isShown(line, pattern, &child);
+			if (current == Evaluation::Match) {
+				ret = Evaluation::Match;
 				break;
+			} else if (current == Evaluation::Nomatch) {
+				// At least one Nomatch found, continue looking for Match.
+				ret = Evaluation::Nomatch;
 			}
 			childFound = gtk_tree_model_iter_next(pattern, &child);
 		} while (childFound);
 	} else if (strcmp(str, "&") == 0 && childFound) {
-		ret = true;
 		do {
-			if (!isShown(line, pattern, &child)) {
-				ret = false;
+			auto current = isShown(line, pattern, &child);
+			if (current == Evaluation::Nomatch) {
+				ret = Evaluation::Nomatch;
 				break;
+			} else if (current == Evaluation::Match) {
+				// At least one Match found, continue looking for Nomatch.
+				ret = Evaluation::Match;
 			}
 			childFound = gtk_tree_model_iter_next(pattern, &child);
 		} while (childFound);
 	} else if (strcmp(str, "!") == 0 && childFound) {
-		ret = !isShown(line, pattern, &child);
+		switch (isShown(line, pattern, &child)) {
+		case Evaluation::Match:
+			ret = Evaluation::Nomatch;
+			break;
+		case Evaluation::Neither:
+			ret = Evaluation::Neither;
+			break;
+		case Evaluation::Nomatch:
+			ret = Evaluation::Match;
+			break;
+		}
 	} else {
 		auto pos = line.find(str);
 		if (pos != std::string::npos)
-			ret = true;
+			ret = Evaluation::Match;
+		else
+			ret = Evaluation::Nomatch;
 	}
 	g_value_unset(&val);
 	return ret;
