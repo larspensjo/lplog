@@ -304,9 +304,11 @@ bool View::Update() {
 }
 
 void View::ClickCell(GtkTreeSelection *selection) {
-	GtkTreeModel *pattern;
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
 	mValidSelectedPatternIter = false;
+	if (selection == 0)
+		return;
+	GtkTreeModel *pattern = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
 	if (!found)
 		return;
 	mValidSelectedPatternIter = true;
