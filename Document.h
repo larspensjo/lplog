@@ -24,8 +24,15 @@
 class Document
 {
 public:
+	// Add a source file
 	void AddSource(const std::string &fileName);
-	void Apply(GtkTextBuffer *dest, GtkTreeModel *pattern);
+
+	// Replace the shown text with new, with the pattern applied
+	void Replace(GtkTextBuffer *dest, GtkTreeModel *pattern);
+
+	// Append new lines to the shown text, with the pattern applied
+	void Append(GtkTextBuffer *dest, GtkTreeModel *pattern);
+
 	// Update from file, return true if there were any changes.
 	bool Update();
 	std::string Status() const;
@@ -42,4 +49,5 @@ private:
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFoundLines = 0;
+	bool mStartedNewFile = true;
 };

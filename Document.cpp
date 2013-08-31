@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include <sstream>
+#include <assert.h>
 
 #include "Document.h"
 
@@ -22,7 +23,7 @@ using std::ios;
 using std::cout;
 using std::endl;
 
-bool findNL(const char *source, unsigned &length, const char *&next) {
+static bool findNL(const char *source, unsigned &length, const char *&next) {
 	const char *p = source;
 	for (; *p != 0; ++p) {
 		if (p[0] == '\r' && p[1] == '\n') {
@@ -82,6 +83,7 @@ bool Document::Update() {
 		// There is a new file
 		startPos = 0;
 		mLines.clear();
+		mStartedNewFile = true;
 	}
 	auto size = mCurrentPosition - startPos;
 	input.seekg (startPos, ios::beg);
@@ -111,18 +113,45 @@ bool Document::Update() {
 	return true;
 }
 
-void Document::Apply(GtkTextBuffer *dest, GtkTreeModel *pattern) {
+void Document::Replace(GtkTextBuffer *dest, GtkTreeModel *pattern) {
+	mStartedNewFile = false;
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
 	std::string result;
 	mFoundLines = 0;
+	std::string separator = ""; // Start empty
+	// Add the lines, one at a time. The last line shall not have a newline.
 	for (auto it = mLines.begin(); it != mLines.end(); ++it) {
 		if (empty || isShown(*it, pattern, &iter) == Evaluation::Match) {
-			result += *it + '\n';
+			result += separator + *it;
+			separator = "\n";
 			++mFoundLines;
 		}
 	}
 	gtk_text_buffer_set_text(dest, result.c_str(), -1);
+}
+
+void Document::Append(GtkTextBuffer *dest, GtkTreeModel *pattern) {
+	if (mStartedNewFile) {
+		// New file, all lines have to be tested again.
+		this->Replace(dest, pattern);
+		return;
+	}
+	GtkTreeIter iter;
+	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
+	assert(!empty);
+	std::string result;
+	// Test only new lines.
+	// Add the lines, one at a time. The last line shall not have a newline.
+	for (unsigned line = gtk_text_buffer_get_line_count(dest); line < mLines.size(); line++) {
+		if (isShown(mLines[line], pattern, &iter) == Evaluation::Match) {
+			result += '\n' + mLines[line];
+			++mFoundLines;
+		}
+	}
+	GtkTextIter last;
+	gtk_text_buffer_get_end_iter(dest, &last);
+	gtk_text_buffer_insert(dest, &last, result.c_str(), -1);
 }
 
 Document::Evaluation Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {

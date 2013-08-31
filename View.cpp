@@ -90,7 +90,7 @@ gboolean View::KeyPressed(guint keyval) {
 		}
 		break;
 	}
-	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
 	return stopEvent; // Stop event from propagating
@@ -130,7 +130,7 @@ void View::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	assert(found);
 	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
 	assert(mBuffer != 0);
-	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
 
@@ -150,7 +150,7 @@ void View::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
 	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
 	g_value_unset(&val);
 	assert(mBuffer != 0);
-	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
 
@@ -276,7 +276,8 @@ void View::Create(Document *doc)
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
-	mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Update();
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	SetStatus(mDoc->Status());
 
 	g_timeout_add(1000, (GSourceFunc)TestForeChanges, this);
@@ -297,11 +298,12 @@ void View::SetStatus(const std::string &str) {
 
 bool View::Update() {
 	if (mDoc->Update()) {
+		// Remember the current scrollbar value
 		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc->Apply(mBuffer, GTK_TREE_MODEL(mPattern));
+		mDoc->Append(mBuffer, GTK_TREE_MODEL(mPattern));
 		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
-			gtk_adjustment_set_value(adj, pos+0.1); // A change is needed!
+			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 		SetStatus(mDoc->Status());
 		return true;
 	}
