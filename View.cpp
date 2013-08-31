@@ -244,14 +244,19 @@ void View::Create(Document *doc)
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "open");
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
-	menuItem = gtk_menu_item_new_with_label("Paste");
-	gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), menuItem);
-	gtk_widget_set_name(GTK_WIDGET(menuItem), "paste");
-	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
-
 	menuItem = gtk_menu_item_new_with_label("Exit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "quit");
+	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
+
+	GtkWidget *editMenu = gtk_menu_new();
+	menuItem = gtk_menu_item_new_with_label("Edit");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), editMenu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuItem);
+
+	menuItem = gtk_menu_item_new_with_label("Paste");
+	gtk_menu_shell_append(GTK_MENU_SHELL(editMenu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "paste");
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
 	GtkWidget *helpMenu = gtk_menu_new();
