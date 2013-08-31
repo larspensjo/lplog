@@ -73,6 +73,7 @@ gboolean View::KeyPressed(guint keyval) {
 			if (IterEqual(&mRoot, &mSelectedPatternIter))
 				return false;
 			gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
+			gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
 			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
 			gtk_tree_path_free(path);
@@ -82,6 +83,7 @@ gboolean View::KeyPressed(guint keyval) {
 	case GDK_KEY_a:
 		{
 			gtk_tree_store_insert_after(mPattern, &child, &mSelectedPatternIter, NULL);
+			gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
 			gtk_tree_view_expand_to_path(mTreeView, path);
 			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
@@ -361,9 +363,9 @@ void View::ClickCell(GtkTreeSelection *selection) {
 	if (!found)
 		return;
 	mValidSelectedPatternIter = true;
+#ifdef DEBUG
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, &mSelectedPatternIter, 0, &val);
-#ifdef DEBUG
 	const gchar *str = g_value_get_string(&val);
 	if (str != nullptr) {
 		cout << "ClickCell: " << str << endl;
