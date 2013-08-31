@@ -17,7 +17,6 @@
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
-#include <assert.h>
 
 #include "View.h"
 #include "Document.h"
@@ -37,6 +36,12 @@ int main (int argc, char *argv[])
 	if (argc > 1) {
 		doc.AddSourceFile(argv [1]);
 	}
+	GError *err = 0;
+	auto icon = gdk_pixbuf_new_from_file("icon.bmp", &err);
+	if (icon != nullptr && err == 0)
+		gtk_window_set_default_icon(icon);
+	else
+		cout << err->message << endl;
 	view.Create(&doc);
 	view.Update();
 	gtk_main ();
