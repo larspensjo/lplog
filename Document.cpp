@@ -15,7 +15,6 @@
 
 #include <string.h>
 #include <sstream>
-#include <assert.h>
 #include <sstream>
 
 #include "Document.h"
@@ -126,7 +125,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 void Document::FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
-	assert(!empty);
+	g_assert(!empty);
 	std::string separator = ""; // Start empty
 	if (mFoundLines > 0)
 		separator = '\n';

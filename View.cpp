@@ -13,7 +13,6 @@
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <assert.h>
 #include <iostream>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 #include <string.h>
@@ -129,12 +128,12 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, V
 }
 
 void View::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
-	assert(mPattern != 0);
+	g_assert(mPattern != 0);
 	GtkTreeIter iter;
 	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	assert(found);
+	g_assert(found);
 	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
-	assert(mBuffer != 0);
+	g_assert(mBuffer != 0);
 	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
@@ -145,16 +144,16 @@ static void ToggleCell(GtkCellRendererToggle *renderer, gchar *path, View *view)
 }
 
 void View::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
-	assert(mPattern != 0);
+	g_assert(mPattern != 0);
 	GtkTreeIter iter;
 	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	assert(found);
+	g_assert(found);
 	GValue val = { 0 };
 	gtk_tree_model_get_value(GTK_TREE_MODEL(mPattern), &iter, 1, &val);
 	bool current = g_value_get_boolean(&val);
 	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
 	g_value_unset(&val);
-	assert(mBuffer != 0);
+	g_assert(mBuffer != 0);
 	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
