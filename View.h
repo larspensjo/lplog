@@ -28,20 +28,12 @@ public:
 	bool Update();
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void ToggleCell(GtkCellRendererToggle *renderer, gchar *path);
-	void ClickCell(GtkTreeSelection *selection);
-	gboolean KeyEvent(GdkEvent *event);
-	gboolean KeyPressed(guint keyval);
 	gboolean TextViewKeyPress(guint keyval);
 	void ToggleButton(const std::string &name);
-	void About();
-	void FileOpenDialog();
 private:
 	GtkLabel *mStatusBar = 0;
-	Document *mDoc = 0;
 	GtkTreeStore *mPattern = 0;
-	GtkTreeIter mSelectedPatternIter = { 0 };
 	GtkTreeIter mRoot = { 0 };
-	bool mValidSelectedPatternIter = false;
 	GtkTextBuffer *mBuffer = 0;
 	GtkTreeView *mTreeView = 0;
 	GtkTextView *mTextView = 0;
@@ -50,7 +42,7 @@ private:
 	GtkScrolledWindow *mScrolledView = 0;
 	bool mShowLineNumbers = false;
 
-	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
-	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name);
+	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb);
+	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
 };

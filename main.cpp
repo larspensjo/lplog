@@ -20,6 +20,7 @@
 
 #include "View.h"
 #include "Document.h"
+#include "Controller.h"
 
 using std::cout;
 using std::endl;
@@ -31,19 +32,13 @@ int main (int argc, char *argv[])
 	gtk_init (&argc, &argv);
 	g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
 
-	View view;
-	Document doc;
-	if (argc > 1) {
-		doc.AddSourceFile(argv [1]);
-	}
 	GError *err = 0;
 	auto icon = gdk_pixbuf_new_from_file("icon.bmp", &err);
 	if (icon != nullptr && err == 0)
 		gtk_window_set_default_icon(icon);
 	else
 		cout << err->message << endl;
-	view.Create(&doc);
-	view.Update();
-	gtk_main ();
+	Controller c;
+	c.Run(argc, argv);
 	return 0;
 }
