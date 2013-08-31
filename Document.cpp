@@ -54,14 +54,23 @@ static bool findNL(const char *source, unsigned &length, const char *&next) {
 	return true;
 }
 
-void Document::AddSource(const std::string &fileName) {
+void Document::AddSourceFile(const std::string &fileName) {
+	mStopUpdates = false;
 	mFileName = fileName;
 	mCurrentPosition = 0;
 	mLines.clear();
 }
 
+void Document::AddSourceText(char *text, unsigned size) {
+	mStopUpdates = true;
+	mFileName = "Paste data";
+	mCurrentPosition = 0;
+	mLines.clear();
+	this->SplitLines(text, size);
+}
+
 bool Document::Update() {
-	if (mFileName == "")
+	if (mFileName == "" || mStopUpdates)
 		return false;
 	std::ifstream input(mFileName);
 	if (!input.is_open()) {
@@ -90,6 +99,12 @@ bool Document::Update() {
 	input.seekg (startPos, ios::beg);
 	char *buff = new char[size+1];
 	input.read(buff, size);
+	this->SplitLines(buff, size);
+	delete [] buff;
+	return true;
+}
+
+void Document::SplitLines(char *buff, unsigned size) {
 	const char *last;
 	while(!g_utf8_validate(buff, size, &last)) {
 		unsigned pos = last - buff;
@@ -97,9 +112,6 @@ bool Document::Update() {
 		buff[pos] = ' ';
 	}
 	buff[size] = 0;
-	// std::cout << "Read " << size << " characters from " << mFileName << endl;
-
-	// auto oldSize = mLines.size();
 	// Split the source into list of lines
 	for (const char *p=buff;;) {
 		unsigned len;
@@ -109,9 +121,6 @@ bool Document::Update() {
 		mLines.push_back(std::string(p, len));
 		p = next;
 	}
-	delete [] buff;
-	// cout << "Added " << mLines.size() - oldSize << " lines." << endl;
-	return true;
 }
 
 void Document::FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine) {

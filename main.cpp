@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
 	View view;
 	Document doc;
 	if (argc > 1) {
-		doc.AddSource(argv [1]);
+		doc.AddSourceFile(argv [1]);
 	}
 	view.Create(&doc);
 	view.Update();

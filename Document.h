@@ -26,7 +26,10 @@ class Document
 {
 public:
 	// Add a source file
-	void AddSource(const std::string &fileName);
+	void AddSourceFile(const std::string &fileName);
+
+	// Add text
+	void AddSourceText(char *, unsigned size);
 
 	// Replace the shown text with new, with the pattern applied
 	void Replace(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers);
@@ -52,4 +55,6 @@ private:
 	unsigned mFoundLines = 0;
 	bool mStartedNewFile = true;
 	void FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine);
+	void SplitLines(char *, unsigned size); // This will modify the argument
+	bool mStopUpdates = false;
 };

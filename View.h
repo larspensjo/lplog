@@ -31,6 +31,7 @@ public:
 	void ClickCell(GtkTreeSelection *selection);
 	gboolean KeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
+	gboolean TextViewKeyPress(guint keyval);
 	void ToggleButton(const std::string &name);
 	void About();
 	void FileOpenDialog();

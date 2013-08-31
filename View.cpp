@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <iostream>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
+#include <string.h>
 
 #include "Document.h"
 #include "View.h"
@@ -110,6 +111,8 @@ static void ButtonClicked(GtkButton *button, View *view) {
 		view->About();
 	else if (name == "open")
 		view->FileOpenDialog();
+	else if (name == "paste")
+		view->TextViewKeyPress(GDK_KEY_Paste);
 	else
 		cout << "Unknown button: " << name << endl;
 }
@@ -176,6 +179,40 @@ void View::ToggleButton(const std::string &name) {
 		cout << "Unknown toggle button: " << name << endl;
 }
 
+static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, View *view) {
+#if 0
+	cout << "keyval: " << event->key.keyval;
+	cout << " is_modifier: " << event->key.is_modifier;
+	cout << " hardware_keycode: " << event->key.hardware_keycode;
+	cout << " type: " << event->key.type;
+	cout << " string: " << event->key.string;
+	cout << endl;
+#endif
+	return view->TextViewKeyPress(event->key.keyval);
+}
+
+gboolean View::TextViewKeyPress(guint keyval) {
+	bool stopEvent = false;
+	switch(keyval) {
+	case GDK_KEY_Paste:
+		{
+			GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+			gchar *p = gtk_clipboard_wait_for_text(clipboard);
+			if (p != nullptr) {
+				// cout << "Pasted text: " << p << " key " << endl;
+				unsigned size = strlen(p);
+				mDoc->AddSourceText(p, size);
+				g_free(p);
+				mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+				SetStatus(mDoc->Status());
+			}
+			stopEvent = true;
+		}
+		break;
+	}
+	return stopEvent; // Stop event from propagating
+}
+
 void View::Create(Document *doc)
 {
 	mDoc = doc;
@@ -205,6 +242,11 @@ void View::Create(Document *doc)
 	menuItem = gtk_menu_item_new_with_label("Open");
 	gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "open");
+	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
+
+	menuItem = gtk_menu_item_new_with_label("Paste");
+	gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "paste");
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
 
 	menuItem = gtk_menu_item_new_with_label("Exit");
@@ -287,6 +329,7 @@ void View::Create(Document *doc)
 	gtk_scrolled_window_set_policy(mScrolledView, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
+	g_signal_connect(G_OBJECT(textview), "key-press-event", G_CALLBACK(::TextViewKeyPress), this );
 	mTextView = GTK_TEXT_VIEW(textview);
 	gtk_text_view_set_wrap_mode(mTextView, GTK_WRAP_CHAR);
 	gtk_widget_modify_font(textview, font);
@@ -360,12 +403,12 @@ void View::FileOpenDialog() {
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-		mDoc->AddSource(filename);
-		gtk_window_set_title (mWindow, ("LPlog " + mDoc->FileName()).c_str());
+		mDoc->AddSourceFile(filename);
+		gtk_window_set_title(mWindow, ("LPlog " + mDoc->FileName()).c_str());
 		Update();
-		g_free (filename);
+		g_free(filename);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 void View::About() {
