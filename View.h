@@ -51,4 +51,6 @@ private:
 	bool mShowLineNumbers = false;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
+	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name);
+	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
 };
