@@ -20,6 +20,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 class Document
 {
@@ -28,10 +29,10 @@ public:
 	void AddSource(const std::string &fileName);
 
 	// Replace the shown text with new, with the pattern applied
-	void Replace(GtkTextBuffer *dest, GtkTreeModel *pattern);
+	void Replace(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers);
 
 	// Append new lines to the shown text, with the pattern applied
-	void Append(GtkTextBuffer *dest, GtkTreeModel *pattern);
+	void Append(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers);
 
 	// Update from file, return true if there were any changes.
 	bool Update();
@@ -50,4 +51,5 @@ private:
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFoundLines = 0;
 	bool mStartedNewFile = true;
+	void FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine);
 };

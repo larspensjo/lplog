@@ -90,7 +90,7 @@ gboolean View::KeyPressed(guint keyval) {
 		}
 		break;
 	}
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
 	return stopEvent; // Stop event from propagating
@@ -110,6 +110,8 @@ static void ButtonClicked(GtkButton *button, View *view) {
 		view->About();
 	else if (name == "open")
 		view->FileOpenDialog();
+	else
+		cout << "Unknown button: " << name << endl;
 }
 
 static gboolean TestForeChanges(View *view)
@@ -130,7 +132,7 @@ void View::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	assert(found);
 	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
 	assert(mBuffer != 0);
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
 
@@ -150,16 +152,28 @@ void View::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
 	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
 	g_value_unset(&val);
 	assert(mBuffer != 0);
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
 }
 
 static void ToggleButton(GtkToggleButton *togglebutton, View *view) {
-	view->ToggleButton();
+	std::string name = gtk_widget_get_name(GTK_WIDGET(togglebutton));
+	view->ToggleButton(name);
 }
 
-void View::ToggleButton() {
-	SetStatus(mDoc->Status());
+void View::ToggleButton(const std::string &name) {
+	if (name == "autoscroll")
+		SetStatus(mDoc->Status()); // This will use the new autoamtic scrolling
+	else if (name == "linenumbers") {
+		mShowLineNumbers = !mShowLineNumbers;
+		// Remember the current scrollbar value
+		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
+		gdouble pos = gtk_adjustment_get_value(adj);
+		mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
+			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
+	} else
+		cout << "Unknown toggle button: " << name << endl;
 }
 
 void View::Create(Document *doc)
@@ -223,8 +237,14 @@ void View::Create(Document *doc)
 	AddButton(buttonBox, "_Child add", "child");
 
 	mAutoScroll = gtk_check_button_new_with_label("Autoscroll");
+	gtk_widget_set_name(GTK_WIDGET(mAutoScroll), "autoscroll");
 	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(::ToggleButton), this );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
+
+	auto toggleButton = gtk_check_button_new_with_label("Line numbers");
+	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
+	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(::ToggleButton), this );
+	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
 
 	// Create the tree model
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
@@ -277,7 +297,7 @@ void View::Create(Document *doc)
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
 	mDoc->Update();
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern));
+	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	SetStatus(mDoc->Status());
 
 	g_timeout_add(1000, (GSourceFunc)TestForeChanges, this);
@@ -301,7 +321,7 @@ bool View::Update() {
 		// Remember the current scrollbar value
 		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc->Append(mBuffer, GTK_TREE_MODEL(mPattern));
+		mDoc->Append(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 		SetStatus(mDoc->Status());

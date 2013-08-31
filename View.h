@@ -31,7 +31,7 @@ public:
 	void ClickCell(GtkTreeSelection *selection);
 	gboolean KeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
-	void ToggleButton();
+	void ToggleButton(const std::string &name);
 	void About();
 	void FileOpenDialog();
 private:
@@ -47,6 +47,7 @@ private:
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
 	GtkScrolledWindow *mScrolledView = 0;
+	bool mShowLineNumbers = false;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name);
 };

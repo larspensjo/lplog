@@ -16,6 +16,7 @@
 #include <string.h>
 #include <sstream>
 #include <assert.h>
+#include <sstream>
 
 #include "Document.h"
 
@@ -113,45 +114,48 @@ bool Document::Update() {
 	return true;
 }
 
-void Document::Replace(GtkTextBuffer *dest, GtkTreeModel *pattern) {
-	mStartedNewFile = false;
+void Document::FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
-	std::string result;
-	mFoundLines = 0;
+	assert(!empty);
 	std::string separator = ""; // Start empty
+	if (mFoundLines > 0)
+		separator = '\n';
 	// Add the lines, one at a time. The last line shall not have a newline.
-	for (auto it = mLines.begin(); it != mLines.end(); ++it) {
-		if (empty || isShown(*it, pattern, &iter) == Evaluation::Match) {
-			result += separator + *it;
+	for (unsigned line = firstLine; line < mLines.size(); line++) {
+		if (isShown(mLines[line], pattern, &iter) == Evaluation::Match) {
+			ss << separator;
+			if (showLineNumbers) {
+				ss.width(5);
+				ss.setf(ss.left);
+				ss << line+1 << " ";
+			}
+			ss << mLines[line];
 			separator = "\n";
 			++mFoundLines;
 		}
 	}
-	gtk_text_buffer_set_text(dest, result.c_str(), -1);
 }
 
-void Document::Append(GtkTextBuffer *dest, GtkTreeModel *pattern) {
+void Document::Replace(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers) {
+	mStartedNewFile = false;
+	mFoundLines = 0;
+	std::stringstream ss;
+	this->FilterString(ss, dest, pattern, showLineNumbers, 0);
+	gtk_text_buffer_set_text(dest, ss.str().c_str(), -1);
+}
+
+void Document::Append(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers) {
 	if (mStartedNewFile) {
 		// New file, all lines have to be tested again.
-		this->Replace(dest, pattern);
+		this->Replace(dest, pattern, showLineNumbers);
 		return;
 	}
-	GtkTreeIter iter;
-	bool empty = !gtk_tree_model_get_iter_first(pattern, &iter);
-	assert(!empty);
-	std::string result;
-	// Test only new lines.
-	// Add the lines, one at a time. The last line shall not have a newline.
-	for (unsigned line = gtk_text_buffer_get_line_count(dest); line < mLines.size(); line++) {
-		if (isShown(mLines[line], pattern, &iter) == Evaluation::Match) {
-			result += '\n' + mLines[line];
-			++mFoundLines;
-		}
-	}
+	std::stringstream ss;
+	this->FilterString(ss, dest, pattern, showLineNumbers, gtk_text_buffer_get_line_count(dest));
 	GtkTextIter last;
 	gtk_text_buffer_get_end_iter(dest, &last);
-	gtk_text_buffer_insert(dest, &last, result.c_str(), -1);
+	gtk_text_buffer_insert(dest, &last, ss.str().c_str(), -1);
 }
 
 Document::Evaluation Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
