@@ -169,7 +169,9 @@ void Controller::FileOpenDialog() {
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		mDoc->AddSourceFile(filename);
 		gtk_window_set_title(mWindow, ("LPlog " + mDoc->FileName()).c_str());
-		Update();
+		mDoc->Update();
+		mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		SetStatus(mDoc->Status());
 		g_free(filename);
 	}
 	gtk_widget_destroy(dialog);
