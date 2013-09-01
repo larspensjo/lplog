@@ -131,7 +131,7 @@ void Document::FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeM
 		separator = '\n';
 	// Add the lines, one at a time. The last line shall not have a newline.
 	for (unsigned line = firstLine; line < mLines.size(); line++) {
-		if (isShown(mLines[line], pattern, &iter) == Evaluation::Match) {
+		if (isShown(mLines[line], pattern, &iter) != Evaluation::Nomatch) {
 			ss << separator;
 			if (showLineNumbers) {
 				ss.width(5);
