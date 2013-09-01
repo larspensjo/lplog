@@ -23,17 +23,16 @@
 using std::cout;
 using std::endl;
 
-void View::Create(Document *doc)
+void View::SetWindowTitle(const std::string &str) {
+	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
+}
+
+void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
 {
-	mDoc = doc;
-
-	GtkWidget *win = NULL;
-
 	/* Create the main window */
-	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	mWindow = GTK_WINDOW(win);
 	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
-	gtk_window_set_title (mWindow, ("LPlog " + mDoc->FileName()).c_str());
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
 	gtk_window_set_default_size(mWindow, 800, 640);
@@ -45,14 +44,14 @@ void View::Create(Document *doc)
 	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
 
 	auto menu = this->AddMenu(menubar, "_File");
-	this->AddMenuButton(menu, "_Open", "open");
-	this->AddMenuButton(menu, "_Exit", "quit");
+	this->AddMenuButton(menu, "_Open", "open", buttonCB);
+	this->AddMenuButton(menu, "_Exit", "quit", buttonCB);
 
 	menu = this->AddMenu(menubar, "_Edit");
-	this->AddMenuButton(menu, "_Paste", "paste");
+	this->AddMenuButton(menu, "_Paste", "paste", buttonCB);
 
 	menu = this->AddMenu(menubar, "_Help");
-	this->AddMenuButton(menu, "_About", "about");
+	this->AddMenuButton(menu, "_About", "about", buttonCB);
 
 	mStatusBar = GTK_LABEL(gtk_label_new("Status"));
 	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(mStatusBar), FALSE, FALSE, 0);
@@ -64,22 +63,19 @@ void View::Create(Document *doc)
 	GtkWidget *buttonBox = gtk_vbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), buttonBox, FALSE, FALSE, 0);
 
-	AddButton(buttonBox, "_Line add", "line");
-	AddButton(buttonBox, "_Remove", "remove");
-	AddButton(buttonBox, "_Child add", "child");
+	AddButton(buttonBox, "_Line add", "line", buttonCB);
+	AddButton(buttonBox, "_Remove", "remove", buttonCB);
+	AddButton(buttonBox, "_Child add", "child", buttonCB);
 
 	mAutoScroll = gtk_check_button_new_with_label("Autoscroll");
 	gtk_widget_set_name(GTK_WIDGET(mAutoScroll), "autoscroll");
-	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(::ToggleButton), this );
+	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(toggleButtonCB), this );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
 	auto toggleButton = gtk_check_button_new_with_label("Line numbers");
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
-	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(::ToggleButton), this );
+	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), this );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
-
-	// Create the tree model
-	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
 	// Add some test data to it
 	gtk_tree_store_append(mPattern, &mRoot, NULL);
@@ -129,11 +125,11 @@ void View::Create(Document *doc)
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
-	mDoc->UpdateInputData();
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	SetStatus(mDoc->Status());
+	doc->UpdateInputData();
+	doc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	SetStatus(doc->Status());
 
-	g_timeout_add(1000, (GSourceFunc)TestForeChanges, this);
+	g_timeout_add(1000, G_CALLBACK(::TestForeChanges), this);
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);
@@ -157,7 +153,7 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 	return menu;
 }
 
-void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name) {
+void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb) {
 	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), name);

@@ -229,3 +229,8 @@ std::string Document::Status() const {
 const std::string &Document::FileName() const {
 	return mFileName;
 }
+
+void Document::Create() {
+	// Create the tree model
+	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+}

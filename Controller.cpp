@@ -77,14 +77,14 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 }
 
 bool Controller::Update() {
-	if (mDoc->UpdateInputData()) {
+	if (mDoc.UpdateInputData()) {
 		// Remember the current scrollbar value
 		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc->Append(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		mDoc.Append(mShowLineNumbers);
 		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-		SetStatus(mDoc->Status());
+		SetStatus(mDoc.Status());
 		return true;
 	}
 	return false;
@@ -101,19 +101,19 @@ void Controller::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
 	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
 	g_value_unset(&val);
 	g_assert(mBuffer != 0);
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
+	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
 }
 
 void Controller::ToggleButton(const std::string &name) {
 	if (name == "autoscroll")
-		SetStatus(mDoc->Status()); // This will use the new autoamtic scrolling
+		SetStatus(mDoc.Status()); // This will use the new autoamtic scrolling
 	else if (name == "linenumbers") {
 		mShowLineNumbers = !mShowLineNumbers;
 		// Remember the current scrollbar value
 		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 	} else
@@ -127,8 +127,8 @@ void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newStri
 	g_assert(found);
 	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
 	g_assert(mBuffer != 0);
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
+	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
@@ -141,10 +141,10 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 			if (p != nullptr) {
 				// cout << "Pasted text: " << p << " key " << endl;
 				unsigned size = strlen(p);
-				mDoc->AddSourceText(p, size);
+				mDoc.AddSourceText(p, size);
 				g_free(p);
-				mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-				SetStatus(mDoc->Status());
+				mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+				SetStatus(mDoc.Status());
 			}
 			stopEvent = true;
 		}
@@ -201,8 +201,8 @@ gboolean Controller::KeyPressed(guint keyval) {
 		}
 		break;
 	}
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
+	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
 	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
 	return stopEvent; // Stop event from propagating
 }
@@ -232,10 +232,13 @@ void Controller::ClickCell(GtkTreeSelection *selection) {
 }
 
 void Controller::Run(int argc, char *argv[]) {
+	mDoc.Create();
 	if (argc > 1) {
-		doc.AddSourceFile(argv [1]);
-	}
-	mView.Create(&doc);
+		mDoc.AddSourceFile(argv [1]);
+		mView.SetWindowTitle(argv[1]);
+	} else
+		mView.SetWindowTitle("");
+	mView.Create(::ButtonClicked, ::ToggleButton);
 	mView.Update();
 	gtk_main ();
 }
@@ -278,11 +281,11 @@ void Controller::FileOpenDialog() {
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-		mDoc->AddSourceFile(filename);
-		gtk_window_set_title(mWindow, ("LPlog " + mDoc->FileName()).c_str());
-		mDoc->Update();
-		mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-		SetStatus(mDoc->Status());
+		mDoc.AddSourceFile(filename);
+		gtk_window_set_title(mWindow, ("LPlog " + mDoc.FileName()).c_str());
+		mDoc.Update();
+		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		SetStatus(mDoc.Status());
 		g_free(filename);
 	}
 	gtk_widget_destroy(dialog);

@@ -23,13 +23,12 @@ class Document;
 class View
 {
 public:
-	void Create(Document*);
+	void Create(GCallback buttonCB, GCallback toggleButtonCB);
 	void SetStatus(const std::string &);
+	void SetWindowTitle(const std::string &);
 private:
 	GtkLabel *mStatusBar = 0;
-	GtkTreeStore *mPattern = 0;
 	GtkTreeIter mRoot = { 0 };
-	GtkTextBuffer *mBuffer = 0;
 	GtkTreeView *mTreeView = 0;
 	GtkTextView *mTextView = 0;
 	GtkWidget *mAutoScroll = 0;

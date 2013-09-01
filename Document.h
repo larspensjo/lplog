@@ -25,6 +25,7 @@
 class Document
 {
 public:
+	void Create();
 	// Add a source file
 	void AddSourceFile(const std::string &fileName);
 
