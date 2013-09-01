@@ -38,7 +38,7 @@ public:
 	void Append(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers);
 
 	// Update from file, return true if there were any changes.
-	bool Update();
+	bool UpdateInputData();
 	std::string Status() const;
 	const std::string &FileName() const;
 private:
@@ -53,7 +53,7 @@ private:
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFoundLines = 0;
-	bool mStartedNewFile = true;
+	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
 	void FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine);
 	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;

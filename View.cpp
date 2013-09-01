@@ -320,7 +320,7 @@ void View::Create(Document *doc)
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
 
-	mDoc->Update();
+	mDoc->UpdateInputData();
 	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 	SetStatus(mDoc->Status());
 
@@ -341,7 +341,7 @@ void View::SetStatus(const std::string &str) {
 }
 
 bool View::Update() {
-	if (mDoc->Update()) {
+	if (mDoc->UpdateInputData()) {
 		// Remember the current scrollbar value
 		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 		gdouble pos = gtk_adjustment_get_value(adj);
@@ -386,7 +386,7 @@ void View::FileOpenDialog() {
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		mDoc->AddSourceFile(filename);
 		gtk_window_set_title(mWindow, ("LPlog " + mDoc->FileName()).c_str());
-		mDoc->Update();
+		mDoc->UpdateInputData();
 		mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
 		SetStatus(mDoc->Status());
 		g_free(filename);

@@ -68,7 +68,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	this->SplitLines(text, size);
 }
 
-bool Document::Update() {
+bool Document::UpdateInputData() {
 	if (mFileName == "" || mStopUpdates)
 		return false;
 	std::ifstream input(mFileName);
@@ -92,7 +92,9 @@ bool Document::Update() {
 		// There is a new file
 		startPos = 0;
 		mLines.clear();
-		mStartedNewFile = true;
+		mFirstNewLine = 0;
+	} else {
+		mFirstNewLine = mLines.size();
 	}
 	auto size = mCurrentPosition - startPos;
 	input.seekg (startPos, ios::beg);
@@ -129,7 +131,7 @@ void Document::FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeM
 	std::string separator = ""; // Start empty
 	if (mFoundLines > 0)
 		separator = '\n';
-	// Add the lines, one at a time. The last line shall not have a newline.
+	// Add the lines to ss, one at a time. The last line shall not have a newline.
 	for (unsigned line = firstLine; line < mLines.size(); line++) {
 		if (isShown(mLines[line], pattern, &iter) != Evaluation::Nomatch) {
 			ss << separator;
@@ -146,7 +148,7 @@ void Document::FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeM
 }
 
 void Document::Replace(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers) {
-	mStartedNewFile = false;
+	mFirstNewLine = 0;
 	mFoundLines = 0;
 	std::stringstream ss;
 	this->FilterString(ss, dest, pattern, showLineNumbers, 0);
@@ -154,13 +156,13 @@ void Document::Replace(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLine
 }
 
 void Document::Append(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers) {
-	if (mStartedNewFile) {
+	if (mFirstNewLine == 0) {
 		// New file, all lines have to be tested again.
 		this->Replace(dest, pattern, showLineNumbers);
 		return;
 	}
 	std::stringstream ss;
-	this->FilterString(ss, dest, pattern, showLineNumbers, gtk_text_buffer_get_line_count(dest));
+	this->FilterString(ss, dest, pattern, showLineNumbers, mFirstNewLine);
 	GtkTextIter last;
 	gtk_text_buffer_get_end_iter(dest, &last);
 	gtk_text_buffer_insert(dest, &last, ss.str().c_str(), -1);
