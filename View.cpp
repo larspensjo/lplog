@@ -235,15 +235,15 @@ void View::Create(Document *doc)
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
 
-	auto menu = this->AddMenu(menubar, "File");
-	this->AddMenuButton(menu, "Open", "open");
-	this->AddMenuButton(menu, "Exit", "quit");
+	auto menu = this->AddMenu(menubar, "_File");
+	this->AddMenuButton(menu, "_Open", "open");
+	this->AddMenuButton(menu, "_Exit", "quit");
 
-	menu = this->AddMenu(menubar, "Edit");
-	this->AddMenuButton(menu, "Paste", "paste");
+	menu = this->AddMenu(menubar, "_Edit");
+	this->AddMenuButton(menu, "_Paste", "paste");
 
-	menu = this->AddMenu(menubar, "Help");
-	this->AddMenuButton(menu, "About", "about");
+	menu = this->AddMenu(menubar, "_Help");
+	this->AddMenuButton(menu, "_About", "about");
 
 	mStatusBar = GTK_LABEL(gtk_label_new("Status"));
 	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(mStatusBar), FALSE, FALSE, 0);
@@ -424,14 +424,14 @@ void View::About() {
 
 GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 	GtkWidget *menu = gtk_menu_new();
-	auto menuItem = gtk_menu_item_new_with_label(label);
+	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuItem);
 	return menu;
 }
 
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name) {
-	auto menuItem = gtk_menu_item_new_with_label(label);
+	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), name);
 	g_signal_connect (menuItem, "activate", G_CALLBACK(ButtonClicked), this);
