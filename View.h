@@ -26,9 +26,7 @@ public:
 	void Create(Document*);
 	void SetStatus(const std::string &);
 	bool Update();
-	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void ToggleCell(GtkCellRendererToggle *renderer, gchar *path);
-	gboolean TextViewKeyPress(guint keyval);
 	void ToggleButton(const std::string &name);
 private:
 	GtkLabel *mStatusBar = 0;

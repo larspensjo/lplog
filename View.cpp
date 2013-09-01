@@ -23,30 +23,6 @@
 using std::cout;
 using std::endl;
 
-static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
-	// I know, the proper way is to compare the iter to a path first.
-	return a->stamp == b->stamp &&
-		a->user_data == b->user_data &&
-		a->user_data2 == b->user_data2 &&
-		a->user_data3 == b->user_data3;
-}
-
-void View::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
-	g_assert(mPattern != 0);
-	GtkTreeIter iter;
-	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	g_assert(found);
-	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
-	g_assert(mBuffer != 0);
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
-}
-
-static void ToggleCell(GtkCellRendererToggle *renderer, gchar *path, View *view)
-{
-	view->ToggleCell(renderer, path);
-}
-
 void View::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
 	g_assert(mPattern != 0);
 	GtkTreeIter iter;
@@ -80,40 +56,6 @@ void View::ToggleButton(const std::string &name) {
 			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 	} else
 		cout << "Unknown toggle button: " << name << endl;
-}
-
-static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, View *view) {
-#if 0
-	cout << "keyval: " << event->key.keyval;
-	cout << " is_modifier: " << event->key.is_modifier;
-	cout << " hardware_keycode: " << event->key.hardware_keycode;
-	cout << " type: " << event->key.type;
-	cout << " string: " << event->key.string;
-	cout << endl;
-#endif
-	return view->TextViewKeyPress(event->key.keyval);
-}
-
-gboolean View::TextViewKeyPress(guint keyval) {
-	bool stopEvent = false;
-	switch(keyval) {
-	case GDK_KEY_Paste:
-		{
-			GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-			gchar *p = gtk_clipboard_wait_for_text(clipboard);
-			if (p != nullptr) {
-				// cout << "Pasted text: " << p << " key " << endl;
-				unsigned size = strlen(p);
-				mDoc->AddSourceText(p, size);
-				g_free(p);
-				mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-				SetStatus(mDoc->Status());
-			}
-			stopEvent = true;
-		}
-		break;
-	}
-	return stopEvent; // Stop event from propagating
 }
 
 void View::Create(Document *doc)
