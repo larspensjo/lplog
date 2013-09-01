@@ -25,9 +25,6 @@ class View
 public:
 	void Create(Document*);
 	void SetStatus(const std::string &);
-	bool Update();
-	void ToggleCell(GtkCellRendererToggle *renderer, gchar *path);
-	void ToggleButton(const std::string &name);
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkTreeStore *mPattern = 0;

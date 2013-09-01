@@ -23,41 +23,6 @@
 using std::cout;
 using std::endl;
 
-void View::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
-	g_assert(mPattern != 0);
-	GtkTreeIter iter;
-	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	g_assert(found);
-	GValue val = { 0 };
-	gtk_tree_model_get_value(GTK_TREE_MODEL(mPattern), &iter, 1, &val);
-	bool current = g_value_get_boolean(&val);
-	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
-	g_value_unset(&val);
-	g_assert(mBuffer != 0);
-	mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	gtk_label_set_text(mStatusBar, mDoc->Status().c_str());
-}
-
-static void ToggleButton(GtkToggleButton *togglebutton, View *view) {
-	std::string name = gtk_widget_get_name(GTK_WIDGET(togglebutton));
-	view->ToggleButton(name);
-}
-
-void View::ToggleButton(const std::string &name) {
-	if (name == "autoscroll")
-		SetStatus(mDoc->Status()); // This will use the new autoamtic scrolling
-	else if (name == "linenumbers") {
-		mShowLineNumbers = !mShowLineNumbers;
-		// Remember the current scrollbar value
-		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
-		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
-			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-	} else
-		cout << "Unknown toggle button: " << name << endl;
-}
-
 void View::Create(Document *doc)
 {
 	mDoc = doc;
@@ -182,20 +147,6 @@ void View::SetStatus(const std::string &str) {
 		gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
 	}
 	gtk_label_set_text(mStatusBar, str.c_str());
-}
-
-bool View::Update() {
-	if (mDoc->UpdateInputData()) {
-		// Remember the current scrollbar value
-		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
-		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc->Append(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
-			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-		SetStatus(mDoc->Status());
-		return true;
-	}
-	return false;
 }
 
 GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
