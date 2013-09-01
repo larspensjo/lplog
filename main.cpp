@@ -17,9 +17,33 @@
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+
+#ifdef __linux__
+#include <limits.h>
+#include <unistd.h>
+#endif // unix
+
+#ifdef _WIN32
+#include <windows.h>
+#endif // _WIN32
 
 #include "View.h"
 #include "Document.h"
+
+// Return the full path to the application, including the application name
+static std::string getexepath() {
+#ifdef __linux__
+	char result[ PATH_MAX ];
+	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+	return std::string( result, (count > 0) ? count : 0 );
+#endif // unix
+#ifdef _WIN32
+	char result[ PATH_MAX ];
+	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+	return std::string( result, (count > 0) ? count : 0 );
+#endif // _WIN32
+}
 
 using std::cout;
 using std::endl;
@@ -36,8 +60,10 @@ int main (int argc, char *argv[])
 	if (argc > 1) {
 		doc.AddSourceFile(argv [1]);
 	}
+	std::string path = getexepath();
+	auto pos = path.rfind('/');
 	GError *err = 0;
-	auto icon = gdk_pixbuf_new_from_file("icon.bmp", &err);
+	auto icon = gdk_pixbuf_new_from_file((path.substr(0, pos) + "/icon.bmp").c_str(), &err); // Name of file must be lplog.bmp
 	if (icon != nullptr && err == 0)
 		gtk_window_set_default_icon(icon);
 	else
