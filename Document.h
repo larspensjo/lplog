@@ -32,10 +32,10 @@ public:
 	void AddSourceText(char *, unsigned size);
 
 	// Replace the shown text with new, with the pattern applied
-	void Replace(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers);
+	void Replace(bool showLineNumbers);
 
 	// Append new lines to the shown text, with the pattern applied
-	void Append(GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers);
+	void Append(bool showLineNumbers);
 
 	// Update from file, return true if there were any changes.
 	bool UpdateInputData();
@@ -54,7 +54,9 @@ private:
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFoundLines = 0;
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
-	void FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine);
+	void FilterString(std::stringstream &ss, bool showLineNumbers);
 	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;
+	GtkTextBuffer *mBuffer = 0;
+	GtkTreeStore *mPattern = 0;
 };
