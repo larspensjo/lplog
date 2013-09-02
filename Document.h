@@ -57,4 +57,5 @@ private:
 	void FilterString(std::stringstream &ss, GtkTextBuffer *dest, GtkTreeModel *pattern, bool showLineNumbers, unsigned firstLine);
 	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;
+	bool mLastLineIsIncomplete = false; // True if we haven't seen the terminating NL.
 };
