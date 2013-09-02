@@ -119,16 +119,15 @@ void Document::SplitLines(char *buff, unsigned size) {
 		const char *next;
 		if (!findNL(p, len, next))
 			break;
-		if (mLastLineIsIncomplete) {
-			// Append to the last line
-			auto last = mLines.size();
-			g_assert(last != 0);
-			mLines[last-1] += std::string(p, len);
-		} else {
-			// Add a new line
-			mLines.push_back(std::string(p, len));
+		if (p[len] == '\0') {
+			// No newline, means the line is incomplete.
+			mIncompleteLastLine += std::string(p, len);
+			cout << "Incomplete last line: '" << mIncompleteLastLine << "'" << endl;
+			break;
 		}
-		mLastLineIsIncomplete = (p[len] == '\0'); // Last byte was a null byte, not a newline termination.
+		// Add a new line
+		mLines.push_back(mIncompleteLastLine + std::string(p, len));
+		mIncompleteLastLine = "";
 		p = next;
 	}
 }
