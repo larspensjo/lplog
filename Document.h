@@ -25,7 +25,7 @@
 class Document
 {
 public:
-	void Create();
+	void Create(GtkTextBuffer *);
 	void AddSourceFile(const std::string &fileName); // Add a source file
 	void AddSourceText(char *, unsigned size); // Add text
 	void Replace(); // Replace the shown text with new, with the pattern applied
@@ -34,6 +34,7 @@ public:
 	std::string Status() const;
 	const std::string &FileName() const;
 	void ToggleLineNumbers();
+	void TogglePattern(gchar *path);
 private:
 	enum class Evaluation {
 		Match,

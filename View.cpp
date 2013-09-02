@@ -27,7 +27,7 @@ void View::SetWindowTitle(const std::string &str) {
 	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
 }
 
-void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
+GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternToggle)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -77,15 +77,11 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), this );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
 
-	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, &mRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
-
 	// Create the tree view
-	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL (mPattern));
+	GtkWidget *tree = gtk_tree_view_new_with_model(pattern);
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
-	g_signal_connect(G_OBJECT(tree), "cursor-changed", G_CALLBACK(::ClickCell), this );
+	g_signal_connect(G_OBJECT(tree), "cursor-changed", clickPatternToggle, this );
 	g_signal_connect(G_OBJECT(tree), "key-press-event", G_CALLBACK(::KeyPressed), this );
 
 	auto renderer = gtk_cell_renderer_text_new();
@@ -117,18 +113,15 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
 	gtk_widget_modify_font(textview, font);
 	gtk_text_view_set_editable(mTextView, false);
 	gtk_widget_set_size_request(textview, 5, 5);
-	mBuffer = gtk_text_view_get_buffer(mTextView);
+	auto buffer = gtk_text_view_get_buffer(mTextView);
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
-
-	doc->UpdateInputData();
-	doc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	SetStatus(doc->Status());
 
 	g_timeout_add(1000, G_CALLBACK(::TestForeChanges), this);
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);
+	return buffer;
 }
 
 void View::Append(Document *doc) {

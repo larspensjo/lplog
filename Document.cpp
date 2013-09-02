@@ -134,6 +134,17 @@ void Document::ToggleLineNumbers() {
 	mShowLineNumbers = !mShowLineNumbers;
 }
 
+void Document::TogglePattern(gchar *path) {
+	GtkTreeIter iter;
+	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
+	g_assert(found);
+	GValue val = { 0 };
+	gtk_tree_model_get_value(GTK_TREE_MODEL(mPattern), &iter, 1, &val);
+	bool current = g_value_get_boolean(&val);
+	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
+	g_value_unset(&val);
+}
+
 void Document::FilterString(std::stringstream &ss) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
@@ -242,11 +253,16 @@ const std::string &Document::FileName() const {
 	return mFileName;
 }
 
-void Document::Create() {
+void Document::Create(GtkTextBuffer *buffer) {
+	mBuffer = buffer;
 	// Create the tree model
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 
 	// Add some test data to it
 	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
 	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
+
+	GtkTreeIter child;
+	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
+	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 }

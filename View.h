@@ -23,7 +23,7 @@ class Document;
 class View
 {
 public:
-	void Create(GCallback buttonCB, GCallback toggleButtonCB);
+	GtkTextBuffer *Create(GtkTreeModel *pattern, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternToggle);
 	void SetStatus(const std::string &);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *);
