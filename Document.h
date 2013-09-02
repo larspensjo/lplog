@@ -58,6 +58,7 @@ private:
 	void FilterString(std::stringstream &ss, bool showLineNumbers);
 	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;
+	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	GtkTextBuffer *mBuffer = 0;
 	GtkTreeStore *mPattern = 0;
 };

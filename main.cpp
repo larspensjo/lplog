@@ -33,16 +33,19 @@
 #include "Controller.h"
 
 // Return the full path to the application, including the application name
-static std::string getexepath() {
+static std::string GetInstallDir() {
 #ifdef __linux__
 	char result[ PATH_MAX ];
 	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-	return std::string( result, (count > 0) ? count : 0 );
+	auto path = std::string( result, (count > 0) ? count : 0 );
+	auto pos = path.rfind('/');
+	return path.substr(0,pos);
 #endif // unix
 #ifdef _WIN32
-	char result[ PATH_MAX ];
-	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-	return std::string( result, (count > 0) ? count : 0 );
+	char result[ MAX_PATH ];
+	auto path = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
+	auto pos = path.rfind('\\');
+	return path.substr(0,pos);
 #endif // _WIN32
 }
 
@@ -61,10 +64,8 @@ int main (int argc, char *argv[])
 	if (argc > 1) {
 		doc.AddSourceFile(argv [1]);
 	}
-	std::string path = getexepath();
-	auto pos = path.rfind('/');
 	GError *err = 0;
-	auto icon = gdk_pixbuf_new_from_file((path.substr(0, pos) + "/icon.bmp").c_str(), &err); // Name of file must be lplog.bmp
+	auto icon = gdk_pixbuf_new_from_file((GetInstallDir() + "/icon.bmp").c_str(), &err); // Name of file must be lplog.bmp
 	if (icon != nullptr && err == 0)
 		gtk_window_set_default_icon(icon);
 	else
