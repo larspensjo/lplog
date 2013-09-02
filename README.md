@@ -2,6 +2,7 @@ lplog
 =====
 
 A gtk based viewer for log files.
+It is like "tail -f | grep pattern", but the pattern can be changed afterwards.
 The purpose is to make it easy to filter for key words.
 Features:
 * Display text in a window, loaded from a file
