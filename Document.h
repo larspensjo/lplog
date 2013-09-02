@@ -26,22 +26,14 @@ class Document
 {
 public:
 	void Create();
-	// Add a source file
-	void AddSourceFile(const std::string &fileName);
-
-	// Add text
-	void AddSourceText(char *, unsigned size);
-
-	// Replace the shown text with new, with the pattern applied
-	void Replace(bool showLineNumbers);
-
-	// Append new lines to the shown text, with the pattern applied
-	void Append(bool showLineNumbers);
-
-	// Update from file, return true if there were any changes.
-	bool UpdateInputData();
+	void AddSourceFile(const std::string &fileName); // Add a source file
+	void AddSourceText(char *, unsigned size); // Add text
+	void Replace(); // Replace the shown text with new, with the pattern applied
+	void Append(); // Append new lines to the shown text, with the pattern applied
+	bool UpdateInputData(); // Update from file, return true if there were any changes.
 	std::string Status() const;
 	const std::string &FileName() const;
+	void ToggleLineNumbers();
 private:
 	enum class Evaluation {
 		Match,
@@ -55,10 +47,12 @@ private:
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFoundLines = 0;
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
-	void FilterString(std::stringstream &ss, bool showLineNumbers);
+	void FilterString(std::stringstream &ss);
 	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	GtkTextBuffer *mBuffer = 0;
 	GtkTreeStore *mPattern = 0;
+	GtkTreeIter mPatternRoot = { 0 };
+	bool mShowLineNumbers = false;
 };

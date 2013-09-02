@@ -18,7 +18,7 @@ public:
 	void FileOpenDialog();
 	gboolean TextViewKeyPress(guint keyval);
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
-	void ToggleCell(GtkCellRendererToggle *renderer, gchar *path);
+	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
 	void ToggleButton(const std::string &name);
 	bool Update();
 private:

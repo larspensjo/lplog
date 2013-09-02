@@ -26,15 +26,14 @@ public:
 	void Create(GCallback buttonCB, GCallback toggleButtonCB);
 	void SetStatus(const std::string &);
 	void SetWindowTitle(const std::string &);
+	void Append(Document *);
 private:
 	GtkLabel *mStatusBar = 0;
-	GtkTreeIter mRoot = { 0 };
 	GtkTreeView *mTreeView = 0;
 	GtkTextView *mTextView = 0;
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
 	GtkScrolledWindow *mScrolledView = 0;
-	bool mShowLineNumbers = false;
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb);
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb);

@@ -130,7 +130,11 @@ void Document::SplitLines(char *buff, unsigned size) {
 	}
 }
 
-void Document::FilterString(std::stringstream &ss, bool showLineNumbers) {
+void Document::ToggleLineNumbers() {
+	mShowLineNumbers = !mShowLineNumbers;
+}
+
+void Document::FilterString(std::stringstream &ss) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
 	g_assert(!empty);
@@ -141,7 +145,7 @@ void Document::FilterString(std::stringstream &ss, bool showLineNumbers) {
 	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
 		if (isShown(mLines[line], GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
 			ss << separator;
-			if (showLineNumbers) {
+			if (mShowLineNumbers) {
 				ss.width(5);
 				ss.setf(ss.left);
 				ss << line+1 << " ";
@@ -153,16 +157,16 @@ void Document::FilterString(std::stringstream &ss, bool showLineNumbers) {
 	}
 }
 
-void Document::Replace(bool showLineNumbers) {
+void Document::Replace() {
 	mFoundLines = 0;
 	std::stringstream ss;
-	this->FilterString(ss, showLineNumbers);
+	this->FilterString(ss);
 	gtk_text_buffer_set_text(mBuffer, ss.str().c_str(), -1);
 }
 
-void Document::Append(bool showLineNumbers) {
+void Document::Append() {
 	std::stringstream ss;
-	this->FilterString(ss, showLineNumbers);
+	this->FilterString(ss);
 	GtkTextIter last;
 	gtk_text_buffer_get_end_iter(mBuffer, &last);
 	gtk_text_buffer_insert(mBuffer, &last, ss.str().c_str(), -1);
@@ -241,4 +245,8 @@ const std::string &Document::FileName() const {
 void Document::Create() {
 	// Create the tree model
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+
+	// Add some test data to it
+	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
+	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
 }

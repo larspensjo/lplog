@@ -77,10 +77,6 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), this );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
 
-	// Add some test data to it
-	gtk_tree_store_append(mPattern, &mRoot, NULL);
-	gtk_tree_store_set(mPattern, &mRoot, 0, "|", 1, true, -1);
-
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(mPattern, &child, &mRoot, NULL);
 	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
@@ -100,7 +96,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
 
 	renderer = gtk_cell_renderer_toggle_new();
 	// g_object_set(G_OBJECT(renderer), "activatable", TRUE, NULL);
-	g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(::ToggleCell), this );
+	g_signal_connect(G_OBJECT(renderer), "toggled", G_CALLBACK(::TogglePattern), this );
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer, "active", 1, NULL);
 	gtk_tree_view_append_column(mTreeView, column);
 
@@ -133,6 +129,16 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB)
 
 	/* Enter the main loop */
 	gtk_widget_show_all (win);
+}
+
+void View::Append(Document *doc) {
+	// Remember the current scrollbar value
+	auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
+	gdouble pos = gtk_adjustment_get_value(adj);
+	doc->Append();
+	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
+		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
+	SetStatus(mDoc->Status());
 }
 
 void View::SetStatus(const std::string &str) {

@@ -66,9 +66,9 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 		a->user_data3 == b->user_data3;
 }
 
-static void ToggleCell(GtkCellRendererToggle *renderer, gchar *path, Controller *c)
+static void TogglePattern(GtkCellRendererToggle *renderer, gchar *path, Controller *c)
 {
-	c->ToggleCell(renderer, path);
+	c->TogglePattern(renderer, path);
 }
 
 static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
@@ -78,19 +78,13 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 
 bool Controller::Update() {
 	if (mDoc.UpdateInputData()) {
-		// Remember the current scrollbar value
-		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
-		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc.Append(mShowLineNumbers);
-		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
-			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-		SetStatus(mDoc.Status());
+		mView.Append(&mDoc);
 		return true;
 	}
 	return false;
 }
 
-void Controller::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
+void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 	g_assert(mPattern != 0);
 	GtkTreeIter iter;
 	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
@@ -101,7 +95,7 @@ void Controller::ToggleCell(GtkCellRendererToggle *renderer, gchar *path) {
 	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
 	g_value_unset(&val);
 	g_assert(mBuffer != 0);
-	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
 }
 
@@ -109,11 +103,11 @@ void Controller::ToggleButton(const std::string &name) {
 	if (name == "autoscroll")
 		SetStatus(mDoc.Status()); // This will use the new autoamtic scrolling
 	else if (name == "linenumbers") {
-		mShowLineNumbers = !mShowLineNumbers;
+		mDoc.ToggleLineNumbers();
 		// Remember the current scrollbar value
 		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 	} else
@@ -127,7 +121,7 @@ void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newStri
 	g_assert(found);
 	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
 	g_assert(mBuffer != 0);
-	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
 }
 
@@ -143,7 +137,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				unsigned size = strlen(p);
 				mDoc.AddSourceText(p, size);
 				g_free(p);
-				mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+				mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 				SetStatus(mDoc.Status());
 			}
 			stopEvent = true;
@@ -201,7 +195,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 		}
 		break;
 	}
-	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
 	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
 	return stopEvent; // Stop event from propagating
@@ -284,7 +278,7 @@ void Controller::FileOpenDialog() {
 		mDoc.AddSourceFile(filename);
 		gtk_window_set_title(mWindow, ("LPlog " + mDoc.FileName()).c_str());
 		mDoc.Update();
-		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
+		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
 		SetStatus(mDoc.Status());
 		g_free(filename);
 	}
