@@ -68,6 +68,13 @@ void Document::AddSourceText(char *text, unsigned size) {
 	this->SplitLines(text, size);
 }
 
+void Document::EditPattern(gchar *path, gchar *newString) {
+	GtkTreeIter iter;
+	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
+	g_assert(found);
+	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
+}
+
 bool Document::UpdateInputData() {
 	if (mFileName == "" || mStopUpdates)
 		return false;

@@ -92,28 +92,17 @@ void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 
 void Controller::ToggleButton(const std::string &name) {
 	if (name == "autoscroll")
-		SetStatus(mDoc.Status()); // This will use the new autoamtic scrolling
+		mView.SetStatus(mDoc.Status()); // This will use the new autoamtic scrolling
 	else if (name == "linenumbers") {
-		mDoc.ToggleLineNumbers();
-		// Remember the current scrollbar value
-		auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
-		gdouble pos = gtk_adjustment_get_value(adj);
-		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
-		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
-			gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
+		mView.ToggleLineNumbers(&mDoc);
 	} else
 		cout << "Unknown toggle button: " << name << endl;
 }
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
-	g_assert(mPattern != 0);
-	GtkTreeIter iter;
-	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	g_assert(found);
-	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
-	g_assert(mBuffer != 0);
-	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
-	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
+	mDoc.EditPattern(path, newString);
+	mDoc.Replace();
+	mView.SetStatus(mDoc.Status());
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {

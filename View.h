@@ -23,10 +23,11 @@ class Document;
 class View
 {
 public:
-	GtkTextBuffer *Create(GtkTreeModel *pattern, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternToggle);
+	GtkTextBuffer *Create(GtkTreeModel *pattern, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternToggle, gpointer cbData);
 	void SetStatus(const std::string &);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *);
+	void ToggleLineNumbers(Document *);
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkTreeView *mTreeView = 0;

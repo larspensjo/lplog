@@ -35,6 +35,7 @@ public:
 	const std::string &FileName() const;
 	void ToggleLineNumbers();
 	void TogglePattern(gchar *path);
+	void EditPattern(gchar *path, gchar *newString);
 private:
 	enum class Evaluation {
 		Match,
