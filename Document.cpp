@@ -122,7 +122,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		if (p[len] == '\0') {
 			// No newline, means the line is incomplete.
 			mIncompleteLastLine += std::string(p, len);
-			cout << "Incomplete last line: '" << mIncompleteLastLine << "'" << endl;
+			// cout << "Incomplete last line: '" << mIncompleteLastLine << "'" << endl;
 			break;
 		}
 		// Add a new line
