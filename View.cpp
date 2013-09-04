@@ -13,6 +13,7 @@
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <string.h>
 #include <iostream>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
@@ -108,6 +109,14 @@ GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback t
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_expand_all(mTreeView);
 
+	// Create the tree model and add some test data to it
+	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
+	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
+	GtkTreeIter child;
+	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
+	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
+
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 
 	// Create the text display window
@@ -118,6 +127,7 @@ GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback t
 	auto textview = gtk_text_view_new();
 	g_signal_connect(G_OBJECT(textview), "key-press-event", textViewkeyPress, cbData );
 	mTextView = GTK_TEXT_VIEW(textview);
+	mBuffer = gtk_text_view_get_buffer(mTextView);
 	gtk_text_view_set_wrap_mode(mTextView, GTK_WRAP_CHAR);
 	gtk_widget_modify_font(textview, font);
 	gtk_text_view_set_editable(mTextView, false);
@@ -133,17 +143,24 @@ GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback t
 	return buffer;
 }
 
+GtkWidget *View::FileOpenDialog() {
+	return gtk_file_chooser_dialog_new("Open File", mWindow, GTK_FILE_CHOOSER_ACTION_OPEN,
+										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+										GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+										NULL);
+}
+
 void View::ToggleLineNumbers(Document *doc) {
 	mShowLineNumbers = !mShowLineNumbers;
 	// Remember the current scrollbar value
 	auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
-	this->Replace();
+	this->Replace(doc);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 }
 
-void View::FilterString(std::stringstream &ss) {
+void View::FilterString(std::stringstream &ss, Document *doc) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
 	g_assert(!empty);
@@ -151,19 +168,20 @@ void View::FilterString(std::stringstream &ss) {
 	if (mFoundLines > 0)
 		separator = '\n';
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
-	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
-		if (isShown(mLines[line], GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
+	auto TestLine = [&] (const std::string &str, unsigned line) {
+		if (isShown(str, GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
 			ss << separator;
 			if (mShowLineNumbers) {
 				ss.width(5);
 				ss.setf(ss.left);
 				ss << line+1 << " ";
 			}
-			ss << mLines[line];
+			ss << str;
 			separator = "\n";
 			++mFoundLines;
 		}
-	}
+	};
+	doc->IterateLines(TestLine);
 }
 
 void View::OpenPatternForEditing(Document *doc) {
@@ -173,13 +191,7 @@ void View::OpenPatternForEditing(Document *doc) {
 	gtk_tree_path_free(path);
 }
 
-std::string View::Status() const {
-	std::stringstream ss;
-	ss << mFileName << ": " << mFoundLines << " (" << mLines.size() << ")";
-	return ss.str();
-}
-
-View::Evaluation View::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
+View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, iter, 1, &val);
 	bool active = g_value_get_boolean(&val);
@@ -255,30 +267,32 @@ void View::Append(Document *doc) {
 	auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
 	std::stringstream ss;
-	this->FilterString(ss);
+	this->FilterString(ss, doc);
 	GtkTextIter last;
 	gtk_text_buffer_get_end_iter(mBuffer, &last);
 	gtk_text_buffer_insert(mBuffer, &last, ss.str().c_str(), -1);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-	SetStatus();
+	UpdateStatusBar(doc);
 }
 
 void View::Replace(Document *doc) {
 	mFoundLines = 0;
 	std::stringstream ss;
-	this->FilterString(ss);
+	this->FilterString(ss, doc);
 	gtk_text_buffer_set_text(mBuffer, ss.str().c_str(), -1);
-	SetStatus();
+	UpdateStatusBar(doc);
 }
 
-void View::SetStatus(const std::string &str) {
+void View::UpdateStatusBar(Document *doc) {
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll))) {
 		GtkTextIter lastLine;
 		gtk_text_buffer_get_end_iter(mBuffer, &lastLine);
 		GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, true);
 		gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
 	}
+	std::stringstream ss;
+	ss << doc->FileName() << ": " << mFoundLines << " (" << mLines.size() << ")";
 	gtk_label_set_text(mStatusBar, str.c_str());
 }
 
@@ -310,4 +324,32 @@ void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCal
 	gtk_widget_set_name(GTK_WIDGET(button), name);
 	g_signal_connect (button, "clicked", cb, cbData);
 	gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
+}
+
+void Controller::About() {
+	const char *license =
+		"LPlog is free software: you can redistribute it and/or modify\n"
+		"it under the terms of the GNU General Public License as published by\n"
+		"the Free Software Foundation, version 3.\n\n"
+		"LPlog is distributed in the hope that it will be useful\n"
+		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+		"GNU General Public License for more details.\n";
+
+	const char *authors[] = {
+		"Lars Pensj\303\266 <lars.pensjo@gmail.com>",
+		NULL
+	};
+
+	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
+
+	gtk_show_about_dialog(NULL,
+		"version", "1.0",
+		"website", "https://github.com/larspensjo/lplog",
+		"comments", "A program to display and filter a log file.",
+		"authors", authors,
+		"license", license,
+		"program-name", "LPlog",
+		"copyright", copyright,
+		NULL);
 }

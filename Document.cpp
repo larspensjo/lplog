@@ -13,7 +13,6 @@
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string.h>
 #include <sstream>
 #include <sstream>
 
@@ -103,6 +102,12 @@ bool Document::UpdateInputData() {
 	return true;
 }
 
+void Document::IterateLines(std::function<void (const std::string&, unsigned)> f) {
+	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
+		f(mLines[line], line);
+	}
+}
+
 void Document::SplitLines(char *buff, unsigned size) {
 	const char *last;
 	while(!g_utf8_validate(buff, size, &last)) {
@@ -132,18 +137,4 @@ void Document::SplitLines(char *buff, unsigned size) {
 
 const std::string &Document::FileName() const {
 	return mFileName;
-}
-
-void Document::Create(GtkTextBuffer *buffer) {
-	mBuffer = buffer;
-	// Create the tree model
-	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
-
-	// Add some test data to it
-	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
-
-	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 }

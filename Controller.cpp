@@ -81,7 +81,7 @@ void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 
 void Controller::ToggleButton(const std::string &name) {
 	if (name == "autoscroll")
-		mView.SetStatus(mDoc.Status()); // This will use the new autoamtic scrolling
+		mView.UpdateStatusBar(&mDoc); // This will use the new automatic scrolling
 	else if (name == "linenumbers") {
 		mView.ToggleLineNumbers(&mDoc);
 	} else
@@ -204,41 +204,8 @@ void Controller::Run(int argc, char *argv[]) {
 	gtk_main ();
 }
 
-void Controller::About() {
-	const char *license =
-		"LPlog is free software: you can redistribute it and/or modify\n"
-		"it under the terms of the GNU General Public License as published by\n"
-		"the Free Software Foundation, version 3.\n\n"
-		"LPlog is distributed in the hope that it will be useful\n"
-		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-		"GNU General Public License for more details.\n";
-
-	const char *authors[] = {
-		"Lars Pensj\303\266 <lars.pensjo@gmail.com>",
-		NULL
-	};
-
-	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
-
-	gtk_show_about_dialog(NULL,
-		"version", "1.0",
-		"website", "https://github.com/larspensjo/lplog",
-		"comments", "A program to display and filter a log file.",
-		"authors", authors,
-		"license", license,
-		"program-name", "LPlog",
-		"copyright", copyright,
-		NULL);
-}
-
 void Controller::FileOpenDialog() {
-	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open File",
-						  mWindow,
-						  GTK_FILE_CHOOSER_ACTION_OPEN,
-						  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-						  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-						  NULL);
+	GtkWidget *dialog = mView.FileOpenDialog();
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));

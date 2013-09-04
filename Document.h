@@ -20,15 +20,16 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <functional>
 
 class Document
 {
 public:
-	void Create(GtkTextBuffer *);
 	void AddSourceFile(const std::string &fileName); // Add a source file
 	void AddSourceText(char *, unsigned size); // Add text
 	bool UpdateInputData(); // Update from file, return true if there were any changes.
 	const std::string &FileName() const;
+	void IterateLines(std::function<void (const std::string&, unsigned)> f);
 private:
 	std::vector<std::string> mLines;
 	std::string mFileName;

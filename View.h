@@ -27,7 +27,6 @@ public:
 	GtkTextBuffer *Create(GtkTreeModel *model, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternSell,
 						GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern,
 						gpointer cbData);
-	void SetStatus(const std::string &);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
@@ -35,30 +34,33 @@ public:
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);
 	void EditPattern(gchar *path, gchar *newString);
-	void FilterString(std::stringstream &ss);
-	std::string Status() const;
+	void FilterString(std::stringstream &ss, Document *doc);
+	void About();
+	GtkWidget *FileOpenDialog();
 private:
 	GtkLabel *mStatusBar = 0;
-	GtkTreeView *mTreeView = 0;
-	GtkTextView *mTextView = 0;
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
 	GtkScrolledWindow *mScrolledView = 0;
-	GtkTreeStore *mPattern = 0;
 	GtkTextBuffer *mBuffer = 0;
 	bool mShowLineNumbers = false;
+	unsigned mFoundLines = 0;
+	GtkTextView *mTextView = 0;
+
+	GtkTreeStore *mPattern = 0;
+	GtkTreeView *mTreeView = 0;
 	GtkTreeIter mSelectedPatternIter = { 0 };
 	GtkTreeIter mPatternRoot = { 0 };
-	unsigned mFoundLines = 0;
 
 	enum class Evaluation {
 		Match,
 		Nomatch,
 		Neither,
 	};
-	Evaluation isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
+	Evaluation isShown(const std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
+	void UpdateStatusBar(Document *doc);
 };
