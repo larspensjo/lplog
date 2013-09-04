@@ -17,17 +17,26 @@
 
 #include <gtk/gtk.h>
 #include <string>
+#include <sstream>
 
 class Document;
 
 class View
 {
 public:
-	GtkTextBuffer *Create(GtkTreeModel *pattern, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternToggle, gpointer cbData);
+	GtkTextBuffer *Create(GtkTreeModel *model, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternSell,
+						GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern,
+						gpointer cbData);
 	void SetStatus(const std::string &);
 	void SetWindowTitle(const std::string &);
-	void Append(Document *);
+	void Append(Document *); // Append the new lines to the end of the view
+	void Replace(Document *); // Replace the lines in the view
 	void ToggleLineNumbers(Document *);
+	void TogglePattern(gchar *path);
+	void OpenPatternForEditing(Document *);
+	void EditPattern(gchar *path, gchar *newString);
+	void FilterString(std::stringstream &ss);
+	std::string Status() const;
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkTreeView *mTreeView = 0;
@@ -35,8 +44,21 @@ private:
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
 	GtkScrolledWindow *mScrolledView = 0;
+	GtkTreeStore *mPattern = 0;
+	GtkTextBuffer *mBuffer = 0;
+	bool mShowLineNumbers = false;
+	GtkTreeIter mSelectedPatternIter = { 0 };
+	GtkTreeIter mPatternRoot = { 0 };
+	unsigned mFoundLines = 0;
 
-	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb);
-	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb);
+	enum class Evaluation {
+		Match,
+		Nomatch,
+		Neither,
+	};
+	Evaluation isShown(std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
+
+	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
+	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
 };

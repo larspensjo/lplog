@@ -68,13 +68,6 @@ void Document::AddSourceText(char *text, unsigned size) {
 	this->SplitLines(text, size);
 }
 
-void Document::EditPattern(gchar *path, gchar *newString) {
-	GtkTreeIter iter;
-	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	g_assert(found);
-	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
-}
-
 bool Document::UpdateInputData() {
 	if (mFileName == "" || mStopUpdates)
 		return false;
@@ -135,125 +128,6 @@ void Document::SplitLines(char *buff, unsigned size) {
 		mIncompleteLastLine = "";
 		p = next;
 	}
-}
-
-void Document::ToggleLineNumbers() {
-	mShowLineNumbers = !mShowLineNumbers;
-}
-
-void Document::TogglePattern(gchar *path) {
-	GtkTreeIter iter;
-	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
-	g_assert(found);
-	GValue val = { 0 };
-	gtk_tree_model_get_value(GTK_TREE_MODEL(mPattern), &iter, 1, &val);
-	bool current = g_value_get_boolean(&val);
-	gtk_tree_store_set(mPattern, &iter, 1, !current, -1);
-	g_value_unset(&val);
-}
-
-void Document::FilterString(std::stringstream &ss) {
-	GtkTreeIter iter;
-	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
-	g_assert(!empty);
-	std::string separator = ""; // Start empty
-	if (mFoundLines > 0)
-		separator = '\n';
-	// Add the lines to ss, one at a time. The last line shall not have a newline.
-	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
-		if (isShown(mLines[line], GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
-			ss << separator;
-			if (mShowLineNumbers) {
-				ss.width(5);
-				ss.setf(ss.left);
-				ss << line+1 << " ";
-			}
-			ss << mLines[line];
-			separator = "\n";
-			++mFoundLines;
-		}
-	}
-}
-
-void Document::Replace() {
-	mFoundLines = 0;
-	std::stringstream ss;
-	this->FilterString(ss);
-	gtk_text_buffer_set_text(mBuffer, ss.str().c_str(), -1);
-}
-
-void Document::Append() {
-	std::stringstream ss;
-	this->FilterString(ss);
-	GtkTextIter last;
-	gtk_text_buffer_get_end_iter(mBuffer, &last);
-	gtk_text_buffer_insert(mBuffer, &last, ss.str().c_str(), -1);
-}
-
-Document::Evaluation Document::isShown(std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
-	GValue val = { 0 };
-	gtk_tree_model_get_value(pattern, iter, 1, &val);
-	bool active = g_value_get_boolean(&val);
-	g_value_unset(&val);
-	if (!active)
-		return Evaluation::Neither;
-	gtk_tree_model_get_value(pattern, iter, 0, &val);
-	Evaluation ret = Evaluation::Neither; // Use this as default
-	const gchar *str = g_value_get_string(&val);
-	GtkTreeIter child;
-	bool childFound = gtk_tree_model_iter_children(pattern, &child, iter);
-	if (str == 0) {
-	} else if (strcmp(str, "|") == 0 && childFound) {
-		do {
-			auto current = isShown(line, pattern, &child);
-			if (current == Evaluation::Match) {
-				ret = Evaluation::Match;
-				break;
-			} else if (current == Evaluation::Nomatch) {
-				// At least one Nomatch found, continue looking for Match.
-				ret = Evaluation::Nomatch;
-			}
-			childFound = gtk_tree_model_iter_next(pattern, &child);
-		} while (childFound);
-	} else if (strcmp(str, "&") == 0 && childFound) {
-		do {
-			auto current = isShown(line, pattern, &child);
-			if (current == Evaluation::Nomatch) {
-				ret = Evaluation::Nomatch;
-				break;
-			} else if (current == Evaluation::Match) {
-				// At least one Match found, continue looking for Nomatch.
-				ret = Evaluation::Match;
-			}
-			childFound = gtk_tree_model_iter_next(pattern, &child);
-		} while (childFound);
-	} else if (strcmp(str, "!") == 0 && childFound) {
-		switch (isShown(line, pattern, &child)) {
-		case Evaluation::Match:
-			ret = Evaluation::Nomatch;
-			break;
-		case Evaluation::Neither:
-			ret = Evaluation::Neither;
-			break;
-		case Evaluation::Nomatch:
-			ret = Evaluation::Match;
-			break;
-		}
-	} else {
-		auto pos = line.find(str);
-		if (pos != std::string::npos)
-			ret = Evaluation::Match;
-		else
-			ret = Evaluation::Nomatch;
-	}
-	g_value_unset(&val);
-	return ret;
-}
-
-std::string Document::Status() const {
-	std::stringstream ss;
-	ss << mFileName << ": " << mFoundLines << " (" << mLines.size() << ")";
-	return ss.str();
 }
 
 const std::string &Document::FileName() const {

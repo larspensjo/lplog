@@ -20,10 +20,9 @@ public:
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
 	void ToggleButton(const std::string &name);
-	bool Update();
+	void PollInput();
 private:
 	bool mValidSelectedPatternIter = false;
-	GtkTreeIter mSelectedPatternIter = { 0 };
 	View mView;
 	Document mDoc;
 };

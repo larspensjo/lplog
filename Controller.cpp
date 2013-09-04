@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string.h>
 
 #include "Controller.h"
 #include "Document.h"
@@ -37,7 +38,7 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 
 static gboolean TestForeChanges(Controller *c)
 {
-	(void)c->Update();
+	c->PollInput();
 	return true; // Keep timer going for ever
 }
 
@@ -58,16 +59,7 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 	return c->TextViewKeyPress(event->key.keyval);
 }
 
-static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
-	// I know, the proper way is to compare the iter to a path first.
-	return a->stamp == b->stamp &&
-		a->user_data == b->user_data &&
-		a->user_data2 == b->user_data2 &&
-		a->user_data3 == b->user_data3;
-}
-
-static void TogglePattern(GtkCellRendererToggle *renderer, gchar *path, Controller *c)
-{
+static void TogglePattern(GtkCellRendererToggle *renderer, gchar *path, Controller *c) {
 	c->TogglePattern(renderer, path);
 }
 
@@ -76,18 +68,15 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 	c->ToggleButton(name);
 }
 
-bool Controller::Update() {
+void Controller::PollInput() {
 	if (mDoc.UpdateInputData()) {
 		mView.Append(&mDoc);
-		return true;
 	}
-	return false;
 }
 
 void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
-	mDoc.TogglePattern(path);
-	mDoc.Replace();
-	mView.SetStatus(mDoc.Status());
+	mView.TogglePattern(path);
+	mView.Replace(&mDoc);
 }
 
 void Controller::ToggleButton(const std::string &name) {
@@ -100,9 +89,8 @@ void Controller::ToggleButton(const std::string &name) {
 }
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
-	mDoc.EditPattern(path, newString);
-	mDoc.Replace();
-	mView.SetStatus(mDoc.Status());
+	mView.EditPattern(path, newString);
+	mView.Replace(&mDoc);
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
@@ -117,8 +105,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				unsigned size = strlen(p);
 				mDoc.AddSourceText(p, size);
 				g_free(p);
-				mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
-				SetStatus(mDoc.Status());
+				mView.Replace(&mDoc);
 			}
 			stopEvent = true;
 		}
@@ -130,15 +117,12 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 gboolean Controller::KeyPressed(guint keyval) {
 	if (!mValidSelectedPatternIter)
 		return false;
-	GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
 	GtkTreeIter child;
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_F2:
 		{
-			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &mSelectedPatternIter);
-			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
-			gtk_tree_path_free(path);
+			mView.OpenPatternForEditing(&mDoc);
 			stopEvent = true;
 		}
 		break;
@@ -158,6 +142,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 			gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
 			gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
+			GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
 			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
 			gtk_tree_path_free(path);
 			stopEvent = true;
@@ -169,14 +154,14 @@ gboolean Controller::KeyPressed(guint keyval) {
 			gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
 			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
 			gtk_tree_view_expand_to_path(mTreeView, path);
+			GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
 			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
 			gtk_tree_path_free(path);
 			stopEvent = true;
 		}
 		break;
 	}
-	mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
-	gtk_label_set_text(mStatusBar, mDoc.Status().c_str());
+	mView.Replace(&mDoc);
 	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
 	return stopEvent; // Stop event from propagating
 }
@@ -214,10 +199,8 @@ void Controller::Run(int argc, char *argv[]) {
 	} else
 		mView.SetWindowTitle("");
 
-	this->Update();
-	doc->UpdateInputData();
-	doc->Replace(mBuffer, GTK_TREE_MODEL(mPattern), mShowLineNumbers);
-	mView.SetStatus(doc->Status());
+	mDoc.UpdateInputData();
+	mView.Replace(&mDoc);
 	gtk_main ();
 }
 
@@ -260,11 +243,10 @@ void Controller::FileOpenDialog() {
 		char *filename;
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		mDoc.AddSourceFile(filename);
-		gtk_window_set_title(mWindow, ("LPlog " + mDoc.FileName()).c_str());
-		mDoc.Update();
-		mDoc.Replace(mBuffer, GTK_TREE_MODEL(mPattern));
-		SetStatus(mDoc.Status());
 		g_free(filename);
+		gtk_window_set_title(mWindow, ("LPlog " + mDoc.FileName()).c_str());
+		mDoc.UpdateInputData();
+		mView.Replace(&mDoc);
 	}
 	gtk_widget_destroy(dialog);
 }
