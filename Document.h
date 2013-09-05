@@ -30,6 +30,7 @@ public:
 	bool UpdateInputData(); // Update from file, return true if there were any changes.
 	const std::string &FileName() const;
 	void IterateLines(std::function<void (const std::string&, unsigned)> f);
+	unsigned GetNumLines() { return mLines.size(); }
 private:
 	std::vector<std::string> mLines;
 	std::string mFileName;

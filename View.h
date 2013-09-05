@@ -24,19 +24,23 @@ class Document;
 class View
 {
 public:
-	GtkTextBuffer *Create(GtkTreeModel *model, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternSell,
-						GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern,
-						gpointer cbData);
+	GtkTextBuffer *Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress,
+						GSourceFunc timer, GCallback togglePattern, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
 	void ToggleLineNumbers(Document *);
-	void TogglePattern(gchar *path);
-	void OpenPatternForEditing(Document *);
-	void EditPattern(gchar *path, gchar *newString);
 	void FilterString(std::stringstream &ss, Document *doc);
 	void About();
 	GtkWidget *FileOpenDialog();
+	void UpdateStatusBar(Document *doc);
+
+	void TogglePattern(gchar *path);
+	void OpenPatternForEditing(Document *);
+	void DeletePattern();
+	void AddPatternLine();
+	void AddPatternLineIndented();
+	void EditPattern(gchar *path, gchar *newString);
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkWidget *mAutoScroll = 0;
@@ -62,5 +66,4 @@ private:
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
-	void UpdateStatusBar(Document *doc);
 };

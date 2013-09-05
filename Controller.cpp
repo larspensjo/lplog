@@ -7,11 +7,6 @@
 using std::cout;
 using std::endl;
 
-static void ClickCell(GtkTreeView *treeView, Controller *c)
-{
-	c->ClickCell(gtk_tree_view_get_selection(treeView));
-}
-
 static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
 	return c->KeyEvent(event);
 }
@@ -106,6 +101,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				mDoc.AddSourceText(p, size);
 				g_free(p);
 				mView.Replace(&mDoc);
+				mView.SetWindowTitle("LPlog Pasted");
 			}
 			stopEvent = true;
 		}
@@ -117,82 +113,40 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 gboolean Controller::KeyPressed(guint keyval) {
 	if (!mValidSelectedPatternIter)
 		return false;
-	GtkTreeIter child;
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_F2:
-		{
-			mView.OpenPatternForEditing(&mDoc);
-			stopEvent = true;
-		}
+		mView.OpenPatternForEditing(&mDoc);
+		stopEvent = true;
 		break;
 	case GDK_KEY_Delete:
 	case GDK_KEY_KP_Delete:
-		if (IterEqual(&mRoot, &mSelectedPatternIter))
-			return false;
-		if (!gtk_tree_store_remove(mPattern, &mSelectedPatternIter))
-			mValidSelectedPatternIter = false;
+		mView.DeletePattern();
 		stopEvent = true;
 		break;
 	case GDK_KEY_plus:
 	case GDK_KEY_KP_Add:
-		{
-			if (IterEqual(&mRoot, &mSelectedPatternIter))
-				return false;
-			gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
-			gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
-			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
-			GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
-			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
-			gtk_tree_path_free(path);
-			stopEvent = true;
-		}
+		mView.AddPatternLine();
+		stopEvent = true;
 		break;
 	case GDK_KEY_a:
-		{
-			gtk_tree_store_insert_after(mPattern, &child, &mSelectedPatternIter, NULL);
-			gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
-			GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
-			gtk_tree_view_expand_to_path(mTreeView, path);
-			GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
-			gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
-			gtk_tree_path_free(path);
-			stopEvent = true;
-		}
+		mView.AddPatternLineIndented();
 		break;
 	}
+	if (!stopEvent)
+		return false;
 	mView.Replace(&mDoc);
-	this->ClickCell(gtk_tree_view_get_selection(mTreeView));
-	return stopEvent; // Stop event from propagating
+	mView.UpdateStatusBar(&mDoc);
+	return true; // Stop event from propagating
 }
 
 gboolean Controller::KeyEvent(GdkEvent *event) {
 	return this->KeyPressed(event->key.keyval);
 }
 
-void Controller::ClickCell(GtkTreeSelection *selection) {
-	mValidSelectedPatternIter = false;
-	if (selection == 0)
-		return;
-	GtkTreeModel *pattern = 0;
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
-	if (!found)
-		return;
-	mValidSelectedPatternIter = true;
-#ifdef DEBUG
-	GValue val = { 0 };
-	gtk_tree_model_get_value(pattern, &mSelectedPatternIter, 0, &val);
-	const gchar *str = g_value_get_string(&val);
-	if (str != nullptr) {
-		cout << "ClickCell: " << str << endl;
-	}
-	g_value_unset(&val);
-#endif
-}
-
 void Controller::Run(int argc, char *argv[]) {
-	mView.Create(::ButtonClicked, ::ToggleButton, ::ClickCell);
-	mDoc.Create();
+	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
+				G_CALLBACK(::TextViewKeyPress), GSourceFunc(::TestForeChanges), G_CALLBACK(::TogglePattern), this);
 	if (argc > 1) {
 		mDoc.AddSourceFile(argv [1]);
 		mView.SetWindowTitle(argv[1]);
@@ -211,7 +165,7 @@ void Controller::FileOpenDialog() {
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		mDoc.AddSourceFile(filename);
 		g_free(filename);
-		gtk_window_set_title(mWindow, ("LPlog " + mDoc.FileName()).c_str());
+		mView.SetWindowTitle("LPlog " + mDoc.FileName());
 		mDoc.UpdateInputData();
 		mView.Replace(&mDoc);
 	}

@@ -35,7 +35,7 @@ void View::SetWindowTitle(const std::string &str) {
 	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
 }
 
-GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback toggleButtonCB, GCallback clickPatternSell,
+GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB,
 						GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern,
 						gpointer cbData)
 {
@@ -87,8 +87,16 @@ GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback t
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
 
+	// Create the tree model and add some test data to it
+	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
+	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
+	GtkTreeIter child;
+	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
+	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
+
 	// Create the tree view
-	GtkWidget *tree = gtk_tree_view_new_with_model(model);
+	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(mPattern));
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
 	g_signal_connect(G_OBJECT(tree), "cursor-changed", togglePattern, cbData );
@@ -108,14 +116,6 @@ GtkTextBuffer *View::Create(GtkTreeModel *model, GCallback buttonCB, GCallback t
 
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_expand_all(mTreeView);
-
-	// Create the tree model and add some test data to it
-	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
-	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
-	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 
@@ -292,8 +292,8 @@ void View::UpdateStatusBar(Document *doc) {
 		gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
 	}
 	std::stringstream ss;
-	ss << doc->FileName() << ": " << mFoundLines << " (" << mLines.size() << ")";
-	gtk_label_set_text(mStatusBar, str.c_str());
+	ss << doc->FileName() << ": " << mFoundLines << " (" << doc->GetNumLines() << ")";
+	gtk_label_set_text(mStatusBar, ss.str().c_str());
 }
 
 void View::EditPattern(gchar *path, gchar *newString) {
@@ -311,6 +311,50 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 	return menu;
 }
 
+void View::DeletePattern() {
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
+	GtkTreeModel *pattern = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
+	if (!found || IterEqual(&mPatternRoot, &mSelectedPatternIter))
+		return; // Don't allow deletion of the root pattern
+	g_assert(pattern == GTK_TREE_MODEL(mPattern));
+	bool ok = gtk_tree_store_remove(mPattern, &mSelectedPatternIter);
+	g_assert(ok);
+}
+
+void View::AddPatternLine() {
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
+	GtkTreeModel *pattern = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
+	if (!found || IterEqual(&mPatternRoot, &mSelectedPatternIter))
+		return; // Don't allow new pattern parallel with root
+	g_assert(pattern == GTK_TREE_MODEL(mPattern));
+	GtkTreeIter child;
+	gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
+	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
+	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
+	GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
+	gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
+	gtk_tree_path_free(path);
+}
+
+void View::AddPatternLineIndented() {
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
+	GtkTreeModel *pattern = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
+	if (!found)
+		return;
+	g_assert(pattern == GTK_TREE_MODEL(mPattern));
+	GtkTreeIter child;
+	gtk_tree_store_insert_after(mPattern, &child, &mSelectedPatternIter, NULL);
+	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
+	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
+	gtk_tree_view_expand_to_path(mTreeView, path);
+	GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
+	gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
+	gtk_tree_path_free(path);
+}
+
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData) {
 	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
@@ -326,7 +370,7 @@ void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCal
 	gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
 }
 
-void Controller::About() {
+void View::About() {
 	const char *license =
 		"LPlog is free software: you can redistribute it and/or modify\n"
 		"it under the terms of the GNU General Public License as published by\n"

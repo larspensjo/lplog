@@ -10,7 +10,6 @@ class View;
 class Controller
 {
 public:
-	void ClickCell(GtkTreeSelection *selection);
 	void Run(int argc, char *argv[]);
 	gboolean KeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
