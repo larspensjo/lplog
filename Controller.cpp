@@ -111,8 +111,6 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 }
 
 gboolean Controller::KeyPressed(guint keyval) {
-	if (!mValidSelectedPatternIter)
-		return false;
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_F2:
@@ -131,6 +129,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 		break;
 	case GDK_KEY_a:
 		mView.AddPatternLineIndented();
+		stopEvent = true;
 		break;
 	}
 	if (!stopEvent)

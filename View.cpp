@@ -35,9 +35,8 @@ void View::SetWindowTitle(const std::string &str) {
 	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
 }
 
-GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB,
-						GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern,
-						gpointer cbData)
+GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+							GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern, gpointer cbData)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -99,7 +98,6 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB,
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(mPattern));
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
-	g_signal_connect(G_OBJECT(tree), "cursor-changed", togglePattern, cbData );
 	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressed, cbData );
 
 	auto renderer = gtk_cell_renderer_text_new();
@@ -185,7 +183,15 @@ void View::FilterString(std::stringstream &ss, Document *doc) {
 }
 
 void View::OpenPatternForEditing(Document *doc) {
-	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &mSelectedPatternIter);
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
+	GtkTreeModel *pattern = 0;
+	GtkTreeIter selectedPattern = { 0 };
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	if (!found)
+		return;
+	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &selectedPattern);
+	if (path == nullptr)
+		return;
 	GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
 	gtk_tree_view_set_cursor(mTreeView, path, firstColumn, true);
 	gtk_tree_path_free(path);
@@ -314,23 +320,24 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 void View::DeletePattern() {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	GtkTreeModel *pattern = 0;
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
-	if (!found || IterEqual(&mPatternRoot, &mSelectedPatternIter))
+	GtkTreeIter selectedPattern = { 0 };
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	if (!found || IterEqual(&mPatternRoot, &selectedPattern))
 		return; // Don't allow deletion of the root pattern
 	g_assert(pattern == GTK_TREE_MODEL(mPattern));
-	bool ok = gtk_tree_store_remove(mPattern, &mSelectedPatternIter);
-	g_assert(ok);
+	(void)gtk_tree_store_remove(mPattern, &selectedPattern);
 }
 
 void View::AddPatternLine() {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	GtkTreeModel *pattern = 0;
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
-	if (!found || IterEqual(&mPatternRoot, &mSelectedPatternIter))
+	GtkTreeIter selectedPattern = { 0 };
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	if (!found || IterEqual(&mPatternRoot, &selectedPattern))
 		return; // Don't allow new pattern parallel with root
 	g_assert(pattern == GTK_TREE_MODEL(mPattern));
 	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, NULL, &mSelectedPatternIter);
+	gtk_tree_store_insert_after(mPattern, &child, NULL, &selectedPattern);
 	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
 	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
 	GtkTreeViewColumn *firstColumn = gtk_tree_view_get_column(mTreeView, 0);
@@ -341,12 +348,13 @@ void View::AddPatternLine() {
 void View::AddPatternLineIndented() {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	GtkTreeModel *pattern = 0;
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &mSelectedPatternIter);
+	GtkTreeIter selectedPattern = { 0 };
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
 	if (!found)
 		return;
 	g_assert(pattern == GTK_TREE_MODEL(mPattern));
 	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, &mSelectedPatternIter, NULL);
+	gtk_tree_store_insert_after(mPattern, &child, &selectedPattern, NULL);
 	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
 	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(mPattern), &child);
 	gtk_tree_view_expand_to_path(mTreeView, path);

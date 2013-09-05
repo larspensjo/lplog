@@ -53,7 +53,6 @@ private:
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;
-	GtkTreeIter mSelectedPatternIter = { 0 };
 	GtkTreeIter mPatternRoot = { 0 };
 
 	enum class Evaluation {
