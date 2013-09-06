@@ -34,6 +34,21 @@ void View::SetWindowTitle(const std::string &str) {
 	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
 }
 
+gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, gpointer user_data) {
+	GList *list = gdk_drag_context_list_targets(context);
+	g_assert(list != nullptr);
+	GdkAtom target_type = GDK_POINTER_TO_ATOM(g_list_nth_data(list, 0));
+	gtk_drag_get_data(widget, context, target_type, time);
+	return true;
+}
+
+void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *data, guint info, guint time, gpointer user_data) {
+	g_assert(info == 0); // Only support one type for now
+	char **str = gtk_selection_data_get_uris(data);
+	g_print("string: %s\n", str[0]);
+	gtk_drag_finish(context, true, false, time);
+}
+
 GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
 							GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern, gpointer cbData)
 {
@@ -43,7 +58,7 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
 	gtk_widget_realize (win);
 	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
-	gtk_window_set_default_size(mWindow, 800, 640);
+	gtk_window_set_default_size(mWindow, 1024, 480);
 
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
@@ -122,12 +137,15 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	gtk_scrolled_window_set_policy(mScrolledView, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
+	gtk_drag_dest_set(textview, GTK_DEST_DEFAULT_DROP, NULL, 0, GDK_ACTION_COPY);
+	gtk_drag_dest_add_uri_targets(textview);
+	g_signal_connect(G_OBJECT(textview), "drag-drop", G_CALLBACK(DragDrop), cbData );
+	g_signal_connect(G_OBJECT(textview), "drag-data-received", G_CALLBACK(DragDataReceived), cbData );
 	g_signal_connect(G_OBJECT(textview), "key-press-event", textViewkeyPress, cbData );
 	mTextView = GTK_TEXT_VIEW(textview);
 	mBuffer = gtk_text_view_get_buffer(mTextView);
 	gtk_text_view_set_wrap_mode(mTextView, GTK_WRAP_CHAR);
 	gtk_widget_modify_font(textview, font);
-	gtk_text_view_set_editable(mTextView, false);
 	gtk_widget_set_size_request(textview, 5, 5);
 	auto buffer = gtk_text_view_get_buffer(mTextView);
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);

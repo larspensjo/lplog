@@ -67,7 +67,8 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 	cout << " string: " << event->key.string;
 	cout << endl;
 #endif
-	return c->TextViewKeyPress(event->key.keyval);
+	(void)c->TextViewKeyPress(event->key.keyval);
+	return true; // Return true, to consume all key presses.
 }
 
 static void TogglePattern(GtkCellRendererToggle *renderer, gchar *path, Controller *c) {
