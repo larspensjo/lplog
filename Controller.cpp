@@ -1,5 +1,21 @@
+// Copyright 2013 Lars Pensjö
+//
+// Lplog is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, version 3.
+//
+// Lplog is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include <iostream>
 #include <string.h>
+#include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
 #include "Controller.h"
 #include "Document.h"
@@ -16,7 +32,7 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 	if (name == "quit")
 		gtk_main_quit();
 	else if (name == "line")
-		c->KeyPressed(GDK_KEY_plus);
+		c->KeyPressed(GDK_KEY_o);
 	else if (name == "remove")
 		c->KeyPressed(GDK_KEY_Delete);
 	else if (name == "child")
@@ -122,6 +138,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 		mView.DeletePattern();
 		stopEvent = true;
 		break;
+	case GDK_KEY_o:
 	case GDK_KEY_plus:
 	case GDK_KEY_KP_Add:
 		mView.AddPatternLine();

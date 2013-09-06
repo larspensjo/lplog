@@ -15,7 +15,6 @@
 
 #include <string.h>
 #include <iostream>
-#include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
 #include "Document.h"
 #include "View.h"
@@ -309,14 +308,6 @@ void View::EditPattern(gchar *path, gchar *newString) {
 	gtk_tree_store_set(mPattern, &iter, 0, newString, -1);
 }
 
-GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
-	GtkWidget *menu = gtk_menu_new();
-	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), menu);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuItem);
-	return menu;
-}
-
 bool View::FindSelectedPattern(GtkTreeIter *selectedPattern) const {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	GtkTreeModel *pattern = 0;
@@ -362,6 +353,14 @@ void View::AddPatternLineIndented() {
 	gtk_tree_path_free(path);
 }
 
+GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
+	GtkWidget *menu = gtk_menu_new();
+	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), menu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuItem);
+	return menu;
+}
+
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData) {
 	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
@@ -395,7 +394,7 @@ void View::About() {
 	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
 
 	gtk_show_about_dialog(NULL,
-		"version", "1.0",
+		"version", "1.1 beta",
 		"website", "https://github.com/larspensjo/lplog",
 		"comments", "A program to display and filter a log file.",
 		"authors", authors,
