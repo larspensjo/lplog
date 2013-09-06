@@ -65,4 +65,5 @@ private:
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
+	bool FindSelectedPattern(GtkTreeIter *selectedPattern) const;
 };

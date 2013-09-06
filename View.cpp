@@ -317,25 +317,27 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 	return menu;
 }
 
-void View::DeletePattern() {
+bool View::FindSelectedPattern(GtkTreeIter *selectedPattern) const {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	GtkTreeModel *pattern = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, selectedPattern);
+	g_assert(found || pattern == GTK_TREE_MODEL(mPattern));
+	return found;
+}
+
+void View::DeletePattern() {
 	GtkTreeIter selectedPattern = { 0 };
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	bool found = FindSelectedPattern(&selectedPattern);
 	if (!found || IterEqual(&mPatternRoot, &selectedPattern))
 		return; // Don't allow deletion of the root pattern
-	g_assert(pattern == GTK_TREE_MODEL(mPattern));
 	(void)gtk_tree_store_remove(mPattern, &selectedPattern);
 }
 
 void View::AddPatternLine() {
-	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
-	GtkTreeModel *pattern = 0;
 	GtkTreeIter selectedPattern = { 0 };
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	bool found = FindSelectedPattern(&selectedPattern);
 	if (!found || IterEqual(&mPatternRoot, &selectedPattern))
 		return; // Don't allow new pattern parallel with root
-	g_assert(pattern == GTK_TREE_MODEL(mPattern));
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(mPattern, &child, NULL, &selectedPattern);
 	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
@@ -346,13 +348,10 @@ void View::AddPatternLine() {
 }
 
 void View::AddPatternLineIndented() {
-	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
-	GtkTreeModel *pattern = 0;
 	GtkTreeIter selectedPattern = { 0 };
-	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	bool found = FindSelectedPattern(&selectedPattern);
 	if (!found)
 		return;
-	g_assert(pattern == GTK_TREE_MODEL(mPattern));
 	GtkTreeIter child;
 	gtk_tree_store_insert_after(mPattern, &child, &selectedPattern, NULL);
 	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1); // Initialize new value with empty string and enabled.
