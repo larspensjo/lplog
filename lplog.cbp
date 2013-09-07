@@ -84,7 +84,11 @@
 		<Unit filename="View.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
-			<code_completion />
+			<code_completion>
+				<search_path add="/usr/include/gtkmm-2.4" />
+				<search_path add="/usr/include/gdkmm-2.4" />
+				<search_path add="/usr/include/glibmm-2.4" />
+			</code_completion>
 			<debugger />
 			<DoxyBlocks>
 				<comment_style block="0" line="0" />

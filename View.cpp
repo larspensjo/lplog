@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include <iostream>
+#include <gtkmm/main.h>
 
 #include "Document.h"
 #include "View.h"
@@ -54,15 +55,13 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 							GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern, GCallback dragReceived, gpointer cbData)
 {
 	/* Create the main window */
-	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	mWindow = GTK_WINDOW(win);
-	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
-	gtk_widget_realize (win);
-	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
-	gtk_window_set_default_size(mWindow, 1024, 480);
+	mWindow.reset(new Gtk::Window(Gtk::WINDOW_TOPLEVEL));
+	mWindow->set_border_width(1);
+	g_signal_connect(mWindow->gobj(), "destroy", gtk_main_quit, NULL);
+	mWindow->set_default_size(1024, 480);
 
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
-	gtk_container_add (GTK_CONTAINER (win), mainbox);
+	gtk_container_add (GTK_CONTAINER (mWindow->gobj()), mainbox);
 
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
@@ -138,8 +137,7 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 
 	g_timeout_add(1000, timer, cbData);
 
-	/* Enter the main loop */
-	gtk_widget_show_all (win);
+	mWindow->show_all();
 	return buffer;
 }
 
@@ -180,7 +178,7 @@ int View::GetCurrentTabId() const {
 }
 
 GtkWidget *View::FileOpenDialog() {
-	return gtk_file_chooser_dialog_new("Open File", mWindow, GTK_FILE_CHOOSER_ACTION_OPEN,
+	return gtk_file_chooser_dialog_new("Open File", mWindow->gobj(), GTK_FILE_CHOOSER_ACTION_OPEN,
 										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 										GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 										NULL);
@@ -441,4 +439,8 @@ void View::About() {
 		"program-name", "LPlog",
 		"copyright", copyright,
 		NULL);
+}
+
+void View::Run() {
+	Gtk::Main::run(*mWindow.get());
 }

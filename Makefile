@@ -57,7 +57,8 @@
 ##==========================================================================
 
 # Use gtk+-3.0 if it exists, otherwise gtk+2.0
-GTK := $(shell if pkg-config --exists gtk+-3.0; then echo gtk+-3.0; else echo gtk+-2.0; fi)
+# GTK := $(shell if pkg-config --exists gtk+-3.0; then echo gtk+-3.0; else echo gtk+-2.0; fi)
+GTK := gtkmm-2.4
 
 # The pre-processor and compiler options.
 MY_CFLAGS =

@@ -18,6 +18,8 @@
 #include <gtk/gtk.h>
 #include <string>
 #include <sstream>
+#include <memory>
+#include <gtkmm/window.h>
 
 class Document;
 
@@ -34,6 +36,7 @@ public:
 	void About();
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
+	void Run();
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);
@@ -44,7 +47,7 @@ public:
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkWidget *mAutoScroll = 0;
-	GtkWindow *mWindow = 0;
+	std::unique_ptr <Gtk::Window> mWindow;
 	GtkScrolledWindow *mScrolledView = 0;
 	GtkTextBuffer *mBuffer = 0;
 	bool mShowLineNumbers = false;

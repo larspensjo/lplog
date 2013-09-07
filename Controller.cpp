@@ -81,13 +81,15 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 }
 
 static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *data, guint info, guint time, Controller *c) {
-	g_assert(info == 0); // Only support one type for now
-	char **str = gtk_selection_data_get_uris(data);
 	bool success = false;
-	if (str != nullptr) {
-		c->OpenURI(str[0]); // Only get the first reference for now
-		g_strfreev(str);
-		success = true;
+	if (info == 0) {
+		 // Only support one type for now
+		char **str = gtk_selection_data_get_uris(data);
+		if (str != nullptr) {
+			c->OpenURI(str[0]); // Only get the first reference for now
+			g_strfreev(str);
+			success = true;
+		}
 	}
 	gtk_drag_finish(context, success, false, time);
 }
@@ -198,7 +200,7 @@ void Controller::Run(int argc, char *argv[]) {
 
 	mDoc.UpdateInputData();
 	mView.Replace(&mDoc);
-	gtk_main ();
+	mView.Run();
 }
 
 void Controller::FileOpenDialog() {
