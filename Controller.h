@@ -14,6 +14,7 @@ public:
 	gboolean KeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
 	void FileOpenDialog();
+	void OpenURI(const std::string &uri);
 	gboolean TextViewKeyPress(guint keyval);
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);

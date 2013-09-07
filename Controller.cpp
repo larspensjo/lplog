@@ -80,6 +80,33 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 	c->ToggleButton(name);
 }
 
+static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *data, guint info, guint time, Controller *c) {
+	g_assert(info == 0); // Only support one type for now
+	char **str = gtk_selection_data_get_uris(data);
+	bool success = false;
+	if (str != nullptr) {
+		g_print("string: %s\n", str[0]);
+		c->OpenURI(str[0]); // Only get the first reference for now
+		g_strfreev(str);
+		success = true;
+	}
+	gtk_drag_finish(context, success, false, time);
+}
+
+void Controller::OpenURI(const std::string &uri) {
+	static const std::string prefix = "file://";
+	unsigned prefixSize = prefix.size();
+	if (uri.size() < prefixSize)
+		return;
+	if (uri.substr(0, prefixSize) != prefix)
+		return;
+	const std::string filename = uri.substr(prefixSize);
+	mDoc.AddSourceFile(filename.c_str());
+	mView.SetWindowTitle(filename);
+	mDoc.UpdateInputData();
+	mView.Replace(&mDoc);
+}
+
 void Controller::PollInput() {
 	if (mDoc.UpdateInputData()) {
 		mView.Append(&mDoc);
@@ -118,7 +145,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				mDoc.AddSourceText(p, size);
 				g_free(p);
 				mView.Replace(&mDoc);
-				mView.SetWindowTitle("LPlog Pasted");
+				mView.SetWindowTitle("[Pasted text]");
 			}
 			stopEvent = true;
 		}
@@ -163,7 +190,7 @@ gboolean Controller::KeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[]) {
 	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
-				G_CALLBACK(::TextViewKeyPress), GSourceFunc(::TestForeChanges), G_CALLBACK(::TogglePattern), this);
+				G_CALLBACK(::TextViewKeyPress), GSourceFunc(::TestForeChanges), G_CALLBACK(::TogglePattern), G_CALLBACK(::DragDataReceived), this);
 	if (argc > 1) {
 		mDoc.AddSourceFile(argv [1]);
 		mView.SetWindowTitle(argv[1]);
@@ -178,13 +205,9 @@ void Controller::Run(int argc, char *argv[]) {
 void Controller::FileOpenDialog() {
 	GtkWidget *dialog = mView.FileOpenDialog();
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-		char *filename;
-		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-		mDoc.AddSourceFile(filename);
+		char *filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+		this->OpenURI(std::string("file://") + filename);
 		g_free(filename);
-		mView.SetWindowTitle("LPlog " + mDoc.FileName());
-		mDoc.UpdateInputData();
-		mView.Replace(&mDoc);
 	}
 	gtk_widget_destroy(dialog);
 }

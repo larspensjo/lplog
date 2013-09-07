@@ -34,7 +34,7 @@ void View::SetWindowTitle(const std::string &str) {
 	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
 }
 
-gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, gpointer user_data) {
+static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, gpointer user_data) {
 	GList *list = gdk_drag_context_list_targets(context);
 	g_assert(list != nullptr);
 	GdkAtom target_type = GDK_POINTER_TO_ATOM(g_list_nth_data(list, 0));
@@ -42,15 +42,8 @@ gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, gu
 	return true;
 }
 
-void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *data, guint info, guint time, gpointer user_data) {
-	g_assert(info == 0); // Only support one type for now
-	char **str = gtk_selection_data_get_uris(data);
-	g_print("string: %s\n", str[0]);
-	gtk_drag_finish(context, true, false, time);
-}
-
 GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-							GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern, gpointer cbData)
+							GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern, GCallback dragReceived, gpointer cbData)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -140,7 +133,7 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	gtk_drag_dest_set(textview, GTK_DEST_DEFAULT_DROP, NULL, 0, GDK_ACTION_COPY);
 	gtk_drag_dest_add_uri_targets(textview);
 	g_signal_connect(G_OBJECT(textview), "drag-drop", G_CALLBACK(DragDrop), cbData );
-	g_signal_connect(G_OBJECT(textview), "drag-data-received", G_CALLBACK(DragDataReceived), cbData );
+	g_signal_connect(G_OBJECT(textview), "drag-data-received", dragReceived, cbData );
 	g_signal_connect(G_OBJECT(textview), "key-press-event", textViewkeyPress, cbData );
 	mTextView = GTK_TEXT_VIEW(textview);
 	mBuffer = gtk_text_view_get_buffer(mTextView);
