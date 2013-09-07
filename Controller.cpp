@@ -85,7 +85,6 @@ static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x,
 	char **str = gtk_selection_data_get_uris(data);
 	bool success = false;
 	if (str != nullptr) {
-		g_print("string: %s\n", str[0]);
 		c->OpenURI(str[0]); // Only get the first reference for now
 		g_strfreev(str);
 		success = true;
