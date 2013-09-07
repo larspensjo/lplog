@@ -31,7 +31,10 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	gtk_window_set_title (mWindow, ("LPlog " + str).c_str());
+	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
+	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
+	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
+	gtk_label_set_label(GTK_LABEL(labelWidget), str.c_str());
 }
 
 static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, gpointer user_data) {
@@ -39,6 +42,11 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	g_assert(list != nullptr);
 	GdkAtom target_type = GDK_POINTER_TO_ATOM(g_list_nth_data(list, 0));
 	gtk_drag_get_data(widget, context, target_type, time);
+	return true;
+}
+
+static gboolean ChangeCurrentPage(GtkNotebook *notebook, gint tab, gpointer user_data) {
+	g_print("Notebook CB: %d\n", tab);
 	return true;
 }
 
@@ -122,7 +130,24 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_expand_all(mTreeView);
 
-	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
+	mNotebook = gtk_notebook_new();
+	gtk_box_pack_start(GTK_BOX(hbox), mNotebook, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(mNotebook), "change-current-page", G_CALLBACK(ChangeCurrentPage), cbData );
+	GtkTextBuffer *buffer = this->AddTab("TABXX", 0, cbData, dragReceived, textViewkeyPress);
+
+
+	g_timeout_add(1000, timer, cbData);
+
+	/* Enter the main loop */
+	gtk_widget_show_all (win);
+	return buffer;
+}
+
+GtkTextBuffer *View::AddTab(const std::string &label, int id, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress) {
+	GtkWidget *labelWidget = gtk_label_new(label.c_str());
+	std::stringstream ss;
+	ss << id;
+	gtk_widget_set_name(labelWidget, ss.str().c_str());
 
 	// Create the text display window
 	GtkWidget *scrollview = gtk_scrolled_window_new( NULL, NULL );
@@ -138,17 +163,20 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	mTextView = GTK_TEXT_VIEW(textview);
 	mBuffer = gtk_text_view_get_buffer(mTextView);
 	gtk_text_view_set_wrap_mode(mTextView, GTK_WRAP_CHAR);
+	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 	gtk_widget_modify_font(textview, font);
 	gtk_widget_set_size_request(textview, 5, 5);
 	auto buffer = gtk_text_view_get_buffer(mTextView);
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
-	gtk_box_pack_start(GTK_BOX(hbox), scrollview, TRUE, TRUE, 0);
-
-	g_timeout_add(1000, timer, cbData);
-
-	/* Enter the main loop */
-	gtk_widget_show_all (win);
+	gtk_notebook_append_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	return buffer;
+}
+
+int View::GetCurrentTabId() const {
+	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
+	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
+	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
+	const char *name = gtk_widget_get_name(labelWidget);
 }
 
 GtkWidget *View::FileOpenDialog() {

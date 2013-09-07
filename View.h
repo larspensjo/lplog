@@ -50,6 +50,7 @@ private:
 	bool mShowLineNumbers = false;
 	unsigned mFoundLines = 0;
 	GtkTextView *mTextView = 0;
+	GtkWidget *mNotebook = 0;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;
@@ -66,4 +67,6 @@ private:
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
 	bool FindSelectedPattern(GtkTreeIter *selectedPattern) const;
+	GtkTextBuffer *AddTab(const std::string &label, int id, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress);
+	int GetCurrentTabId() const;
 };

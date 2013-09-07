@@ -194,7 +194,7 @@ void Controller::Run(int argc, char *argv[]) {
 		mDoc.AddSourceFile(argv [1]);
 		mView.SetWindowTitle(argv[1]);
 	} else
-		mView.SetWindowTitle("");
+		mView.SetWindowTitle("[empty]");
 
 	mDoc.UpdateInputData();
 	mView.Replace(&mDoc);
