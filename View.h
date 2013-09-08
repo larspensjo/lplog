@@ -24,8 +24,8 @@ class Document;
 class View
 {
 public:
-	GtkTextBuffer *Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell, GCallback textViewkeyPress,
-						GSourceFunc timer, GCallback togglePattern, GCallback dragReceived, gpointer cbData);
+	GtkTextBuffer *Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+						GSourceFunc timer, GCallback togglePattern, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
@@ -34,6 +34,7 @@ public:
 	void About();
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
+	int AddTab(Document *, const std::string &label, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress);
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);
@@ -45,11 +46,8 @@ private:
 	GtkLabel *mStatusBar = 0;
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
-	GtkScrolledWindow *mScrolledView = 0;
-	GtkTextBuffer *mBuffer = 0;
 	bool mShowLineNumbers = false;
 	unsigned mFoundLines = 0;
-	GtkTextView *mTextView = 0;
 	GtkWidget *mNotebook = 0;
 
 	GtkTreeStore *mPattern = 0;
@@ -67,6 +65,5 @@ private:
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
 	bool FindSelectedPattern(GtkTreeIter *selectedPattern) const;
-	GtkTextBuffer *AddTab(const std::string &label, int id, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress);
 	int GetCurrentTabId() const;
 };

@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include <iostream>
+#include <stdlib.h>
 
 #include "Document.h"
 #include "View.h"
@@ -51,7 +52,7 @@ static gboolean ChangeCurrentPage(GtkNotebook *notebook, gint tab, gpointer user
 }
 
 GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-							GCallback textViewkeyPress, GSourceFunc timer, GCallback togglePattern, GCallback dragReceived, gpointer cbData)
+							GSourceFunc timer, GCallback togglePattern, gpointer cbData)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -133,26 +134,24 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	mNotebook = gtk_notebook_new();
 	gtk_box_pack_start(GTK_BOX(hbox), mNotebook, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(mNotebook), "change-current-page", G_CALLBACK(ChangeCurrentPage), cbData );
-	GtkTextBuffer *buffer = this->AddTab("TABXX", 0, cbData, dragReceived, textViewkeyPress);
-
 
 	g_timeout_add(1000, timer, cbData);
 
 	/* Enter the main loop */
-	gtk_widget_show_all (win);
-	return buffer;
+	gtk_widget_show_all(win);
 }
 
-GtkTextBuffer *View::AddTab(const std::string &label, int id, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress) {
+int View::AddTab(Document *doc, const std::string &label, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress) {
+	static int nextId = 0; // Create a new unique number for each tab.
 	GtkWidget *labelWidget = gtk_label_new(label.c_str());
 	std::stringstream ss;
-	ss << id;
+	ss << nextId;
 	gtk_widget_set_name(labelWidget, ss.str().c_str());
 
 	// Create the text display window
 	GtkWidget *scrollview = gtk_scrolled_window_new( NULL, NULL );
-	mScrolledView = GTK_SCROLLED_WINDOW(scrollview);
-	gtk_scrolled_window_set_policy(mScrolledView, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	doc->mScrolledView = GTK_SCROLLED_WINDOW(scrollview);
+	gtk_scrolled_window_set_policy(doc->mScrolledView, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_set_border_width(GTK_CONTAINER(scrollview), 1);
 	auto textview = gtk_text_view_new();
 	gtk_drag_dest_set(textview, GTK_DEST_DEFAULT_DROP, NULL, 0, GDK_ACTION_COPY);
@@ -160,16 +159,17 @@ GtkTextBuffer *View::AddTab(const std::string &label, int id, gpointer cbData, G
 	g_signal_connect(G_OBJECT(textview), "drag-drop", G_CALLBACK(DragDrop), cbData );
 	g_signal_connect(G_OBJECT(textview), "drag-data-received", dragReceived, cbData );
 	g_signal_connect(G_OBJECT(textview), "key-press-event", textViewkeyPress, cbData );
-	mTextView = GTK_TEXT_VIEW(textview);
-	mBuffer = gtk_text_view_get_buffer(mTextView);
-	gtk_text_view_set_wrap_mode(mTextView, GTK_WRAP_CHAR);
+	doc->mTextView = GTK_TEXT_VIEW(textview);
+	gtk_text_view_set_wrap_mode(doc->mTextView, GTK_WRAP_CHAR);
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 	gtk_widget_modify_font(textview, font);
 	gtk_widget_set_size_request(textview, 5, 5);
-	auto buffer = gtk_text_view_get_buffer(mTextView);
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	gtk_notebook_append_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
-	return buffer;
+
+	gtk_widget_show_all(scrollview);
+
+	return nextId++;
 }
 
 int View::GetCurrentTabId() const {
@@ -177,6 +177,7 @@ int View::GetCurrentTabId() const {
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
 	const char *name = gtk_widget_get_name(labelWidget);
+	return atoi(name);
 }
 
 GtkWidget *View::FileOpenDialog() {
@@ -189,7 +190,8 @@ GtkWidget *View::FileOpenDialog() {
 void View::ToggleLineNumbers(Document *doc) {
 	mShowLineNumbers = !mShowLineNumbers;
 	// Remember the current scrollbar value
-	auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
+	g_assert(doc->mScrolledView != nullptr);
+	auto adj = gtk_scrolled_window_get_vadjustment(doc->mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
 	this->Replace(doc);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
@@ -308,13 +310,16 @@ void View::TogglePattern(gchar *path) {
 
 void View::Append(Document *doc) {
 	// Remember the current scrollbar value
-	auto adj = gtk_scrolled_window_get_vadjustment(mScrolledView);
+	g_assert(doc->mScrolledView != nullptr);
+	auto adj = gtk_scrolled_window_get_vadjustment(doc->mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
 	std::stringstream ss;
 	this->FilterString(ss, doc);
 	GtkTextIter last;
-	gtk_text_buffer_get_end_iter(mBuffer, &last);
-	gtk_text_buffer_insert(mBuffer, &last, ss.str().c_str(), -1);
+	g_assert(doc->mTextView != nullptr);
+	auto buffer = gtk_text_view_get_buffer(doc->mTextView);
+	gtk_text_buffer_get_end_iter(buffer, &last);
+	gtk_text_buffer_insert(buffer, &last, ss.str().c_str(), -1);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
 	UpdateStatusBar(doc);
@@ -324,16 +329,19 @@ void View::Replace(Document *doc) {
 	mFoundLines = 0;
 	std::stringstream ss;
 	this->FilterString(ss, doc);
-	gtk_text_buffer_set_text(mBuffer, ss.str().c_str(), -1);
+	g_assert(doc->mTextView != nullptr);
+	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 	UpdateStatusBar(doc);
 }
 
 void View::UpdateStatusBar(Document *doc) {
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll))) {
 		GtkTextIter lastLine;
-		gtk_text_buffer_get_end_iter(mBuffer, &lastLine);
-		GtkTextMark *mark = gtk_text_buffer_create_mark(mBuffer, NULL, &lastLine, true);
-		gtk_text_view_scroll_to_mark(mTextView, mark, 0.0, true, 0.0, 1.0);
+		g_assert(doc->mTextView != nullptr);
+		auto buffer = gtk_text_view_get_buffer(doc->mTextView);
+		gtk_text_buffer_get_end_iter(buffer, &lastLine);
+		GtkTextMark *mark = gtk_text_buffer_create_mark(buffer, NULL, &lastLine, true);
+		gtk_text_view_scroll_to_mark(doc->mTextView, mark, 0.0, true, 0.0, 1.0);
 	}
 	std::stringstream ss;
 	ss << doc->FileName() << ": " << mFoundLines << " (" << doc->GetNumLines() << ")";

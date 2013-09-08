@@ -31,6 +31,9 @@ public:
 	const std::string &FileName() const;
 	void IterateLines(std::function<void (const std::string&, unsigned)> f);
 	unsigned GetNumLines() { return mLines.size(); }
+
+	GtkScrolledWindow *mScrolledView = 0; // TODO: Should not be public, manage in a better way.
+	GtkTextView *mTextView = 0; // TODO: Should not be public, manage in a better way.
 private:
 	std::vector<std::string> mLines;
 	std::string mFileName;

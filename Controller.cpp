@@ -23,6 +23,8 @@
 using std::cout;
 using std::endl;
 
+static const std::string filePrefixURI = "file://";
+
 static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
 	return c->KeyEvent(event);
 }
@@ -93,14 +95,14 @@ static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x,
 }
 
 void Controller::OpenURI(const std::string &uri) {
-	static const std::string prefix = "file://";
-	unsigned prefixSize = prefix.size();
+	unsigned prefixSize = filePrefixURI.size();
 	if (uri.size() < prefixSize)
 		return;
-	if (uri.substr(0, prefixSize) != prefix)
+	if (uri.substr(0, prefixSize) != filePrefixURI)
 		return;
 	const std::string filename = uri.substr(prefixSize);
 	mDoc.AddSourceFile(filename.c_str());
+	mView.AddTab(&mDoc, filename.c_str(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 	mView.SetWindowTitle(filename);
 	mDoc.UpdateInputData();
 	mView.Replace(&mDoc);
@@ -189,12 +191,12 @@ gboolean Controller::KeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[]) {
 	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
-				G_CALLBACK(::TextViewKeyPress), GSourceFunc(::TestForeChanges), G_CALLBACK(::TogglePattern), G_CALLBACK(::DragDataReceived), this);
+				 GSourceFunc(::TestForeChanges), G_CALLBACK(::TogglePattern), this);
 	if (argc > 1) {
-		mDoc.AddSourceFile(argv [1]);
-		mView.SetWindowTitle(argv[1]);
-	} else
+		this->OpenURI(filePrefixURI + argv[1]);
+	} else {
 		mView.SetWindowTitle("[empty]");
+	}
 
 	mDoc.UpdateInputData();
 	mView.Replace(&mDoc);
@@ -205,7 +207,7 @@ void Controller::FileOpenDialog() {
 	GtkWidget *dialog = mView.FileOpenDialog();
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 		char *filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-		this->OpenURI(std::string("file://") + filename);
+		this->OpenURI(filePrefixURI + filename);
 		g_free(filename);
 	}
 	gtk_widget_destroy(dialog);

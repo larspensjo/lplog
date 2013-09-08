@@ -61,9 +61,6 @@ int main (int argc, char *argv[])
 
 	View view;
 	Document doc;
-	if (argc > 1) {
-		doc.AddSourceFile(argv [1]);
-	}
 	GError *err = 0;
 	auto icon = gdk_pixbuf_new_from_file((GetInstallDir() + "/icon.bmp").c_str(), &err); // Name of file must be lplog.bmp
 	if (icon != nullptr && err == 0)
