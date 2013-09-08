@@ -344,7 +344,7 @@ void View::UpdateStatusBar(Document *doc) {
 		gtk_text_view_scroll_to_mark(doc->mTextView, mark, 0.0, true, 0.0, 1.0);
 	}
 	std::stringstream ss;
-	ss << doc->FileName() << ": " << mFoundLines << " (" << doc->GetNumLines() << ")";
+	ss << doc->GetFileName() << "   " << doc->Date() << "                     " << mFoundLines << " (" << doc->GetNumLines() << ")";
 	gtk_label_set_text(mStatusBar, ss.str().c_str());
 }
 

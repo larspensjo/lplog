@@ -103,7 +103,7 @@ void Controller::OpenURI(const std::string &uri) {
 	const std::string filename = uri.substr(prefixSize);
 	mDoc.AddSourceFile(filename);
 	mDoc.UpdateInputData();
-	mView.AddTab(&mDoc, filename + " " + mDoc.Date(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
+	mView.AddTab(&mDoc, mDoc.GetFileNameShort(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 	mView.Replace(&mDoc);
 }
 
@@ -111,7 +111,7 @@ void Controller::PollInput() {
 	unsigned lines = mDoc.GetNumLines();
 	if (mDoc.UpdateInputData()) {
 		if (mDoc.GetNumLines() < lines) {
-			mView.AddTab(&mDoc, mDoc.FileName() + " " + mDoc.Date(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
+			mView.AddTab(&mDoc, mDoc.GetFileNameShort(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 			mView.Replace(&mDoc); // Restarted new file
 		} else {
 			mView.Append(&mDoc);

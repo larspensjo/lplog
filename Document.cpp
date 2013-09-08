@@ -158,6 +158,17 @@ void Document::SplitLines(char *buff, unsigned size) {
 	}
 }
 
-const std::string &Document::FileName() const {
+std::string Document::GetFileNameShort() const {
+	std::string::size_type pos = 0;
+	auto pos1 = mFileName.rfind('/');
+	if (pos1 != mFileName.npos)
+		pos = pos1+1;
+	pos1 = mFileName.rfind('\\');
+	if (pos1 != mFileName.npos && pos1 > pos)
+		pos = pos1+1;
+	return mFileName.substr(pos);
+}
+
+const std::string &Document::GetFileName() const {
 	return mFileName;
 }

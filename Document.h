@@ -29,7 +29,8 @@ public:
 	void AddSourceFile(const std::string &fileName); // Add a source file
 	void AddSourceText(char *, unsigned size); // Add text
 	bool UpdateInputData(); // Update from file, return true if there were any changes.
-	const std::string &FileName() const;
+	const std::string &GetFileName() const;
+	std::string GetFileNameShort() const; // Get the last part of the filename
 	void IterateLines(std::function<void (const std::string&, unsigned)> f);
 	unsigned GetNumLines() { return mLines.size(); }
 	std::string Date() const;
