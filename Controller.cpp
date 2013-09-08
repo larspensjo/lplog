@@ -109,8 +109,12 @@ void Controller::OpenURI(const std::string &uri) {
 }
 
 void Controller::PollInput() {
+	unsigned lines = mDoc.GetNumLines();
 	if (mDoc.UpdateInputData()) {
-		mView.Append(&mDoc);
+		if (mDoc.GetNumLines() < lines)
+			mView.Replace(&mDoc); // Restarted new file
+		else
+			mView.Append(&mDoc);
 	}
 }
 
