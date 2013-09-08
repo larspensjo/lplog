@@ -101,20 +101,21 @@ void Controller::OpenURI(const std::string &uri) {
 	if (uri.substr(0, prefixSize) != filePrefixURI)
 		return;
 	const std::string filename = uri.substr(prefixSize);
-	mDoc.AddSourceFile(filename.c_str());
-	mView.AddTab(&mDoc, filename.c_str(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-	mView.SetWindowTitle(filename);
+	mDoc.AddSourceFile(filename);
 	mDoc.UpdateInputData();
+	mView.AddTab(&mDoc, filename + " " + mDoc.Date(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 	mView.Replace(&mDoc);
 }
 
 void Controller::PollInput() {
 	unsigned lines = mDoc.GetNumLines();
 	if (mDoc.UpdateInputData()) {
-		if (mDoc.GetNumLines() < lines)
+		if (mDoc.GetNumLines() < lines) {
+			mView.AddTab(&mDoc, mDoc.FileName() + " " + mDoc.Date(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 			mView.Replace(&mDoc); // Restarted new file
-		else
+		} else {
 			mView.Append(&mDoc);
+		}
 	}
 }
 
@@ -149,8 +150,8 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				unsigned size = strlen(p);
 				mDoc.AddSourceText(p, size);
 				g_free(p);
+				mView.AddTab(&mDoc, "[Pasted text]", this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 				mView.Replace(&mDoc);
-				mView.SetWindowTitle("[Pasted text]");
 			}
 			stopEvent = true;
 		}

@@ -14,8 +14,9 @@
 //
 
 #include <sstream>
-#include <sstream>
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "Document.h"
 
 using std::ios;
@@ -52,11 +53,33 @@ static bool findNL(const char *source, unsigned &length, const char *&next) {
 	return true;
 }
 
+std::string Document::Date() const {
+    int ret;
+    struct tm t;
+    char buf[30];
+
+    tzset();
+    if (localtime_r(&(mCtime.tv_sec), &t) == NULL)
+        return "";
+
+    ret = strftime(buf, sizeof buf, "%F %T", &t);
+    if (ret == 0)
+        return "";
+
+    return buf;
+}
+
 void Document::AddSourceFile(const std::string &fileName) {
 	mStopUpdates = false;
 	mFileName = fileName;
 	mCurrentPosition = 0;
 	mLines.clear();
+	struct stat st;
+	if (stat(fileName.c_str(), &st) == 0) {
+		mCtime = st.st_ctim;
+	} else {
+		mCtime = {0};
+	}
 }
 
 void Document::AddSourceText(char *text, unsigned size) {

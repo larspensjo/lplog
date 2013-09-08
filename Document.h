@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <time.h>
 
 class Document
 {
@@ -31,6 +32,7 @@ public:
 	const std::string &FileName() const;
 	void IterateLines(std::function<void (const std::string&, unsigned)> f);
 	unsigned GetNumLines() { return mLines.size(); }
+	std::string Date() const;
 
 	GtkScrolledWindow *mScrolledView = 0; // TODO: Should not be public, manage in a better way.
 	GtkTextView *mTextView = 0; // TODO: Should not be public, manage in a better way.
@@ -42,4 +44,5 @@ private:
 	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
+	struct timespec mCtime = {0};
 };
