@@ -163,11 +163,10 @@ int View::AddTab(Document *doc, const std::string &label, gpointer cbData, GCall
 	gtk_text_view_set_wrap_mode(doc->mTextView, GTK_WRAP_CHAR);
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
 	gtk_widget_modify_font(textview, font);
-	gtk_widget_set_size_request(textview, 5, 5);
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
-	gtk_notebook_append_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
-
+	int page = gtk_notebook_prepend_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	gtk_widget_show_all(scrollview);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
 
 	return nextId++;
 }
