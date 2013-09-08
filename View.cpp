@@ -34,7 +34,9 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 void View::SetWindowTitle(const std::string &str) {
 	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
+	g_assert(child != nullptr);
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
+	g_assert(labelWidget != nullptr);
 	gtk_label_set_label(GTK_LABEL(labelWidget), str.c_str());
 }
 

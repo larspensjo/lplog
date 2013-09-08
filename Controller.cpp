@@ -198,12 +198,9 @@ void Controller::Run(int argc, char *argv[]) {
 				 G_CALLBACK(::TogglePattern), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
-	} else {
-		mView.SetWindowTitle("[empty]");
+		mDoc.UpdateInputData();
+		mView.Replace(&mDoc);
 	}
-
-	mDoc.UpdateInputData();
-	mView.Replace(&mDoc);
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	gtk_main ();
 }
