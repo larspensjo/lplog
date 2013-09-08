@@ -191,7 +191,7 @@ gboolean Controller::KeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[]) {
 	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
-				 GSourceFunc(::TestForeChanges), G_CALLBACK(::TogglePattern), this);
+				 G_CALLBACK(::TogglePattern), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	} else {
@@ -200,6 +200,7 @@ void Controller::Run(int argc, char *argv[]) {
 
 	mDoc.UpdateInputData();
 	mView.Replace(&mDoc);
+	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	gtk_main ();
 }
 

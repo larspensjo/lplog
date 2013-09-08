@@ -24,8 +24,8 @@ class Document;
 class View
 {
 public:
-	GtkTextBuffer *Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-						GSourceFunc timer, GCallback togglePattern, gpointer cbData);
+	void Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+				GCallback togglePattern, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view

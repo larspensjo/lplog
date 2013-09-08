@@ -51,8 +51,8 @@ static gboolean ChangeCurrentPage(GtkNotebook *notebook, gint tab, gpointer user
 	return true;
 }
 
-GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-							GSourceFunc timer, GCallback togglePattern, gpointer cbData)
+void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+				  GCallback togglePattern, gpointer cbData)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -134,8 +134,6 @@ GtkTextBuffer *View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallb
 	mNotebook = gtk_notebook_new();
 	gtk_box_pack_start(GTK_BOX(hbox), mNotebook, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(mNotebook), "change-current-page", G_CALLBACK(ChangeCurrentPage), cbData );
-
-	g_timeout_add(1000, timer, cbData);
 
 	/* Enter the main loop */
 	gtk_widget_show_all(win);
