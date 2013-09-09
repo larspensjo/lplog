@@ -71,6 +71,10 @@ std::string Document::Date() const {
     return buf;
 }
 
+void Document::StopUpdate() {
+	mStopUpdates = true;
+}
+
 void Document::AddSourceFile(const std::string &fileName) {
 	mStopUpdates = false;
 	mFileName = fileName;

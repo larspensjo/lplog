@@ -130,6 +130,7 @@ void Controller::PollInput(bool forceUpdate) {
 	if (mCurrentDoc->UpdateInputData() || forceUpdate) {
 		if (mCurrentDoc->GetNumLines() < lines) {
 			mView.DimCurrentTab();
+			mCurrentDoc->StopUpdate(); // The old tab shall no longer update
 			std::string fn = mCurrentDoc->GetFileName();
 			mCurrentDoc = &mDocumentList[mView.nextId];
 			mCurrentDoc->AddSourceFile(fn);

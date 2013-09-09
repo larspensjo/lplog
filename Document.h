@@ -34,6 +34,7 @@ public:
 	void IterateLines(std::function<void (const std::string&, unsigned)> f);
 	unsigned GetNumLines() { return mLines.size(); }
 	std::string Date() const;
+	void StopUpdate();
 
 	GtkScrolledWindow *mScrolledView = 0; // TODO: Should not be public, manage in a better way.
 	GtkTextView *mTextView = 0; // TODO: Should not be public, manage in a better way.
