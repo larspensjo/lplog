@@ -22,6 +22,7 @@ public:
 	void ToggleButton(const std::string &name);
 	void PollInput();
 	void About() { mView.About(); }
+	void ChangeDoc(int);
 private:
 	bool mValidSelectedPatternIter = false;
 	View mView;

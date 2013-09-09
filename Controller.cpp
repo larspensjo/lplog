@@ -94,6 +94,20 @@ static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x,
 	gtk_drag_finish(context, success, false, time);
 }
 
+static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, Controller *c) {
+	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), tab);
+	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), child);
+	const char *name = gtk_widget_get_name(labelWidget);
+	// g_print("Notebook CB: page %d, id %d\n", tab, atoi(name));
+	c->ChangeDoc(atoi(name));
+}
+
+void Controller::ChangeDoc(int id) {
+	mCurrentDoc = &mDocumentList[id];
+	this->PollInput();
+	mView.UpdateStatusBar(mCurrentDoc);
+}
+
 void Controller::OpenURI(const std::string &uri) {
 	unsigned prefixSize = filePrefixURI.size();
 	if (uri.size() < prefixSize)
@@ -114,7 +128,9 @@ void Controller::PollInput() {
 	unsigned lines = mCurrentDoc->GetNumLines();
 	if (mCurrentDoc->UpdateInputData()) {
 		if (mCurrentDoc->GetNumLines() < lines) {
+			std::string fn = mCurrentDoc->GetFileName();
 			mCurrentDoc = &mDocumentList[mView.nextId];
+			mCurrentDoc->AddSourceFile(fn);
 			mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 			mView.Replace(mCurrentDoc); // Restarted new file
 		} else {
@@ -201,7 +217,7 @@ gboolean Controller::KeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[]) {
 	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
-				 G_CALLBACK(::TogglePattern), this);
+				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}

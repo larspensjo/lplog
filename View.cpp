@@ -48,15 +48,8 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	return true;
 }
 
-static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, gpointer user_data) {
-	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), tab);
-	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), child);
-	const char *name = gtk_widget_get_name(labelWidget);
-	// g_print("Notebook CB: page %d, id %d\n", tab, atoi(name));
-}
-
 void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-				  GCallback togglePattern, gpointer cbData)
+				  GCallback togglePattern, GCallback changePage, gpointer cbData)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -137,7 +130,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	mNotebook = gtk_notebook_new();
 	gtk_box_pack_start(GTK_BOX(hbox), mNotebook, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(mNotebook), "switch-page", G_CALLBACK(::ChangeCurrentPage), cbData );
+	g_signal_connect(G_OBJECT(mNotebook), "switch-page", changePage, cbData );
 
 	/* Enter the main loop */
 	gtk_widget_show_all(win);
