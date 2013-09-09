@@ -35,6 +35,7 @@ public:
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
 	int AddTab(Document *, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress);
+	void DimCurrentTab();
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);

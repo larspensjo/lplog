@@ -129,6 +129,7 @@ void Controller::PollInput(bool forceUpdate) {
 	unsigned lines = mCurrentDoc->GetNumLines();
 	if (mCurrentDoc->UpdateInputData() || forceUpdate) {
 		if (mCurrentDoc->GetNumLines() < lines) {
+			mView.DimCurrentTab();
 			std::string fn = mCurrentDoc->GetFileName();
 			mCurrentDoc = &mDocumentList[mView.nextId];
 			mCurrentDoc->AddSourceFile(fn);

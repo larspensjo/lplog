@@ -173,6 +173,14 @@ int View::GetCurrentTabId() const {
 	return atoi(name);
 }
 
+void View::DimCurrentTab() {
+	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
+	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
+	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
+	GdkRGBA color = {0.7, 0.7, 0.7, 1};
+	gtk_widget_override_background_color(labelWidget, GTK_STATE_FLAG_NORMAL, &color);
+}
+
 GtkWidget *View::FileOpenDialog() {
 	return gtk_file_chooser_dialog_new("Open File", mWindow, GTK_FILE_CHOOSER_ACTION_OPEN,
 										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
