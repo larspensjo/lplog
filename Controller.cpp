@@ -101,41 +101,45 @@ void Controller::OpenURI(const std::string &uri) {
 	if (uri.substr(0, prefixSize) != filePrefixURI)
 		return;
 	const std::string filename = uri.substr(prefixSize);
-	mDoc.AddSourceFile(filename);
-	mDoc.UpdateInputData();
-	mView.AddTab(&mDoc, mDoc.GetFileNameShort(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-	mView.Replace(&mDoc);
+	mCurrentDoc = &mDocumentList[mView.nextId];
+	mCurrentDoc->AddSourceFile(filename);
+	mCurrentDoc->UpdateInputData();
+	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
+	mView.Replace(mCurrentDoc);
 }
 
 void Controller::PollInput() {
-	unsigned lines = mDoc.GetNumLines();
-	if (mDoc.UpdateInputData()) {
-		if (mDoc.GetNumLines() < lines) {
-			mView.AddTab(&mDoc, mDoc.GetFileNameShort(), this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-			mView.Replace(&mDoc); // Restarted new file
+	if (mCurrentDoc == nullptr)
+		return; // There is no current document
+	unsigned lines = mCurrentDoc->GetNumLines();
+	if (mCurrentDoc->UpdateInputData()) {
+		if (mCurrentDoc->GetNumLines() < lines) {
+			mCurrentDoc = &mDocumentList[mView.nextId];
+			mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
+			mView.Replace(mCurrentDoc); // Restarted new file
 		} else {
-			mView.Append(&mDoc);
+			mView.Append(mCurrentDoc);
 		}
 	}
 }
 
 void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 	mView.TogglePattern(path);
-	mView.Replace(&mDoc);
+	mView.Replace(mCurrentDoc);
 }
 
 void Controller::ToggleButton(const std::string &name) {
 	if (name == "autoscroll")
-		mView.UpdateStatusBar(&mDoc); // This will use the new automatic scrolling
+		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
 	else if (name == "linenumbers") {
-		mView.ToggleLineNumbers(&mDoc);
+		mView.ToggleLineNumbers(mCurrentDoc);
 	} else
 		cout << "Unknown toggle button: " << name << endl;
 }
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	mView.EditPattern(path, newString);
-	mView.Replace(&mDoc);
+	mView.Replace(mCurrentDoc);
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
@@ -147,11 +151,12 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 			gchar *p = gtk_clipboard_wait_for_text(clipboard);
 			if (p != nullptr) {
 				// cout << "Pasted text: " << p << " key " << endl;
+				mCurrentDoc = &mDocumentList[mView.nextId];
 				unsigned size = strlen(p);
-				mDoc.AddSourceText(p, size);
+				mCurrentDoc->AddSourceText(p, size);
 				g_free(p);
-				mView.AddTab(&mDoc, "[Pasted text]", this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-				mView.Replace(&mDoc);
+				mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
+				mView.Replace(mCurrentDoc);
 			}
 			stopEvent = true;
 		}
@@ -164,7 +169,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_F2:
-		mView.OpenPatternForEditing(&mDoc);
+		mView.OpenPatternForEditing(mCurrentDoc);
 		stopEvent = true;
 		break;
 	case GDK_KEY_Delete:
@@ -185,8 +190,8 @@ gboolean Controller::KeyPressed(guint keyval) {
 	}
 	if (!stopEvent)
 		return false;
-	mView.Replace(&mDoc);
-	mView.UpdateStatusBar(&mDoc);
+	mView.Replace(mCurrentDoc);
+	mView.UpdateStatusBar(mCurrentDoc);
 	return true; // Stop event from propagating
 }
 
@@ -199,8 +204,6 @@ void Controller::Run(int argc, char *argv[]) {
 				 G_CALLBACK(::TogglePattern), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
-		mDoc.UpdateInputData();
-		mView.Replace(&mDoc);
 	}
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	gtk_main ();

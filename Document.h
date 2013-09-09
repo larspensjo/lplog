@@ -42,8 +42,9 @@ private:
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
-	void SplitLines(char *, unsigned size); // This will modify the argument
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	struct timespec mCtime = {0};
+
+	void SplitLines(char *, unsigned size); // This will modify the argument
 };

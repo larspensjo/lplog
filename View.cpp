@@ -143,9 +143,8 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	gtk_widget_show_all(win);
 }
 
-int View::AddTab(Document *doc, const std::string &label, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress) {
-	static int nextId = 0; // Create a new unique number for each tab.
-	GtkWidget *labelWidget = gtk_label_new(label.c_str());
+int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress) {
+	GtkWidget *labelWidget = gtk_label_new(doc->GetFileNameShort().c_str());
 	std::stringstream ss;
 	ss << nextId;
 	gtk_widget_set_name(labelWidget, ss.str().c_str());

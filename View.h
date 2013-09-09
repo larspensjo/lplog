@@ -34,7 +34,7 @@ public:
 	void About();
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
-	int AddTab(Document *, const std::string &label, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress);
+	int AddTab(Document *, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress);
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);
@@ -42,6 +42,8 @@ public:
 	void AddPatternLine();
 	void AddPatternLineIndented();
 	void EditPattern(gchar *path, gchar *newString);
+
+	int nextId = 0; // Create a new unique number for each tab.
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkWidget *mAutoScroll = 0;

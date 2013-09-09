@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include <map>
 
 #include "View.h"
 #include "Document.h"
@@ -24,5 +25,6 @@ public:
 private:
 	bool mValidSelectedPatternIter = false;
 	View mView;
-	Document mDoc;
+	Document *mCurrentDoc = 0;
+	std::map<int, Document> mDocumentList;
 };

@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "Document.h"
 
 using std::ios;
@@ -84,10 +85,13 @@ void Document::AddSourceFile(const std::string &fileName) {
 
 void Document::AddSourceText(char *text, unsigned size) {
 	mStopUpdates = true;
-	mFileName = "Paste data";
+	mFileName = "[Paste]";
 	mCurrentPosition = 0;
 	mLines.clear();
 	this->SplitLines(text, size);
+	struct timeval tv = { 0 };
+	gettimeofday(&tv, 0);
+	mCtime.tv_sec = tv.tv_sec;
 }
 
 bool Document::UpdateInputData() {
