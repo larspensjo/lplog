@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include <time.h>
+#include <ctime>
 
 class Document
 {
@@ -44,7 +44,7 @@ private:
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
-	struct timespec mCtime = {0};
+	std::time_t mFileTime = {0};
 
 	void SplitLines(char *, unsigned size); // This will modify the argument
 };

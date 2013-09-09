@@ -12,12 +12,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
+#undef __STRICT_ANSI__ // Needed for "struct stat" in MinGW.
 
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <sys/time.h>
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include "Document.h"
 
 using std::ios;
@@ -56,14 +61,10 @@ static bool findNL(const char *source, unsigned &length, const char *&next) {
 
 std::string Document::Date() const {
     int ret;
-    struct tm t;
-    char buf[30];
+    char buf[100];
 
-    tzset();
-    if (localtime_r(&(mCtime.tv_sec), &t) == NULL)
-        return "";
-
-    ret = strftime(buf, sizeof buf, "%F %T", &t);
+	std::tm *tm = std::localtime(&mFileTime);
+    ret = std::strftime(buf, sizeof buf, "%c", tm);
     if (ret == 0)
         return "";
 
@@ -77,9 +78,9 @@ void Document::AddSourceFile(const std::string &fileName) {
 	mLines.clear();
 	struct stat st;
 	if (stat(fileName.c_str(), &st) == 0) {
-		mCtime = st.st_ctim;
+		mFileTime = st.st_ctime;
 	} else {
-		mCtime = {0};
+		mFileTime = 0;
 	}
 }
 
@@ -89,9 +90,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mCurrentPosition = 0;
 	mLines.clear();
 	this->SplitLines(text, size);
-	struct timeval tv = { 0 };
-	gettimeofday(&tv, 0);
-	mCtime.tv_sec = tv.tv_sec;
+	std::localtime(&mFileTime);
 }
 
 bool Document::UpdateInputData() {

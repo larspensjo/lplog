@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <stdlib.h>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
 #include "Controller.h"
