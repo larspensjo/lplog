@@ -104,7 +104,7 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
-	this->PollInput();
+	this->PollInput(true);
 	mView.UpdateStatusBar(mCurrentDoc);
 }
 
@@ -122,11 +122,11 @@ void Controller::OpenURI(const std::string &uri) {
 	mView.Replace(mCurrentDoc);
 }
 
-void Controller::PollInput() {
+void Controller::PollInput(bool forceUpdate) {
 	if (mCurrentDoc == nullptr)
 		return; // There is no current document
 	unsigned lines = mCurrentDoc->GetNumLines();
-	if (mCurrentDoc->UpdateInputData()) {
+	if (mCurrentDoc->UpdateInputData() || forceUpdate) {
 		if (mCurrentDoc->GetNumLines() < lines) {
 			std::string fn = mCurrentDoc->GetFileName();
 			mCurrentDoc = &mDocumentList[mView.nextId];
