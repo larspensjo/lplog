@@ -23,9 +23,11 @@ public:
 	void PollInput(bool forceUpdate = false);
 	void About() { mView.About(); }
 	void ChangeDoc(int);
+	void Quit() { mQuitNow = true; }
 private:
 	bool mValidSelectedPatternIter = false;
 	View mView;
 	Document *mCurrentDoc = 0;
 	std::map<int, Document> mDocumentList;
+	bool mQuitNow = false;
 };

@@ -33,7 +33,7 @@ static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
 static void ButtonClicked(GtkButton *button, Controller *c) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
 	if (name == "quit")
-		gtk_main_quit();
+		c->Quit();
 	else if (name == "line")
 		c->KeyPressed(GDK_KEY_o);
 	else if (name == "remove")
@@ -103,6 +103,10 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 	c->ChangeDoc(atoi(name));
 }
 
+static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
+	c->Quit();
+	return false;
+}
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
 	this->PollInput(true);
@@ -220,12 +224,14 @@ gboolean Controller::KeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[]) {
 	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
-				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), this);
+				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
-	gtk_main ();
+	while (!mQuitNow) {
+		gtk_main_iteration();
+	}
 }
 
 void Controller::FileOpenDialog() {

@@ -49,14 +49,14 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 }
 
 void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-				  GCallback togglePattern, GCallback changePage, gpointer cbData)
+				  GCallback togglePattern, GCallback changePage, GCallback quitCB, gpointer cbData)
 {
 	/* Create the main window */
 	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	mWindow = GTK_WINDOW(win);
 	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
 	gtk_widget_realize (win);
-	g_signal_connect (win, "destroy", gtk_main_quit, NULL);
+	g_signal_connect (win, "destroy", quitCB, cbData);
 	gtk_window_set_default_size(mWindow, 1024, 480);
 
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);

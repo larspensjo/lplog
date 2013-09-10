@@ -25,7 +25,7 @@ class View
 {
 public:
 	void Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-				GCallback togglePattern, GCallback changePage, gpointer cbData);
+				GCallback togglePattern, GCallback changePage, GCallback quitCB, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
