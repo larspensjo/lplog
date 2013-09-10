@@ -107,10 +107,12 @@ static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 	c->Quit();
 	return false;
 }
+
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
-	this->PollInput(true);
-	mView.UpdateStatusBar(mCurrentDoc);
+	g_print("Change to doc %d, lines %d, doc %x\n", id, mCurrentDoc->GetNumLines(), mCurrentDoc);
+	this->PollInput();
+	mForceReplace = true;
 }
 
 void Controller::OpenURI(const std::string &uri) {
@@ -123,8 +125,7 @@ void Controller::OpenURI(const std::string &uri) {
 	mCurrentDoc = &mDocumentList[mView.nextId];
 	mCurrentDoc->AddSourceFile(filename);
 	mCurrentDoc->UpdateInputData();
-	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-	mView.Replace(mCurrentDoc);
+	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 }
 
 void Controller::PollInput(bool forceUpdate) {
@@ -136,10 +137,10 @@ void Controller::PollInput(bool forceUpdate) {
 			mView.DimCurrentTab();
 			mCurrentDoc->StopUpdate(); // The old tab shall no longer update
 			std::string fn = mCurrentDoc->GetFileName();
-			mCurrentDoc = &mDocumentList[mView.nextId];
+			mCurrentDoc = &mDocumentList[mView.nextId]; // Restarted new file
 			mCurrentDoc->AddSourceFile(fn);
 			mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-			mView.Replace(mCurrentDoc); // Restarted new file
+			mForceReplace = true;
 		} else {
 			mView.Append(mCurrentDoc);
 		}
@@ -148,7 +149,7 @@ void Controller::PollInput(bool forceUpdate) {
 
 void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 	mView.TogglePattern(path);
-	mView.Replace(mCurrentDoc);
+	mForceReplace = true;
 }
 
 void Controller::ToggleButton(const std::string &name) {
@@ -162,7 +163,7 @@ void Controller::ToggleButton(const std::string &name) {
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	mView.EditPattern(path, newString);
-	mView.Replace(mCurrentDoc);
+	mForceReplace = true;
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
@@ -178,8 +179,8 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				unsigned size = strlen(p);
 				mCurrentDoc->AddSourceText(p, size);
 				g_free(p);
-				mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-				mView.Replace(mCurrentDoc);
+				mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
+				mForceReplace = true;
 			}
 			stopEvent = true;
 		}
@@ -213,8 +214,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 	}
 	if (!stopEvent)
 		return false;
-	mView.Replace(mCurrentDoc);
-	mView.UpdateStatusBar(mCurrentDoc);
+	mForceReplace = true;
 	return true; // Stop event from propagating
 }
 
@@ -231,6 +231,11 @@ void Controller::Run(int argc, char *argv[]) {
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
+		if (mForceReplace) {
+			mForceReplace = false;
+			mView.Replace(mCurrentDoc);
+			mView.UpdateStatusBar(mCurrentDoc);
+		}
 	}
 }
 

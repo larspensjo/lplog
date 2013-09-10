@@ -136,7 +136,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	gtk_widget_show_all(win);
 }
 
-int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress) {
+int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress, bool switchTab) {
 	GtkWidget *labelWidget = gtk_label_new(doc->GetFileNameShort().c_str());
 	std::stringstream ss;
 	ss << nextId;
@@ -160,7 +160,8 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	int page = gtk_notebook_prepend_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	gtk_widget_show_all(scrollview);
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
+	if (switchTab)
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
 
 	return nextId++;
 }
