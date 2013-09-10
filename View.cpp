@@ -178,8 +178,15 @@ void View::DimCurrentTab() {
 	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
+#if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color = {0.7, 0.7, 0.7, 1};
 	gtk_widget_override_background_color(labelWidget, GTK_STATE_FLAG_NORMAL, &color);
+#else
+	GdkColor color;
+	gdk_color_parse ("black", &color);
+	color.red=128<<8; color.green=128<<8; color.blue=128<<8;
+	gtk_widget_modify_bg(labelWidget, GTK_STATE_NORMAL, &color);
+#endif
 }
 
 GtkWidget *View::FileOpenDialog() {
