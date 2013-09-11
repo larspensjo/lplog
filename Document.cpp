@@ -167,7 +167,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		mIncompleteLastLine = "";
 		p = next;
 	}
-	g_debug("Document::SplitLines total %d, incomplete last %d", mLines.size(), mIncompleteLastLine != "");
+	g_debug("Document::SplitLines total %lu, incomplete last %d in document %p", mLines.size(), mIncompleteLastLine != "", this);
 }
 
 std::string Document::GetFileNameShort() const {

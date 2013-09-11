@@ -112,13 +112,12 @@ static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
-	g_debug("Controller::ChangeDoc doc %d, lines %d", id, mCurrentDoc->GetNumLines());
+	g_debug("Controller::ChangeDoc doc %d (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
 	this->PollInput();
 	mForceReplace = true;
 }
 
 void Controller::OpenURI(const std::string &uri) {
-	g_debug("Controller::OpenURI %s", uri.c_str());
 	unsigned prefixSize = filePrefixURI.size();
 	if (uri.size() < prefixSize)
 		return;
@@ -126,6 +125,7 @@ void Controller::OpenURI(const std::string &uri) {
 		return;
 	const std::string filename = uri.substr(prefixSize);
 	mCurrentDoc = &mDocumentList[mView.nextId];
+	g_debug("Controller::OpenURI %s new document %p", uri.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
 	mCurrentDoc->UpdateInputData();
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
@@ -141,6 +141,7 @@ void Controller::PollInput(bool forceUpdate) {
 			mCurrentDoc->StopUpdate(); // The old tab shall no longer update
 			std::string fn = mCurrentDoc->GetFileName();
 			mCurrentDoc = &mDocumentList[mView.nextId]; // Restarted new file
+			g_debug("Controller::PollInput new document %p for %s", mCurrentDoc, fn.c_str());
 			mCurrentDoc->AddSourceFile(fn);
 			mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
 			mForceReplace = true;
@@ -182,6 +183,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 			if (p != nullptr) {
 				// cout << "Pasted text: " << p << " key " << endl;
 				mCurrentDoc = &mDocumentList[mView.nextId];
+				g_debug("Controller::TextViewKeyPress new document %p", mCurrentDoc);
 				unsigned size = strlen(p);
 				mCurrentDoc->AddSourceText(p, size);
 				g_free(p);
