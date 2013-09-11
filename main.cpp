@@ -54,10 +54,10 @@ using std::endl;
 
 int main (int argc, char *argv[])
 {
+	g_debug("main: Argc before %d", argc);
 	/* Initialize GTK+ */
-	g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, (GLogFunc) gtk_false, NULL);
-	gtk_init (&argc, &argv);
-	g_log_set_handler ("Gtk", G_LOG_LEVEL_WARNING, g_log_default_handler, NULL);
+	gtk_init(&argc, &argv);
+	g_debug("main: Argc after %d", argc);
 
 	View view;
 	Document doc;

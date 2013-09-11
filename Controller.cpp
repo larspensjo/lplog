@@ -32,6 +32,7 @@ static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
 
 static void ButtonClicked(GtkButton *button, Controller *c) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
+	g_debug("ButtonClicked %s", name.c_str());
 	if (name == "quit")
 		c->Quit();
 	else if (name == "line")
@@ -87,6 +88,7 @@ static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x,
 	g_assert(info == 0); // Only support one type for now
 	char **str = gtk_selection_data_get_uris(data);
 	bool success = false;
+	g_debug("DragDataReceived %s", str[0]);
 	if (str != nullptr) {
 		c->OpenURI(str[0]); // Only get the first reference for now
 		g_strfreev(str);
@@ -99,7 +101,7 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), tab);
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), child);
 	const char *name = gtk_widget_get_name(labelWidget);
-	// g_print("Notebook CB: page %d, id %d\n", tab, atoi(name));
+	g_debug("ChangeCurrentPage tab %d widget %s", tab, name);
 	c->ChangeDoc(atoi(name));
 }
 
@@ -110,12 +112,13 @@ static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
-	g_print("Change to doc %d, lines %d, doc %x\n", id, mCurrentDoc->GetNumLines(), mCurrentDoc);
+	g_debug("Controller::ChangeDoc doc %d, lines %d", id, mCurrentDoc->GetNumLines());
 	this->PollInput();
 	mForceReplace = true;
 }
 
 void Controller::OpenURI(const std::string &uri) {
+	g_debug("Controller::OpenURI %s", uri.c_str());
 	unsigned prefixSize = filePrefixURI.size();
 	if (uri.size() < prefixSize)
 		return;
@@ -143,6 +146,7 @@ void Controller::PollInput(bool forceUpdate) {
 			mForceReplace = true;
 		} else {
 			mView.Append(mCurrentDoc);
+			mView.UpdateStatusBar(mCurrentDoc);
 		}
 	}
 }
@@ -153,6 +157,7 @@ void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 }
 
 void Controller::ToggleButton(const std::string &name) {
+	g_debug("Controller::ToggleButton %s", name.c_str());
 	if (name == "autoscroll")
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
 	else if (name == "linenumbers") {
@@ -167,6 +172,7 @@ void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newStri
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
+	g_debug("Controller::TextViewKeyPress keyval %x", keyval);
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_Paste:
@@ -219,6 +225,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 }
 
 gboolean Controller::KeyEvent(GdkEvent *event) {
+	g_debug("Controller::KeyEvent event type %d", event->type);
 	return this->KeyPressed(event->key.keyval);
 }
 
@@ -232,6 +239,7 @@ void Controller::Run(int argc, char *argv[]) {
 	while (!mQuitNow) {
 		gtk_main_iteration();
 		if (mForceReplace) {
+			g_debug("Controller::Run force replace");
 			mForceReplace = false;
 			mView.Replace(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);

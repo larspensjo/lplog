@@ -45,6 +45,7 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	g_assert(list != nullptr);
 	GdkAtom target_type = GDK_POINTER_TO_ATOM(g_list_nth_data(list, 0));
 	gtk_drag_get_data(widget, context, target_type, time);
+	g_debug("DragDrop");
 	return true;
 }
 
@@ -160,6 +161,7 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	int page = gtk_notebook_prepend_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	gtk_widget_show_all(scrollview);
+	g_debug("View::AddTab id %d prev page %d new page %d switching %d", nextId, gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook)), page, switchTab);
 	if (switchTab)
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
 
@@ -187,6 +189,7 @@ void View::DimCurrentTab() {
 	color.red=128<<8; color.green=128<<8; color.blue=128<<8;
 	gtk_widget_modify_bg(labelWidget, GTK_STATE_NORMAL, &color);
 #endif
+	g_debug("View::DimCurrentTab page %d", page);
 }
 
 GtkWidget *View::FileOpenDialog() {
@@ -205,6 +208,7 @@ void View::ToggleLineNumbers(Document *doc) {
 	this->Replace(doc);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
+	g_debug("View::ToggleLineNumbers scrollbar pos %f", pos);
 }
 
 void View::FilterString(std::stringstream &ss, Document *doc) {
@@ -212,6 +216,7 @@ void View::FilterString(std::stringstream &ss, Document *doc) {
 	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
 	g_assert(!empty);
 	std::string separator = ""; // Start empty
+	unsigned startLine = mFoundLines;
 	if (mFoundLines > 0)
 		separator = '\n';
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
@@ -229,6 +234,7 @@ void View::FilterString(std::stringstream &ss, Document *doc) {
 		}
 	};
 	doc->IterateLines(TestLine);
+	g_debug("View::FilterString starting line %d, ending %d", startLine, mFoundLines);
 }
 
 void View::OpenPatternForEditing(Document *doc) {
@@ -322,6 +328,7 @@ void View::Append(Document *doc) {
 	g_assert(doc->mScrolledView != nullptr);
 	auto adj = gtk_scrolled_window_get_vadjustment(doc->mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
+	g_debug("View::Append scrollbar %f", pos);
 	std::stringstream ss;
 	this->FilterString(ss, doc);
 	GtkTextIter last;
@@ -331,16 +338,15 @@ void View::Append(Document *doc) {
 	gtk_text_buffer_insert(buffer, &last, ss.str().c_str(), -1);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-	UpdateStatusBar(doc);
 }
 
 void View::Replace(Document *doc) {
 	mFoundLines = 0;
+	g_debug("View::Replace");
 	std::stringstream ss;
 	this->FilterString(ss, doc);
 	g_assert(doc->mTextView != nullptr);
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
-	UpdateStatusBar(doc);
 }
 
 void View::UpdateStatusBar(Document *doc) {

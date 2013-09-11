@@ -76,6 +76,7 @@ void Document::StopUpdate() {
 }
 
 void Document::AddSourceFile(const std::string &fileName) {
+	g_debug("Document::AddSourceFile %s", fileName.c_str());
 	mStopUpdates = false;
 	mFileName = fileName;
 	mCurrentPosition = 0;
@@ -94,6 +95,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mCurrentPosition = 0;
 	mLines.clear();
 	this->SplitLines(text, size);
+	g_debug("Document::AddSourceText %d characters %lu lines", size, mLines.size());
 	std::localtime(&mFileTime);
 }
 
@@ -104,6 +106,7 @@ bool Document::UpdateInputData() {
 	if (!input.is_open()) {
 		// There is no file to open
 		if (mCurrentPosition != 0) {
+			g_debug("Document::UpdateInputData no file");
 			// There was a file last time we tried
 			mCurrentPosition = 0;
 			mLines.clear();
@@ -119,6 +122,7 @@ bool Document::UpdateInputData() {
 	mCurrentPosition = end;
 	if (mCurrentPosition <= startPos) {
 		// There is a new file
+		g_debug("Document::UpdateInputData new content");
 		startPos = 0;
 		mLines.clear();
 	}
@@ -163,6 +167,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		mIncompleteLastLine = "";
 		p = next;
 	}
+	g_debug("Document::SplitLines total %d, incomplete last %d", mLines.size(), mIncompleteLastLine != "");
 }
 
 std::string Document::GetFileNameShort() const {
