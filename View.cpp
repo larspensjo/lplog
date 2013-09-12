@@ -32,12 +32,8 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
-	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
-	g_assert(child != nullptr);
-	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
-	g_assert(labelWidget != nullptr);
-	gtk_label_set_label(GTK_LABEL(labelWidget), str.c_str());
+	std::string newTitle = "LPlog 1.1b       " + str;
+	gtk_window_set_title(mWindow, newTitle.c_str());
 }
 
 static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, gpointer user_data) {
@@ -53,11 +49,11 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 				  GCallback togglePattern, GCallback changePage, GCallback quitCB, gpointer cbData)
 {
 	/* Create the main window */
-	GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	mWindow = GTK_WINDOW(win);
-	gtk_container_set_border_width (GTK_CONTAINER (win), 1);
+	gtk_container_set_border_width(GTK_CONTAINER (win), 1);
 	gtk_widget_realize (win);
-	g_signal_connect (win, "destroy", quitCB, cbData);
+	g_signal_connect(win, "destroy", quitCB, cbData);
 	gtk_window_set_default_size(mWindow, 1024, 480);
 
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);

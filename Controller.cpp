@@ -114,6 +114,7 @@ void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
 	g_debug("[%d] Controller::ChangeDoc doc (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
 	this->PollInput();
+	mView.SetWindowTitle(mCurrentDoc->GetFileNameShort());
 	mQueueReplace = true;
 }
 
