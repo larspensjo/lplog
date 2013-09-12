@@ -45,6 +45,8 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 		c->About();
 	else if (name == "open")
 		c->FileOpenDialog();
+	else if (name == "close")
+		c->CloseCurrentTab();
 	else if (name == "paste")
 		c->TextViewKeyPress(GDK_KEY_Paste);
 	else
@@ -108,6 +110,19 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 	c->Quit();
 	return false;
+}
+
+void Controller::CloseCurrentTab() {
+	int id = mView.GetCurrentTabId();
+	if (id == -1)
+		return;
+	g_debug("[%d] Controller::CloseCurrentTab tab", id);
+	if (mCurrentDoc == &mDocumentList[id])
+		mCurrentDoc = nullptr;
+	mDocumentList.erase(id);
+	mView.CloseCurrentTab();
+	mView.SetWindowTitle("");
+	mView.UpdateStatusBar(nullptr);
 }
 
 void Controller::ChangeDoc(int id) {

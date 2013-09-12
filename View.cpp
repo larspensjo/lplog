@@ -64,6 +64,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	auto menu = this->AddMenu(menubar, "_File");
 	this->AddMenuButton(menu, "_Open", "open", buttonCB, cbData);
+	this->AddMenuButton(menu, "_Close", "close", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Exit", "quit", buttonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Edit");
@@ -162,6 +163,13 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
 
 	return nextId++;
+}
+
+void View::CloseCurrentTab() {
+	int id = GetCurrentTabId();
+	int tab = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
+	g_debug("[%d] View::CloseCurrentTab tab %d widget %s", id, tab);
+	gtk_notebook_remove_page(GTK_NOTEBOOK(mNotebook), tab);
 }
 
 int View::GetCurrentTabId() const {
@@ -350,6 +358,10 @@ void View::Replace(Document *doc) {
 }
 
 void View::UpdateStatusBar(Document *doc) {
+	if (doc == nullptr) {
+		gtk_label_set_text(mStatusBar, "");
+		return;
+	}
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll))) {
 		GtkTextIter lastLine;
 		g_assert(doc->mTextView != nullptr);

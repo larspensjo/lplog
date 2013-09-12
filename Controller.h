@@ -24,6 +24,7 @@ public:
 	void About() { mView.About(); }
 	void ChangeDoc(int);
 	void Quit() { mQuitNow = true; }
+	void CloseCurrentTab();
 private:
 	bool mValidSelectedPatternIter = false;
 	View mView;

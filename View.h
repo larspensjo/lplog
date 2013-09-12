@@ -36,6 +36,7 @@ public:
 	void UpdateStatusBar(Document *doc);
 	int AddTab(Document *, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress, bool switchTab = false);
 	void DimCurrentTab();
+	void CloseCurrentTab();
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);
