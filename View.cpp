@@ -161,7 +161,7 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	int page = gtk_notebook_prepend_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	gtk_widget_show_all(scrollview);
-	g_debug("View::AddTab id %d prev page %d new page %d switching %d", nextId, gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook)), page, switchTab);
+	g_debug("[%d] View::AddTab id %d prev page %d new page %d switching %d", GetCurrentTabId(), nextId, gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook)), page, switchTab);
 	if (switchTab)
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
 
@@ -171,7 +171,11 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 int View::GetCurrentTabId() const {
 	int page = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(mNotebook), page);
+	if (child == nullptr)
+		return -1;
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(mNotebook), child);
+	if (labelWidget == nullptr)
+		return -1;
 	const char *name = gtk_widget_get_name(labelWidget);
 	return atoi(name);
 }
@@ -189,7 +193,7 @@ void View::DimCurrentTab() {
 	color.red=128<<8; color.green=128<<8; color.blue=128<<8;
 	gtk_widget_modify_bg(labelWidget, GTK_STATE_NORMAL, &color);
 #endif
-	g_debug("View::DimCurrentTab page %d", page);
+	g_debug("[%d] View::DimCurrentTab page %d", GetCurrentTabId(), page);
 }
 
 GtkWidget *View::FileOpenDialog() {
@@ -208,10 +212,10 @@ void View::ToggleLineNumbers(Document *doc) {
 	this->Replace(doc);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-	g_debug("View::ToggleLineNumbers scrollbar pos %f", pos);
+	g_debug("[%d] View::ToggleLineNumbers scrollbar pos %f", GetCurrentTabId(), pos);
 }
 
-void View::FilterString(std::stringstream &ss, Document *doc) {
+void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine) {
 	GtkTreeIter iter;
 	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
 	g_assert(!empty);
@@ -233,8 +237,8 @@ void View::FilterString(std::stringstream &ss, Document *doc) {
 			++mFoundLines;
 		}
 	};
-	doc->IterateLines(TestLine);
-	g_debug("View::FilterString starting line %d, ending %d", startLine, mFoundLines);
+	doc->IterateLines(TestLine, restartFirstLine);
+	g_debug("[%d] View::FilterString starting line %d, ending %d", GetCurrentTabId(), startLine, mFoundLines);
 }
 
 void View::OpenPatternForEditing(Document *doc) {
@@ -328,9 +332,9 @@ void View::Append(Document *doc) {
 	g_assert(doc->mScrolledView != nullptr);
 	auto adj = gtk_scrolled_window_get_vadjustment(doc->mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
-	g_debug("View::Append scrollbar %f", pos);
+	g_debug("[%d] View::Append scrollbar %f", GetCurrentTabId(), pos);
 	std::stringstream ss;
-	this->FilterString(ss, doc);
+	this->FilterString(ss, doc, false);
 	GtkTextIter last;
 	g_assert(doc->mTextView != nullptr);
 	auto buffer = gtk_text_view_get_buffer(doc->mTextView);
@@ -342,9 +346,9 @@ void View::Append(Document *doc) {
 
 void View::Replace(Document *doc) {
 	mFoundLines = 0;
-	g_debug("View::Replace");
+	g_debug("[%d] View::Replace", GetCurrentTabId());
 	std::stringstream ss;
-	this->FilterString(ss, doc);
+	this->FilterString(ss, doc, true);
 	g_assert(doc->mTextView != nullptr);
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }

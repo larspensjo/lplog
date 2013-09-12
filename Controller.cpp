@@ -112,7 +112,7 @@ static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
-	g_debug("Controller::ChangeDoc doc %d (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
+	g_debug("[%d] Controller::ChangeDoc doc (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
 	this->PollInput();
 	mForceReplace = true;
 }
@@ -125,30 +125,32 @@ void Controller::OpenURI(const std::string &uri) {
 		return;
 	const std::string filename = uri.substr(prefixSize);
 	mCurrentDoc = &mDocumentList[mView.nextId];
-	g_debug("Controller::OpenURI %s new document %p", uri.c_str(), mCurrentDoc);
+	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), uri.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
-	mCurrentDoc->UpdateInputData();
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 }
 
-void Controller::PollInput(bool forceUpdate) {
+void Controller::PollInput() {
 	if (mCurrentDoc == nullptr)
 		return; // There is no current document
-	unsigned lines = mCurrentDoc->GetNumLines();
-	if (mCurrentDoc->UpdateInputData() || forceUpdate) {
-		if (mCurrentDoc->GetNumLines() < lines) {
-			mView.DimCurrentTab();
-			mCurrentDoc->StopUpdate(); // The old tab shall no longer update
-			std::string fn = mCurrentDoc->GetFileName();
-			mCurrentDoc = &mDocumentList[mView.nextId]; // Restarted new file
-			g_debug("Controller::PollInput new document %p for %s", mCurrentDoc, fn.c_str());
-			mCurrentDoc->AddSourceFile(fn);
-			mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress));
-			mForceReplace = true;
-		} else {
-			mView.Append(mCurrentDoc);
-			mView.UpdateStatusBar(mCurrentDoc);
-		}
+	Document::UpdateResult res = mCurrentDoc->UpdateInputData();
+	switch (res) {
+	case Document::UpdateResult::Replaced: {
+		mView.DimCurrentTab();
+		mCurrentDoc->StopUpdate(); // The old tab shall no longer update
+		std::string fn = mCurrentDoc->GetFileName();
+		Document *newDoc = &mDocumentList[mView.nextId]; // Restarted new file
+		g_debug("[%d] Controller::PollInput new document %p for %s", mView.GetCurrentTabId(), newDoc, fn.c_str());
+		newDoc->AddSourceFile(fn);
+		mView.AddTab(newDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), false);
+		break;
+	}
+	case Document::UpdateResult::Grow:
+		mView.Append(mCurrentDoc);
+		mView.UpdateStatusBar(mCurrentDoc);
+		break;
+	case Document::UpdateResult::NoChange:
+		break;
 	}
 }
 
@@ -158,7 +160,7 @@ void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 }
 
 void Controller::ToggleButton(const std::string &name) {
-	g_debug("Controller::ToggleButton %s", name.c_str());
+	g_debug("[%d] Controller::ToggleButton %s", mView.GetCurrentTabId(), name.c_str());
 	if (name == "autoscroll")
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
 	else if (name == "linenumbers") {
@@ -173,7 +175,7 @@ void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newStri
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
-	g_debug("Controller::TextViewKeyPress keyval %x", keyval);
+	g_debug("[%d] Controller::TextViewKeyPress keyval %x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_Paste:
@@ -183,7 +185,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 			if (p != nullptr) {
 				// cout << "Pasted text: " << p << " key " << endl;
 				mCurrentDoc = &mDocumentList[mView.nextId];
-				g_debug("Controller::TextViewKeyPress new document %p", mCurrentDoc);
+				g_debug("[%d] Controller::TextViewKeyPress new document %p", mView.GetCurrentTabId(), mCurrentDoc);
 				unsigned size = strlen(p);
 				mCurrentDoc->AddSourceText(p, size);
 				g_free(p);
@@ -227,7 +229,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 }
 
 gboolean Controller::KeyEvent(GdkEvent *event) {
-	g_debug("Controller::KeyEvent event type %d", event->type);
+	g_debug("[%d] Controller::KeyEvent event type %d", mView.GetCurrentTabId(), event->type);
 	return this->KeyPressed(event->key.keyval);
 }
 
@@ -241,7 +243,7 @@ void Controller::Run(int argc, char *argv[]) {
 	while (!mQuitNow) {
 		gtk_main_iteration();
 		if (mForceReplace) {
-			g_debug("Controller::Run force replace");
+			g_debug("[%d] Controller::Run force replace", mView.GetCurrentTabId());
 			mForceReplace = false;
 			mView.Replace(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);

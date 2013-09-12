@@ -28,10 +28,15 @@ class Document
 public:
 	void AddSourceFile(const std::string &fileName); // Add a source file
 	void AddSourceText(char *, unsigned size); // Add text
-	bool UpdateInputData(); // Update from file, return true if there were any changes.
+	enum class UpdateResult {
+		NoChange, // The same content, no change
+		Grow,     // New content added
+		Replaced  // New file
+	};
+	UpdateResult UpdateInputData(); // Update from file
 	const std::string &GetFileName() const;
 	std::string GetFileNameShort() const; // Get the last part of the filename
-	void IterateLines(std::function<void (const std::string&, unsigned)> f);
+	void IterateLines(std::function<void (const std::string&, unsigned)> f, bool restartFirstLine);
 	unsigned GetNumLines() { return mLines.size(); }
 	std::string Date() const;
 	void StopUpdate();

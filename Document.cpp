@@ -105,44 +105,45 @@ void Document::AddSourceText(char *text, unsigned size) {
 	std::localtime(&mFileTime);
 }
 
-bool Document::UpdateInputData() {
+Document::UpdateResult Document::UpdateInputData() {
+	mFirstNewLine = mLines.size(); // Remember where the new lines started after the update
 	if (mFileName == "" || mStopUpdates)
-		return false;
+		return UpdateResult::NoChange;
 	std::ifstream input(mFileName);
 	if (!input.is_open()) {
 		// There is no file to open
 		if (mCurrentPosition != 0) {
 			g_debug("Document::UpdateInputData no file");
-			// There was a file last time we tried
-			mCurrentPosition = 0;
-			mLines.clear();
-			return true;
+			mStopUpdates = true;
+			return UpdateResult::Replaced;
 		}
-		return false;
+		return UpdateResult::NoChange;
 	}
 	std::ifstream::pos_type startPos = mCurrentPosition;
 	input.seekg (0, ios::end);
 	std::ifstream::pos_type end = input.tellg();
 	if (end == mCurrentPosition)
-		return false; // No change.
+		return UpdateResult::NoChange;
 	mCurrentPosition = end;
 	if (mCurrentPosition <= startPos) {
 		// There is a new file
 		g_debug("Document::UpdateInputData new content");
-		startPos = 0;
-		mLines.clear();
+		mStopUpdates = true;
+		return UpdateResult::Replaced;
 	}
-	mFirstNewLine = mLines.size(); // Remember where the new lines started after the update
 	auto size = mCurrentPosition - startPos;
 	input.seekg (startPos, ios::beg);
 	char *buff = new char[size+1];
 	input.read(buff, size);
 	this->SplitLines(buff, size);
 	delete [] buff;
-	return true;
+	return UpdateResult::Grow;
 }
 
-void Document::IterateLines(std::function<void (const std::string&, unsigned)> f) {
+void Document::IterateLines(std::function<void (const std::string&, unsigned)> f, bool restartFirstLine) {
+	if (restartFirstLine)
+		mFirstNewLine = 0;
+	g_debug("Document::IterateLines from line %d restart %d", mFirstNewLine, restartFirstLine);
 	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
 		f(mLines[line], line);
 	}

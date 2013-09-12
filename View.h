@@ -30,7 +30,7 @@ public:
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
 	void ToggleLineNumbers(Document *);
-	void FilterString(std::stringstream &ss, Document *doc);
+	void FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine);
 	void About();
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
@@ -43,8 +43,9 @@ public:
 	void AddPatternLine();
 	void AddPatternLineIndented();
 	void EditPattern(gchar *path, gchar *newString);
+	int GetCurrentTabId() const;
 
-	int nextId = 0; // Create a new unique number for each tab.
+	int nextId = 0; // Create a new unique number for each tab. TODO: Should be private
 private:
 	GtkLabel *mStatusBar = 0;
 	GtkWidget *mAutoScroll = 0;
@@ -68,5 +69,4 @@ private:
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	GtkWidget *AddMenu(GtkWidget *menubar, const gchar *label);
 	bool FindSelectedPattern(GtkTreeIter *selectedPattern) const;
-	int GetCurrentTabId() const;
 };

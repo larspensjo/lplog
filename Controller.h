@@ -20,7 +20,7 @@ public:
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
 	void ToggleButton(const std::string &name);
-	void PollInput(bool forceUpdate = false);
+	void PollInput();
 	void About() { mView.About(); }
 	void ChangeDoc(int);
 	void Quit() { mQuitNow = true; }
