@@ -29,33 +29,33 @@ using std::ios;
 using std::cout;
 using std::endl;
 
-static bool findNL(const char *source, unsigned &length, const char *&next) {
+static bool findNL(const char *source, unsigned *length, const char **next) {
 	const char *p = source;
 	for (; *p != 0; ++p) {
 		if (p[0] == '\r' && p[1] == '\n') {
 			// Windows format
-			next = p+2;
-			length = p-source;
+			*next = p+2;
+			*length = p-source;
 			return true;
 		}
 		if (p[0] == '\n' && p[1] == '\r') {
 			// Mac format
-			next = p+2;
-			length = p-source;
+			*next = p+2;
+			*length = p-source;
 			return true;
 		}
 		if (p[0] == '\n') {
 			// Unix format
-			next = p+1;
-			length = p-source;
+			*next = p+1;
+			*length = p-source;
 			return true;
 		}
 	}
 	if (p == source)
 		return false;
 	// Just a 0-byte terminator
-	next = p; // Will fail next time
-	length = p-source;
+	*next = p; // Will fail next time
+	*length = p-source;
 	return true;
 }
 
@@ -81,7 +81,6 @@ void Document::AddSourceFile(const std::string &fileName) {
 	if (mFileName[0] == '/')
 		mFileName = mFileName.substr(1);
 #endif
-	g_debug("Document::AddSourceFile %s", mFileName.c_str());
 	mStopUpdates = false;
 	mFileName = mFileName;
 	mCurrentPosition = 0;
@@ -89,6 +88,7 @@ void Document::AddSourceFile(const std::string &fileName) {
 	struct stat st;
 	if (stat(mFileName.c_str(), &st) == 0) {
 		mFileTime = st.st_ctime;
+		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), st.st_size);
 	} else {
 		g_debug("Document::AddSourceFile failed to open (%d)", errno);
 		mFileTime = 0;
@@ -135,7 +135,8 @@ Document::UpdateResult Document::UpdateInputData() {
 	input.seekg (startPos, ios::beg);
 	char *buff = new char[size+1];
 	input.read(buff, size);
-	this->SplitLines(buff, size);
+	// On MinGW, the actual number of characters will be smaller as CRNL is converted to NL.
+	this->SplitLines(buff, input.gcount());
 	delete [] buff;
 	return UpdateResult::Grow;
 }
@@ -161,16 +162,18 @@ void Document::SplitLines(char *buff, unsigned size) {
 	for (const char *p=buff;;) {
 		unsigned len;
 		const char *next;
-		if (!findNL(p, len, next))
+		if (!findNL(p, &len, &next))
 			break;
 		if (p[len] == '\0') {
 			// No newline, means the line is incomplete.
 			mIncompleteLastLine += std::string(p, len);
-			// cout << "Incomplete last line: '" << mIncompleteLastLine << "'" << endl;
+			g_debug("Document::SplitLines incomplete last line '%s'", mIncompleteLastLine.c_str());
 			break;
 		}
 		// Add a new line
 		mLines.push_back(mIncompleteLastLine + std::string(p, len));
+		if (mIncompleteLastLine != "")
+			g_debug("Document::SplitLines merged incomplete last line '%s'", (mIncompleteLastLine + std::string(p, len)).c_str());
 		mIncompleteLastLine = "";
 		p = next;
 	}
