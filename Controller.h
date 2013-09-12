@@ -30,5 +30,6 @@ private:
 	Document *mCurrentDoc = 0;
 	std::map<int, Document> mDocumentList;
 	bool mQuitNow = false;
-	bool mForceReplace= false;
+	bool mQueueReplace = false;
+	bool mQueueAppend = false;
 };

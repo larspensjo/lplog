@@ -114,7 +114,7 @@ void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
 	g_debug("[%d] Controller::ChangeDoc doc (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
 	this->PollInput();
-	mForceReplace = true;
+	mQueueReplace = true;
 }
 
 void Controller::OpenURI(const std::string &uri) {
@@ -146,8 +146,7 @@ void Controller::PollInput() {
 		break;
 	}
 	case Document::UpdateResult::Grow:
-		mView.Append(mCurrentDoc);
-		mView.UpdateStatusBar(mCurrentDoc);
+		mQueueAppend = true;
 		break;
 	case Document::UpdateResult::NoChange:
 		break;
@@ -156,7 +155,7 @@ void Controller::PollInput() {
 
 void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 	mView.TogglePattern(path);
-	mForceReplace = true;
+	mQueueReplace = true;
 }
 
 void Controller::ToggleButton(const std::string &name) {
@@ -171,7 +170,7 @@ void Controller::ToggleButton(const std::string &name) {
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	mView.EditPattern(path, newString);
-	mForceReplace = true;
+	mQueueReplace = true;
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
@@ -190,7 +189,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 				mCurrentDoc->AddSourceText(p, size);
 				g_free(p);
 				mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
-				mForceReplace = true;
+				mQueueReplace = true;
 			}
 			stopEvent = true;
 		}
@@ -224,7 +223,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 	}
 	if (!stopEvent)
 		return false;
-	mForceReplace = true;
+	mQueueReplace = true;
 	return true; // Stop event from propagating
 }
 
@@ -242,12 +241,17 @@ void Controller::Run(int argc, char *argv[]) {
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
-		if (mForceReplace) {
-			g_debug("[%d] Controller::Run force replace", mView.GetCurrentTabId());
-			mForceReplace = false;
+		if (mQueueReplace) {
+			g_debug("[%d] Controller::Run queued replace", mView.GetCurrentTabId());
 			mView.Replace(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
+		} else if (mQueueAppend) {
+			g_debug("[%d] Controller::Run queued append", mView.GetCurrentTabId());
+			mView.Append(mCurrentDoc);
+			mView.UpdateStatusBar(mCurrentDoc);
 		}
+		mQueueAppend = false;
+		mQueueReplace = false;
 	}
 }
 
