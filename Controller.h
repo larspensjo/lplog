@@ -33,4 +33,5 @@ private:
 	bool mQuitNow = false;
 	bool mQueueReplace = false;
 	bool mQueueAppend = false;
+	bool mRootPatternDisabled = false;
 };

@@ -170,8 +170,19 @@ void Controller::PollInput() {
 }
 
 void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
+	g_debug("[%d] Controller::TogglePattern %s", mView.GetCurrentTabId(), path);
 	mView.TogglePattern(path);
-	mQueueReplace = true;
+	// Inhibit update if root pattern is disabled
+	if (mRootPatternDisabled && mView.RootPatternActive()) {
+		g_debug("[%d] Controller::ToggleButton Root pattern enabled", mView.GetCurrentTabId());
+		mRootPatternDisabled = false;
+	}
+	if (!mRootPatternDisabled)
+		mQueueReplace = true;
+	if (!mView.RootPatternActive()) {
+		g_debug("[%d] Controller::ToggleButton Root pattern disabled", mView.GetCurrentTabId());
+		mRootPatternDisabled = true;
+	}
 }
 
 void Controller::ToggleButton(const std::string &name) {
@@ -186,7 +197,9 @@ void Controller::ToggleButton(const std::string &name) {
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	mView.EditPattern(path, newString);
-	mQueueReplace = true;
+	// Inhibit update if root pattern is disabled
+	if (!mRootPatternDisabled)
+		mQueueReplace = true;
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {

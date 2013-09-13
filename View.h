@@ -37,6 +37,7 @@ public:
 	int AddTab(Document *, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress, bool switchTab = false);
 	void DimCurrentTab();
 	void CloseCurrentTab();
+	int GetCurrentTabId() const;
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing(Document *);
@@ -44,7 +45,7 @@ public:
 	void AddPatternLine();
 	void AddPatternLineIndented();
 	void EditPattern(gchar *path, gchar *newString);
-	int GetCurrentTabId() const;
+	bool RootPatternActive();
 
 	int nextId = 0; // Create a new unique number for each tab. TODO: Should be private
 private:

@@ -260,6 +260,14 @@ void View::OpenPatternForEditing(Document *doc) {
 	gtk_tree_path_free(path);
 }
 
+bool View::RootPatternActive() {
+	GValue val = { 0 };
+	gtk_tree_model_get_value(GTK_TREE_MODEL(mPattern), &mPatternRoot, 1, &val);
+	bool active = g_value_get_boolean(&val);
+	g_value_unset(&val);
+	return active;
+}
+
 View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, GtkTreeIter *iter) {
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, iter, 1, &val);
