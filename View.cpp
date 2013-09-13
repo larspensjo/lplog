@@ -115,15 +115,18 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
 	g_signal_connect(G_OBJECT(renderer), "edited", editCell, cbData );
 	auto column = gtk_tree_view_column_new_with_attributes("Pattern", renderer, "text", 0, NULL);
+	gtk_tree_view_column_set_expand(column, TRUE);
 	gtk_tree_view_append_column(mTreeView, column);
 
 	renderer = gtk_cell_renderer_toggle_new();
-	// g_object_set(G_OBJECT(renderer), "activatable", TRUE, NULL);
 	g_signal_connect(G_OBJECT(renderer), "toggled", togglePattern, cbData );
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer, "active", 1, NULL);
 	gtk_tree_view_append_column(mTreeView, column);
 
-	gtk_box_pack_start(GTK_BOX(hbox), tree, FALSE, FALSE, 0);
+	GtkWidget *scrollview = gtk_scrolled_window_new(NULL, NULL);
+	gtk_widget_set_size_request(scrollview, 150, -1);
+	gtk_container_add(GTK_CONTAINER (scrollview), tree);
+	gtk_box_pack_start(GTK_BOX(hbox), scrollview, FALSE, FALSE, 0);
 	gtk_tree_view_expand_all(mTreeView);
 
 	mNotebook = gtk_notebook_new();
