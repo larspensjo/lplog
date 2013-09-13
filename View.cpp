@@ -248,7 +248,7 @@ void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstL
 	g_debug("[%d] View::FilterString starting line %d, ending %d", GetCurrentTabId(), startLine, mFoundLines);
 }
 
-void View::OpenPatternForEditing(Document *doc) {
+void View::OpenPatternForEditing() {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	GtkTreeModel *pattern = 0;
 	GtkTreeIter selectedPattern = { 0 };

@@ -40,7 +40,7 @@ public:
 	int GetCurrentTabId() const;
 
 	void TogglePattern(gchar *path);
-	void OpenPatternForEditing(Document *);
+	void OpenPatternForEditing();
 	void DeletePattern();
 	void AddPatternLine();
 	void AddPatternLineIndented();

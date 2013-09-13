@@ -231,7 +231,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_F2:
-		mView.OpenPatternForEditing(mCurrentDoc);
+		mView.OpenPatternForEditing();
 		stopEvent = true;
 		break;
 	case GDK_KEY_Delete:
