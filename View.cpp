@@ -156,6 +156,11 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	gtk_container_add(GTK_CONTAINER(frame2), mNotebook);
 	g_signal_connect(G_OBJECT(mNotebook), "switch-page", changePage, cbData );
 
+	// Create tags
+	// ===========
+	GtkTextTagTable *mTextTagTable = gtk_text_tag_table_new();
+	GtkTextTag *mBoldTag = gtk_text_tag_new("bold");
+
 	gtk_widget_show_all(win);
 }
 
