@@ -48,7 +48,8 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
 				  GCallback togglePattern, GCallback changePage, GCallback quitCB, gpointer cbData)
 {
-	/* Create the main window */
+	// Create the main window
+	// ======================
 	GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	mWindow = GTK_WINDOW(win);
 	gtk_container_set_border_width(GTK_CONTAINER (win), 1);
@@ -58,6 +59,9 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
+
+	// Create menus
+	// ============
 
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
@@ -76,7 +80,8 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	mStatusBar = GTK_LABEL(gtk_label_new("Status"));
 	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(mStatusBar), FALSE, FALSE, 0);
 
-	/* Create a vertical box with buttons */
+	// Create left pane with buttons
+	// =============================
 	GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_end (GTK_BOX (mainbox), hbox, TRUE, TRUE, 0);
 
@@ -96,8 +101,20 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
+	
+	// Create the horizontal pane for tree view and text view
+	GtkWidget *hpaned = gtk_hpaned_new ();
+	GtkWidget *frame1 = gtk_frame_new (NULL);
+	GtkWidget *frame2 = gtk_frame_new (NULL);
+	gtk_frame_set_shadow_type (GTK_FRAME (frame1), GTK_SHADOW_IN);
+	gtk_frame_set_shadow_type (GTK_FRAME (frame2), GTK_SHADOW_IN);
+	gtk_paned_pack1(GTK_PANED (hpaned), frame1, FALSE, TRUE);
+	gtk_paned_pack2(GTK_PANED (hpaned), frame2, TRUE, FALSE);
+	gtk_widget_set_size_request (frame2, 300, -1);
+	gtk_box_pack_start(GTK_BOX(hbox), hpaned, TRUE, TRUE, 0);
 
-	// Create the tree model and add some test data to it
+	// Create the tree model and add some initial pattern
+	// ==================================================
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
 	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
@@ -106,6 +123,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 
 	// Create the tree view
+	// ====================
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(mPattern));
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
@@ -116,24 +134,28 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_signal_connect(G_OBJECT(renderer), "edited", editCell, cbData );
 	auto column = gtk_tree_view_column_new_with_attributes("Pattern", renderer, "text", 0, NULL);
 	gtk_tree_view_column_set_expand(column, TRUE);
+	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_append_column(mTreeView, column);
 
 	renderer = gtk_cell_renderer_toggle_new();
 	g_signal_connect(G_OBJECT(renderer), "toggled", togglePattern, cbData );
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer, "active", 1, NULL);
+	gtk_tree_view_column_set_expand(column, FALSE);
 	gtk_tree_view_append_column(mTreeView, column);
 
 	GtkWidget *scrollview = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollview), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_widget_set_size_request(scrollview, 150, -1);
-	gtk_container_add(GTK_CONTAINER (scrollview), tree);
-	gtk_box_pack_start(GTK_BOX(hbox), scrollview, FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(scrollview), tree);
+	gtk_container_add(GTK_CONTAINER(frame1), scrollview);
 	gtk_tree_view_expand_all(mTreeView);
 
+	// Create the notebook
+	// ===================
 	mNotebook = gtk_notebook_new();
-	gtk_box_pack_start(GTK_BOX(hbox), mNotebook, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(frame2), mNotebook);
 	g_signal_connect(G_OBJECT(mNotebook), "switch-page", changePage, cbData );
 
-	/* Enter the main loop */
 	gtk_widget_show_all(win);
 }
 
@@ -171,7 +193,7 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 void View::CloseCurrentTab() {
 	int id = GetCurrentTabId();
 	int tab = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
-	g_debug("[%d] View::CloseCurrentTab tab %d widget %s", id, tab);
+	g_debug("[%d] View::CloseCurrentTab tab %d", id, tab);
 	gtk_notebook_remove_page(GTK_NOTEBOOK(mNotebook), tab);
 }
 

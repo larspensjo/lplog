@@ -22,8 +22,8 @@ public:
 	void ToggleButton(const std::string &name);
 	void PollInput();
 	void About() { mView.About(); }
-	void ChangeDoc(int);
-	void Quit() { mQuitNow = true; }
+	void ChangeDoc(int id);                                                  // Change current document
+	void Quit() { mQuitNow = true; }                                         // Request application to shut down
 	void CloseCurrentTab();
 private:
 	bool mValidSelectedPatternIter = false;

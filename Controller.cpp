@@ -99,6 +99,7 @@ static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x,
 	gtk_drag_finish(context, success, false, time);
 }
 
+// Callback when another tab was selected.
 static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, Controller *c) {
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), tab);
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), child);
@@ -158,7 +159,7 @@ void Controller::PollInput() {
 		Document *newDoc = &mDocumentList[mView.nextId]; // Restarted new file
 		g_debug("[%d] Controller::PollInput new document %p for %s", mView.GetCurrentTabId(), newDoc, fn.c_str());
 		newDoc->AddSourceFile(fn);
-		mView.AddTab(newDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), false);
+		mView.AddTab(newDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 		break;
 	}
 	case Document::UpdateResult::Grow:
