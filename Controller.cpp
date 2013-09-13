@@ -271,11 +271,11 @@ void Controller::Run(int argc, char *argv[]) {
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
-		if (mQueueReplace) {
+		if (mQueueReplace && mCurrentDoc != nullptr) {
 			g_debug("[%d] Controller::Run queued replace", mView.GetCurrentTabId());
 			mView.Replace(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
-		} else if (mQueueAppend) {
+		} else if (mQueueAppend && mCurrentDoc != nullptr) {
 			g_debug("[%d] Controller::Run queued append", mView.GetCurrentTabId());
 			mView.Append(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
