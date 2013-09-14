@@ -46,7 +46,7 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 }
 
 void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-				  GCallback togglePattern, GCallback changePage, GCallback quitCB, gpointer cbData)
+				  GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData)
 {
 	// Create the main window
 	// ======================
@@ -57,7 +57,11 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_signal_connect(win, "destroy", quitCB, cbData);
 	gtk_window_set_default_size(mWindow, 1024, 480);
 
-	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *mainbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
+	GtkWidget *mainbox = gtk_vbox_new(FALSE, 0);
+#endif // GTK_CHECK_VERSION
 	gtk_container_add (GTK_CONTAINER (win), mainbox);
 
 	// Create menus
@@ -73,19 +77,47 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	menu = this->AddMenu(menubar, "_Edit");
 	this->AddMenuButton(menu, "_Paste", "paste", buttonCB, cbData);
+	this->AddMenuButton(menu, "_Find", "find", buttonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Help");
 	this->AddMenuButton(menu, "_About", "about", buttonCB, cbData);
 
-	mStatusBar = GTK_LABEL(gtk_label_new("Status"));
-	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(mStatusBar), FALSE, FALSE, 0);
+	// Create the status bar
+	// =====================
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *statusBar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
+#else
+	GtkWidget *statusBar = gtk_hbox_new(FALSE, 1);
+#endif // GTK_CHECK_VERSION
+	gtk_box_pack_end(GTK_BOX (mainbox), GTK_WIDGET(statusBar), FALSE, FALSE, 0);
+
+	mStatusText = GTK_LABEL(gtk_label_new("Status"));
+	gtk_box_pack_end(GTK_BOX (statusBar), GTK_WIDGET(mStatusText), TRUE, TRUE, 0);
+
+#if GTK_CHECK_VERSION(3,6,0)
+	mFindEntry = gtk_search_entry_new();
+#else
+	GtkWidget *findLabel = gtk_label_new("Find:");
+	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(findLabel), FALSE, FALSE, 0);
+	mFindEntry = gtk_entry_new();
+#endif
+	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
+	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(mFindEntry), FALSE, FALSE, 0);
 
 	// Create left pane with buttons
 	// =============================
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
 	GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+#endif // GTK_CHECK_VERSION
 	gtk_box_pack_end (GTK_BOX (mainbox), hbox, TRUE, TRUE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *buttonBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
 	GtkWidget *buttonBox = gtk_vbox_new(FALSE, 0);
+#endif // GTK_CHECK_VERSION
 	gtk_box_pack_start(GTK_BOX(hbox), buttonBox, FALSE, FALSE, 0);
 
 	AddButton(buttonBox, "_Line add", "line", buttonCB, cbData);
@@ -107,7 +139,11 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	// Create the horizontal pane for tree view and text view
 	// ======================================================
-	GtkWidget *hpaned = gtk_hpaned_new ();
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *hpaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+#else
+	GtkWidget *hpaned = gtk_hpaned_new();
+#endif // GTK_CHECK_VERSION
 	GtkWidget *frame1 = gtk_frame_new (NULL);
 	GtkWidget *frame2 = gtk_frame_new (NULL);
 	gtk_frame_set_shadow_type (GTK_FRAME (frame1), GTK_SHADOW_IN);
@@ -161,6 +197,10 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_signal_connect(G_OBJECT(mNotebook), "switch-page", changePage, cbData );
 
 	gtk_widget_show_all(win);
+}
+
+void View::SetFocusFind() {
+	gtk_widget_grab_focus(mFindEntry);
 }
 
 int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress, bool switchTab) {
@@ -394,9 +434,30 @@ void View::Replace(Document *doc) {
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }
 
+void View::FindNext(Document *doc, const std::string &str) {
+	GtkTextBuffer *buff = gtk_text_view_get_buffer(doc->mTextView);
+	unsigned lineCount = gtk_text_buffer_get_line_count(buff);
+	GtkTextIter lineStart;
+	gtk_text_buffer_get_iter_at_offset(buff, &lineStart, 0);
+	for (unsigned line=0; line < lineCount; line++) {
+		GtkTextIter lineEnd;
+		if (line == lineCount-1)
+			gtk_text_buffer_get_iter_at_offset(buff, &lineEnd, -1);
+		else
+			gtk_text_buffer_get_iter_at_line(buff, &lineEnd, line+1);
+		const std::string currentLine = gtk_text_buffer_get_text(buff, &lineStart, &lineEnd, FALSE);
+		if (currentLine.find(str) != std::string::npos) {
+			// g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
+			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.5, 0.5);
+			return;
+		}
+		lineStart = lineEnd;
+	}
+}
+
 void View::UpdateStatusBar(Document *doc) {
 	if (doc == nullptr) {
-		gtk_label_set_text(mStatusBar, "");
+		gtk_label_set_text(mStatusText, "");
 		return;
 	}
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll))) {
@@ -409,7 +470,7 @@ void View::UpdateStatusBar(Document *doc) {
 	}
 	std::stringstream ss;
 	ss << doc->GetFileName() << "   " << doc->Date() << "                     " << mFoundLines << " (" << doc->GetNumLines() << ")";
-	gtk_label_set_text(mStatusBar, ss.str().c_str());
+	gtk_label_set_text(mStatusText, ss.str().c_str());
 }
 
 void View::EditPattern(gchar *path, gchar *newString) {

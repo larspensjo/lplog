@@ -32,7 +32,7 @@ static gboolean TreeViewKeyPressed(GtkTreeView *, GdkEvent *event, Controller *c
 	if (state & GDK_CONTROL_MASK)
 		return false;
 	g_debug("TreeViewKeyPressed state 0x%x", event->key.state);
-	GdkModifierType a;
+	// GdkModifierType a;
 	return c->TextViewKeyEvent(event);
 }
 
@@ -51,6 +51,8 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 		c->About();
 	else if (name == "open")
 		c->FileOpenDialog();
+	else if (name == "find")
+		c->InitiateFind();
 	else if (name == "close")
 		c->CloseCurrentTab();
 	else if (name == "paste")
@@ -83,6 +85,9 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 		switch(keyval) {
 		case GDK_KEY_v:
 			keyval = GDK_KEY_Paste;
+			break;
+		case GDK_KEY_f:
+			keyval = GDK_KEY_Find;
 			break;
 		default:
 			return true; // Consume and ignore
@@ -125,6 +130,21 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 	c->Quit();
 	return false;
+}
+
+static void EditEntry(GtkEditable *editable, Controller *c) {
+	g_debug("EditEntry");
+	const char *str = gtk_editable_get_chars(editable, 0, -1);
+	c->Find(str);
+}
+
+void Controller::Find(const std::string &str) {
+	g_debug("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
+	mView.FindNext(mCurrentDoc, str);
+}
+
+void Controller::InitiateFind() {
+	mView.SetFocusFind();
 }
 
 void Controller::CloseCurrentTab() {
@@ -221,6 +241,10 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 	g_debug("[%d] Controller::TextViewKeyPress keyval 0x%x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
+	case GDK_KEY_Find:
+		mView.SetFocusFind();
+		stopEvent = true;
+		break;
 	case GDK_KEY_Paste:
 		{
 			GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
@@ -278,7 +302,7 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[]) {
 	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::EditCell),
-				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), this);
+				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}

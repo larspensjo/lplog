@@ -25,6 +25,8 @@ public:
 	void ChangeDoc(int id);                                                  // Change current document
 	void Quit() { mQuitNow = true; }                                         // Request application to shut down
 	void CloseCurrentTab();
+	void InitiateFind();                                                     // User pressed Find, to search in text view
+	void Find(const std::string &);
 private:
 	bool mValidSelectedPatternIter = false;
 	View mView;
