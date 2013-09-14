@@ -62,7 +62,9 @@ int main (int argc, char *argv[])
 	View view;
 	Document doc;
 	GError *err = 0;
-	auto icon = gdk_pixbuf_new_from_file((GetInstallDir() + "/lplog.ico").c_str(), &err); // Name of file must be lplog.bmp
+	const std::string iconFile = GetInstallDir() + "/lplog.ico";
+	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
+	g_debug("Icon file: %s err %s", iconFile.c_str(), err?err->message:"OK");
 	if (icon != nullptr && err == 0)
 		gtk_window_set_default_icon(icon);
 	else

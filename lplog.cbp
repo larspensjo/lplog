@@ -85,6 +85,9 @@
 		<Unit filename="View.cpp" />
 		<Unit filename="View.h" />
 		<Unit filename="extract_dep.sh" />
+		<Unit filename="lplog.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
