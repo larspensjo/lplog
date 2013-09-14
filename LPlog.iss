@@ -20,6 +20,7 @@ Compression=lzma
 SolidCompression=yes
 ;InfoBeforeFile=../Disclaimer.rtf
 InfoAfterFile=readme.md
+WizardImageFile=lplog.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
