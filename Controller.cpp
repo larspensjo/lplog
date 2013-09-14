@@ -27,7 +27,29 @@ using std::endl;
 static const std::string filePrefixURI = "file://";
 
 // A key was pressed in the tree view
-static gboolean TreeViewKeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
+static gboolean KeyPressedOther(GtkWidget *widget, GdkEvent *event, Controller *c) {
+	return c->KeyPressedOther(widget, event);
+}
+
+gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
+	const std::string name = gtk_widget_get_name(widget);
+	guint state = event->key.state;
+	gint keyval = event->key.keyval;
+	g_debug("KeyPressedOther state 0x%x key 0x%x name %s", event->key.state, keyval, name.c_str());
+	if (!(state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_F3) {
+		// Ignore widget name
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+		return true;
+	}
+	if (!(state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_Escape && name == "findentry") {
+		gtk_widget_grab_focus(GTK_WIDGET(mCurrentDoc->mTextView));
+		return true;
+	}
+	return false;
+}
+
+// A key was pressed in the tree view
+static gboolean TreeViewKeyPressed(GtkWidget *, GdkEvent *event, Controller *c) {
 	guint state = event->key.state;
 	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_f) {
 		c->InitiateFind();
@@ -317,7 +339,7 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 }
 
 void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
-	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::EditCell),
+	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::EditCell),
 				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);

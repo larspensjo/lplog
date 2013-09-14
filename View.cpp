@@ -46,7 +46,7 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	return true;
 }
 
-void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
 				  GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData)
 {
 	// Create the main window
@@ -103,7 +103,9 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	mFindEntry = gtk_entry_new();
 	gtk_entry_set_icon_from_stock(GTK_ENTRY(mFindEntry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_FIND);
 #endif
+	gtk_widget_set_name(mFindEntry, "findentry");
 	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
+	g_signal_connect(G_OBJECT(mFindEntry), "key-press-event", keyPressOtherCB, cbData);
 	gtk_box_pack_start(GTK_BOX (statusBar), mFindEntry, FALSE, FALSE, 0);
 
 	GtkWidget *button = gtk_button_new_with_label(">");
@@ -181,7 +183,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(mPattern));
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
-	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressed, cbData );
+	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressedTreeCB, cbData );
 
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);

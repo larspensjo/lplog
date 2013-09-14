@@ -24,7 +24,7 @@ class Document;
 class View
 {
 public:
-	void Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+	void Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
 				GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
