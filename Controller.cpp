@@ -64,17 +64,25 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, C
 	c->EditCell(renderer, path, newString);
 }
 
+// A key was pressed in the main text editor.
 static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller *c) {
-#if 0
-	cout << "keyval: " << event->key.keyval;
-	cout << " is_modifier: " << event->key.is_modifier;
-	cout << " hardware_keycode: " << event->key.hardware_keycode;
-	cout << " type: " << event->key.type;
-	cout << " string: " << event->key.string;
-	cout << endl;
-#endif
-	(void)c->TextViewKeyPress(event->key.keyval);
-	return true; // Return true, to consume all key presses.
+	gint keyval = event->key.keyval;
+	g_debug("TextViewKeyPress %s: 0x%x modifier %d state 0x%x hardware_keycode 0x%x type %d",
+			event->key.string, keyval, event->key.is_modifier, event->key.state, event->key.hardware_keycode, event->key.type);
+	if (event->key.is_modifier)
+		return false; // Ignore all SHIF, CTRL, etc.
+	if (!(event->key.state & GDK_CONTROL_MASK))
+		return true; // Consume all normal characters, to prevent from being inserted
+	else {
+		switch(keyval) {
+		case GDK_KEY_v:
+			keyval = GDK_KEY_Paste;
+			break;
+		default:
+			return true; // Consume and ignore
+		}
+	}
+	return c->TextViewKeyPress(keyval);
 }
 
 static void TogglePattern(GtkCellRendererToggle *renderer, gchar *path, Controller *c) {
@@ -204,7 +212,7 @@ void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newStri
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
-	g_debug("[%d] Controller::TextViewKeyPress keyval %x", mView.GetCurrentTabId(), keyval);
+	g_debug("[%d] Controller::TextViewKeyPress keyval 0x%x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_Paste:
