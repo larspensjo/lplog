@@ -26,8 +26,14 @@ using std::endl;
 
 static const std::string filePrefixURI = "file://";
 
-static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
-	return c->KeyEvent(event);
+// A key was pressed in the tree view
+static gboolean TreeViewKeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
+	guint state = event->key.state;
+	if (state & GDK_CONTROL_MASK)
+		return false;
+	g_debug("TreeViewKeyPressed state 0x%x", event->key.state);
+	// GdkModifierType a;
+	return c->TextViewKeyEvent(event);
 }
 
 static void ButtonClicked(GtkButton *button, Controller *c) {
@@ -45,6 +51,8 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 		c->About();
 	else if (name == "open")
 		c->FileOpenDialog();
+	else if (name == "find")
+		c->InitiateFind();
 	else if (name == "close")
 		c->CloseCurrentTab();
 	else if (name == "paste")
@@ -64,17 +72,28 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, C
 	c->EditCell(renderer, path, newString);
 }
 
+// A key was pressed in the main text editor.
 static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller *c) {
-#if 0
-	cout << "keyval: " << event->key.keyval;
-	cout << " is_modifier: " << event->key.is_modifier;
-	cout << " hardware_keycode: " << event->key.hardware_keycode;
-	cout << " type: " << event->key.type;
-	cout << " string: " << event->key.string;
-	cout << endl;
-#endif
-	(void)c->TextViewKeyPress(event->key.keyval);
-	return true; // Return true, to consume all key presses.
+	gint keyval = event->key.keyval;
+	g_debug("TextViewKeyPress %s: 0x%x modifier %d state 0x%x hardware_keycode 0x%x type %d",
+			event->key.string, keyval, event->key.is_modifier, event->key.state, event->key.hardware_keycode, event->key.type);
+	if (event->key.is_modifier)
+		return false; // Ignore all SHIF, CTRL, etc.
+	if (!(event->key.state & GDK_CONTROL_MASK))
+		return true; // Consume all normal characters, to prevent from being inserted
+	else {
+		switch(keyval) {
+		case GDK_KEY_v:
+			keyval = GDK_KEY_Paste;
+			break;
+		case GDK_KEY_f:
+			keyval = GDK_KEY_Find;
+			break;
+		default:
+			return true; // Consume and ignore
+		}
+	}
+	return c->TextViewKeyPress(keyval);
 }
 
 static void TogglePattern(GtkCellRendererToggle *renderer, gchar *path, Controller *c) {
@@ -111,6 +130,21 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 	c->Quit();
 	return false;
+}
+
+static void EditEntry(GtkEditable *editable, Controller *c) {
+	g_debug("EditEntry");
+	const char *str = gtk_editable_get_chars(editable, 0, -1);
+	c->Find(str);
+}
+
+void Controller::Find(const std::string &str) {
+	g_debug("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
+	mView.FindNext(mCurrentDoc, str);
+}
+
+void Controller::InitiateFind() {
+	mView.SetFocusFind();
 }
 
 void Controller::CloseCurrentTab() {
@@ -204,9 +238,13 @@ void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newStri
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
-	g_debug("[%d] Controller::TextViewKeyPress keyval %x", mView.GetCurrentTabId(), keyval);
+	g_debug("[%d] Controller::TextViewKeyPress keyval 0x%x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
+	case GDK_KEY_Find:
+		mView.SetFocusFind();
+		stopEvent = true;
+		break;
 	case GDK_KEY_Paste:
 		{
 			GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
@@ -232,7 +270,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_F2:
-		mView.OpenPatternForEditing(mCurrentDoc);
+		mView.OpenPatternForEditing();
 		stopEvent = true;
 		break;
 	case GDK_KEY_Delete:
@@ -257,25 +295,25 @@ gboolean Controller::KeyPressed(guint keyval) {
 	return true; // Stop event from propagating
 }
 
-gboolean Controller::KeyEvent(GdkEvent *event) {
-	g_debug("[%d] Controller::KeyEvent event type %d", mView.GetCurrentTabId(), event->type);
+gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
+	g_debug("[%d] Controller::TextViewKeyEvent event type %d", mView.GetCurrentTabId(), event->type);
 	return this->KeyPressed(event->key.keyval);
 }
 
 void Controller::Run(int argc, char *argv[]) {
-	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
-				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), this);
+	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::EditCell),
+				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
 	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
-		if (mQueueReplace) {
+		if (mQueueReplace && mCurrentDoc != nullptr) {
 			g_debug("[%d] Controller::Run queued replace", mView.GetCurrentTabId());
 			mView.Replace(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
-		} else if (mQueueAppend) {
+		} else if (mQueueAppend && mCurrentDoc != nullptr) {
 			g_debug("[%d] Controller::Run queued append", mView.GetCurrentTabId());
 			mView.Append(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
