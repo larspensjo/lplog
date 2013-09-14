@@ -98,9 +98,8 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 #if GTK_CHECK_VERSION(3,6,0)
 	mFindEntry = gtk_search_entry_new();
 #else
-	GtkWidget *findLabel = gtk_label_new("Find:");
-	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(findLabel), FALSE, FALSE, 0);
 	mFindEntry = gtk_entry_new();
+	gtk_entry_set_icon_from_stock(GTK_ENTRY(mFindEntry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_FIND);
 #endif
 	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
 	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(mFindEntry), FALSE, FALSE, 0);

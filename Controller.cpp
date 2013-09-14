@@ -143,6 +143,8 @@ static void EditEntry(GtkEditable *editable, Controller *c) {
 }
 
 void Controller::Find(const std::string &str) {
+	if (mCurrentDoc == nullptr)
+		return;
 	g_debug("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
 	mView.FindNext(mCurrentDoc, str);
 }
