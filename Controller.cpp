@@ -26,8 +26,14 @@ using std::endl;
 
 static const std::string filePrefixURI = "file://";
 
-static gboolean KeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
-	return c->KeyEvent(event);
+// A key was pressed in the tree view
+static gboolean TreeViewKeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
+	guint state = event->key.state;
+	if (state & GDK_CONTROL_MASK)
+		return false;
+	g_debug("TreeViewKeyPressed state 0x%x", event->key.state);
+	GdkModifierType a;
+	return c->TextViewKeyEvent(event);
 }
 
 static void ButtonClicked(GtkButton *button, Controller *c) {
@@ -265,13 +271,13 @@ gboolean Controller::KeyPressed(guint keyval) {
 	return true; // Stop event from propagating
 }
 
-gboolean Controller::KeyEvent(GdkEvent *event) {
-	g_debug("[%d] Controller::KeyEvent event type %d", mView.GetCurrentTabId(), event->type);
+gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
+	g_debug("[%d] Controller::TextViewKeyEvent event type %d", mView.GetCurrentTabId(), event->type);
 	return this->KeyPressed(event->key.keyval);
 }
 
 void Controller::Run(int argc, char *argv[]) {
-	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::KeyPressed), G_CALLBACK(::EditCell),
+	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::EditCell),
 				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);

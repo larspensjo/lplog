@@ -12,7 +12,7 @@ class Controller
 {
 public:
 	void Run(int argc, char *argv[]);
-	gboolean KeyEvent(GdkEvent *event);
+	gboolean TextViewKeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
 	void FileOpenDialog();
 	void OpenURI(const std::string &uri);
