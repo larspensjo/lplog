@@ -16,6 +16,7 @@
 #include <string.h>
 #include <iostream>
 #include <stdlib.h>
+#include <algorithm>
 
 #include "Document.h"
 #include "View.h"
@@ -104,6 +105,12 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
 	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(mFindEntry), FALSE, FALSE, 0);
 
+	GtkWidget *toggleButton = gtk_check_button_new_with_label("Case sensitive");
+	gtk_button_set_focus_on_click(GTK_BUTTON(toggleButton), false);
+	gtk_widget_set_name(GTK_WIDGET(toggleButton), "casesensitive");
+	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
+	gtk_box_pack_start(GTK_BOX(statusBar), toggleButton, FALSE, FALSE, 0);
+
 	// Create left pane with buttons
 	// =============================
 #if GTK_CHECK_VERSION(3,0,0)
@@ -132,7 +139,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
-	auto toggleButton = gtk_toggle_button_new_with_label("Line numbers");
+	toggleButton = gtk_toggle_button_new_with_label("Line numbers");
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
@@ -434,7 +441,10 @@ void View::Replace(Document *doc) {
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }
 
-void View::FindNext(Document *doc, const std::string &str) {
+void View::FindNext(Document *doc, std::string str) {
+	if (!mCaseSensitive)
+		std::transform(str.begin(), str.end(),str.begin(), ::tolower);
+	g_debug("[%d] View::FindNext '%s'", GetCurrentTabId(), str.c_str());
 	GtkTextBuffer *buff = gtk_text_view_get_buffer(doc->mTextView);
 	unsigned lineCount = gtk_text_buffer_get_line_count(buff);
 	GtkTextIter lineStart;
@@ -445,14 +455,22 @@ void View::FindNext(Document *doc, const std::string &str) {
 			gtk_text_buffer_get_iter_at_offset(buff, &lineEnd, -1);
 		else
 			gtk_text_buffer_get_iter_at_line(buff, &lineEnd, line+1);
-		const std::string currentLine = gtk_text_buffer_get_text(buff, &lineStart, &lineEnd, FALSE);
+		std::string currentLine = gtk_text_buffer_get_text(buff, &lineStart, &lineEnd, FALSE);
+		if (!mCaseSensitive)
+			std::transform(currentLine.begin(), currentLine.end(),currentLine.begin(), ::tolower);
 		if (currentLine.find(str) != std::string::npos) {
-			// g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
-			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.5, 0.5);
+			g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
+			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.0, 0.0);
 			return;
 		}
 		lineStart = lineEnd;
 	}
+}
+
+void View::FindSetCaseSensitive(Document *doc) {
+	mCaseSensitive = !mCaseSensitive;
+	const std::string str = gtk_editable_get_chars(GTK_EDITABLE(mFindEntry), 0, -1);
+	this->FindNext(doc, str);
 }
 
 void View::UpdateStatusBar(Document *doc) {

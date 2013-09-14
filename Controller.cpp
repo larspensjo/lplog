@@ -134,7 +134,7 @@ static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
 
 static void EditEntry(GtkEditable *editable, Controller *c) {
 	g_debug("EditEntry");
-	const char *str = gtk_editable_get_chars(editable, 0, -1);
+	const std::string str = gtk_editable_get_chars(editable, 0, -1);
 	c->Find(str);
 }
 
@@ -209,13 +209,13 @@ void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
 	mView.TogglePattern(path);
 	// Inhibit update if root pattern is disabled
 	if (mRootPatternDisabled && mView.RootPatternActive()) {
-		g_debug("[%d] Controller::ToggleButton Root pattern enabled", mView.GetCurrentTabId());
+		g_debug("[%d] Controller::TogglePattern Root pattern enabled", mView.GetCurrentTabId());
 		mRootPatternDisabled = false;
 	}
 	if (!mRootPatternDisabled)
 		mQueueReplace = true;
 	if (!mView.RootPatternActive()) {
-		g_debug("[%d] Controller::ToggleButton Root pattern disabled", mView.GetCurrentTabId());
+		g_debug("[%d] Controller::TogglePattern Root pattern disabled", mView.GetCurrentTabId());
 		mRootPatternDisabled = true;
 	}
 }
@@ -224,6 +224,8 @@ void Controller::ToggleButton(const std::string &name) {
 	g_debug("[%d] Controller::ToggleButton %s", mView.GetCurrentTabId(), name.c_str());
 	if (name == "autoscroll")
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
+	else if (name == "casesensitive")
+		mView.FindSetCaseSensitive(mCurrentDoc);
 	else if (name == "linenumbers") {
 		mView.ToggleLineNumbers(mCurrentDoc);
 	} else

@@ -39,7 +39,8 @@ public:
 	void CloseCurrentTab();
 	int GetCurrentTabId() const;
 	void SetFocusFind();
-	void FindNext(Document *doc, const std::string &);
+	void FindNext(Document *, std::string);
+	void FindSetCaseSensitive(Document *doc);
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing();
@@ -58,6 +59,7 @@ private:
 	GtkWidget *mFindEntry = 0;
 	unsigned mFoundLines = 0;
 	GtkWidget *mNotebook = 0;
+	bool mCaseSensitive = false;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;
