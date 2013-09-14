@@ -29,6 +29,10 @@ static const std::string filePrefixURI = "file://";
 // A key was pressed in the tree view
 static gboolean TreeViewKeyPressed(GtkTreeView *, GdkEvent *event, Controller *c) {
 	guint state = event->key.state;
+	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_f) {
+		c->InitiateFind();
+		return true;
+	}
 	if (state & GDK_CONTROL_MASK)
 		return false;
 	g_debug("TreeViewKeyPressed state 0x%x", event->key.state);

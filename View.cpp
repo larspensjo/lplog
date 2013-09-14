@@ -308,9 +308,7 @@ void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstL
 		if (isShown(str, GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
 			ss << separator;
 			if (mShowLineNumbers) {
-				ss.width(5);
-				ss.setf(ss.left);
-				ss << line+1 << " ";
+				ss << line+1 << "\t";
 			}
 			ss << str;
 			separator = "\n";
