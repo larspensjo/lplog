@@ -19,7 +19,7 @@ public:
 	gboolean TextViewKeyPress(guint keyval);
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
-	void ToggleButton(const std::string &name);
+	void ToggleButton(const std::string &name);                              // Click toggle button and other buttons
 	void PollInput();
 	void About() { mView.About(); }
 	void ChangeDoc(int id);                                                  // Change current document

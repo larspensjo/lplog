@@ -104,11 +104,17 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_entry_set_icon_from_stock(GTK_ENTRY(mFindEntry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_FIND);
 #endif
 	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
-	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(mFindEntry), FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX (statusBar), mFindEntry, FALSE, FALSE, 0);
+
+	GtkWidget *button = gtk_button_new_with_label(">");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(toggleButtonCB), cbData );
+	gtk_widget_set_name(button, "findnext");
+	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
 
 	GtkWidget *toggleButton = gtk_check_button_new_with_label("Case sensitive");
 	gtk_button_set_focus_on_click(GTK_BUTTON(toggleButton), false);
-	gtk_widget_set_name(GTK_WIDGET(toggleButton), "casesensitive");
+	gtk_widget_set_name(toggleButton, "casesensitive");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(statusBar), toggleButton, FALSE, FALSE, 0);
 
@@ -440,15 +446,17 @@ void View::Replace(Document *doc) {
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }
 
-void View::FindNext(Document *doc, std::string str) {
+void View::FindNext(Document *doc, std::string str, bool restart) {
 	if (!mCaseSensitive)
 		std::transform(str.begin(), str.end(),str.begin(), ::tolower);
 	g_debug("[%d] View::FindNext '%s'", GetCurrentTabId(), str.c_str());
 	GtkTextBuffer *buff = gtk_text_view_get_buffer(doc->mTextView);
 	unsigned lineCount = gtk_text_buffer_get_line_count(buff);
+	if (restart)
+		doc->mNextSearchLine = 0;
 	GtkTextIter lineStart;
-	gtk_text_buffer_get_iter_at_offset(buff, &lineStart, 0);
-	for (unsigned line=0; line < lineCount; line++) {
+	gtk_text_buffer_get_iter_at_line(buff, &lineStart, doc->mNextSearchLine);
+	for (unsigned line=doc->mNextSearchLine; line < lineCount; line++) {
 		GtkTextIter lineEnd;
 		if (line == lineCount-1)
 			gtk_text_buffer_get_iter_at_offset(buff, &lineEnd, -1);
@@ -460,6 +468,9 @@ void View::FindNext(Document *doc, std::string str) {
 		if (currentLine.find(str) != std::string::npos) {
 			g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
 			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.0, 0.0);
+			doc->mNextSearchLine = line+1;
+			if (doc->mNextSearchLine >= lineCount)
+				doc->mNextSearchLine = 0;
 			return;
 		}
 		lineStart = lineEnd;
@@ -468,8 +479,11 @@ void View::FindNext(Document *doc, std::string str) {
 
 void View::FindSetCaseSensitive(Document *doc) {
 	mCaseSensitive = !mCaseSensitive;
-	const std::string str = gtk_editable_get_chars(GTK_EDITABLE(mFindEntry), 0, -1);
-	this->FindNext(doc, str);
+	this->FindNext(doc, GetSearchString(), true);
+}
+
+const std::string View::GetSearchString() const {
+	return gtk_editable_get_chars(GTK_EDITABLE(mFindEntry), 0, -1);
 }
 
 void View::UpdateStatusBar(Document *doc) {

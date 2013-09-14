@@ -43,6 +43,7 @@ public:
 
 	GtkScrolledWindow *mScrolledView = 0; // TODO: Should not be public, manage in a better way.
 	GtkTextView *mTextView = 0;           // TODO: Should not be public, manage in a better way.
+	unsigned mNextSearchLine = 0;          // To know where "find next" should continue
 private:
 	std::vector<std::string> mLines;
 	std::string mFileName;

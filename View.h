@@ -38,9 +38,11 @@ public:
 	void DimCurrentTab();
 	void CloseCurrentTab();
 	int GetCurrentTabId() const;
+
 	void SetFocusFind();
-	void FindNext(Document *, std::string);
+	void FindNext(Document *, std::string, bool restart);
 	void FindSetCaseSensitive(Document *doc);
+	const std::string GetSearchString() const;
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing();

@@ -146,7 +146,7 @@ void Controller::Find(const std::string &str) {
 	if (mCurrentDoc == nullptr)
 		return;
 	g_debug("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
-	mView.FindNext(mCurrentDoc, str);
+	mView.FindNext(mCurrentDoc, str, true);
 }
 
 void Controller::InitiateFind() {
@@ -232,10 +232,12 @@ void Controller::ToggleButton(const std::string &name) {
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
 	else if (name == "casesensitive")
 		mView.FindSetCaseSensitive(mCurrentDoc);
-	else if (name == "linenumbers") {
+	else if (name == "findnext")
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+	else if (name == "linenumbers")
 		mView.ToggleLineNumbers(mCurrentDoc);
-	} else
-		cout << "Unknown toggle button: " << name << endl;
+	else
+		g_debug("[%d] Controller::ToggleButton unknown %s", mView.GetCurrentTabId(), name.c_str());
 }
 
 void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
