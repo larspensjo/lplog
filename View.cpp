@@ -92,17 +92,21 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	AddButton(buttonBox, "_Remove", "remove", buttonCB, cbData);
 	AddButton(buttonBox, "_Child add", "child", buttonCB, cbData);
 
-	mAutoScroll = gtk_check_button_new_with_label("Autoscroll");
+	auto widget = gtk_label_new("Toggle");
+	gtk_box_pack_start(GTK_BOX(buttonBox), widget, FALSE, FALSE, 10);
+
+	mAutoScroll = gtk_toggle_button_new_with_label("Autoscroll");
 	gtk_widget_set_name(GTK_WIDGET(mAutoScroll), "autoscroll");
 	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
-	auto toggleButton = gtk_check_button_new_with_label("Line numbers");
+	auto toggleButton = gtk_toggle_button_new_with_label("Line numbers");
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
-	
+
 	// Create the horizontal pane for tree view and text view
+	// ======================================================
 	GtkWidget *hpaned = gtk_hpaned_new ();
 	GtkWidget *frame1 = gtk_frame_new (NULL);
 	GtkWidget *frame2 = gtk_frame_new (NULL);
