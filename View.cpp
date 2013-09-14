@@ -46,13 +46,15 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	return true;
 }
 
-void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
 				  GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData)
 {
 	// Create the main window
 	// ======================
 	GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	mWindow = GTK_WINDOW(win);
+	if (icon != nullptr)
+		gtk_window_set_icon(mWindow, icon);
 	gtk_container_set_border_width(GTK_CONTAINER (win), 1);
 	gtk_widget_realize (win);
 	g_signal_connect(win, "destroy", quitCB, cbData);
@@ -98,9 +100,8 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 #if GTK_CHECK_VERSION(3,6,0)
 	mFindEntry = gtk_search_entry_new();
 #else
-	GtkWidget *findLabel = gtk_label_new("Find:");
-	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(findLabel), FALSE, FALSE, 0);
 	mFindEntry = gtk_entry_new();
+	gtk_entry_set_icon_from_stock(GTK_ENTRY(mFindEntry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_FIND);
 #endif
 	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
 	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(mFindEntry), FALSE, FALSE, 0);

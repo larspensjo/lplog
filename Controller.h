@@ -11,7 +11,7 @@ class View;
 class Controller
 {
 public:
-	void Run(int argc, char *argv[]);
+	void Run(int argc, char *argv[], GdkPixbuf *icon);
 	gboolean TextViewKeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
 	void FileOpenDialog();
