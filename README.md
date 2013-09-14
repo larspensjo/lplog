@@ -14,6 +14,8 @@ Features:
 * Incremental search
 * Optional display of line numbers
 
+A windows executable can be found at: https://www.dropbox.com/sh/lxneh66393icwb4/7J7vhx1olq
+
 Compiles for Windows and Linux, GTK+-2.0 and gtk+-3.0.
 
 For Windows:
