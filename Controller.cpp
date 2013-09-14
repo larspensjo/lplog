@@ -308,8 +308,8 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 	return this->KeyPressed(event->key.keyval);
 }
 
-void Controller::Run(int argc, char *argv[]) {
-	mView.Create(G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::EditCell),
+void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
+	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::EditCell),
 				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);

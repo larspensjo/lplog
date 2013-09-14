@@ -59,15 +59,12 @@ int main (int argc, char *argv[])
 	gtk_init(&argc, &argv);
 	g_debug("main: Argc after %d", argc);
 
-	View view;
-	Document doc;
 	GError *err = 0;
-	auto icon = gdk_pixbuf_new_from_file((GetInstallDir() + "/icon.bmp").c_str(), &err); // Name of file must be lplog.bmp
-	if (icon != nullptr && err == 0)
-		gtk_window_set_default_icon(icon);
-	else
-		cout << err->message << endl;
+	const std::string iconPath = GetInstallDir() + "/icon.bmp";
+	auto icon = gdk_pixbuf_new_from_file(iconPath.c_str(), &err); // Name of file must be lplog.bmp
+	if (icon == nullptr)
+		g_debug("main: Failed to load icon %s (%s)", iconPath.c_str(), err->message);
 	Controller c;
-	c.Run(argc, argv);
+	c.Run(argc, argv, icon);
 	return 0;
 }
