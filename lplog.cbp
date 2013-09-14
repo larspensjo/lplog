@@ -78,11 +78,13 @@
 		<Unit filename="Controller.h" />
 		<Unit filename="Document.cpp" />
 		<Unit filename="Document.h" />
+		<Unit filename="LPlog.iss" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
 		<Unit filename="TODO.md" />
 		<Unit filename="View.cpp" />
 		<Unit filename="View.h" />
+		<Unit filename="extract_dep.sh" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
