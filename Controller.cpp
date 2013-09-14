@@ -83,7 +83,7 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 			event->key.string, keyval, event->key.is_modifier, event->key.state, event->key.hardware_keycode, event->key.type);
 	if (event->key.is_modifier)
 		return false; // Ignore all SHIF, CTRL, etc.
-	if (!(event->key.state & GDK_CONTROL_MASK))
+	if (!(event->key.state & GDK_CONTROL_MASK) && !(keyval >= GDK_KEY_F1 && keyval <= GDK_KEY_F35))
 		return true; // Consume all normal characters, to prevent from being inserted
 	else {
 		switch(keyval) {
@@ -92,6 +92,8 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 			break;
 		case GDK_KEY_f:
 			keyval = GDK_KEY_Find;
+			break;
+		case GDK_KEY_F3:
 			break;
 		default:
 			return true; // Consume and ignore
@@ -251,6 +253,10 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 	g_debug("[%d] Controller::TextViewKeyPress keyval 0x%x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
+	case GDK_KEY_F3:
+		stopEvent = true;
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+		break;
 	case GDK_KEY_Find:
 		mView.SetFocusFind();
 		stopEvent = true;
