@@ -75,6 +75,8 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 		c->KeyPressed(GDK_KEY_a);
 	else if (name == "about")
 		c->About();
+	else if (name == "help")
+		c->Help();
 	else if (name == "open")
 		c->FileOpenDialog();
 	else if (name == "find")
@@ -361,6 +363,17 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 		mQueueAppend = false;
 		mQueueReplace = false;
 	}
+}
+
+void Controller::Help() const {
+	const std::string msg =
+		"LPlog\n"
+		"\n"
+		"Enter pattern in tree on the left side.\n"
+		"Add additional patterns with '+' and\n"
+		"new children with 'a'\n"
+		"For example, the NOT operator '!' takes one child.\n";
+	mView.Help(msg);
 }
 
 void Controller::FileOpenDialog() {

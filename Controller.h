@@ -23,7 +23,8 @@ public:
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
 	void ToggleButton(const std::string &name);                              // Click toggle button and other buttons
 	void PollInput();
-	void About() { mView.About(); }
+	void About() const { mView.About(); }
+	void Help() const;
 	void ChangeDoc(int id);                                                  // Change current document
 	void Quit() { mQuitNow = true; }                                         // Request application to shut down
 	void CloseCurrentTab();

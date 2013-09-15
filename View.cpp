@@ -69,7 +69,6 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 
 	// Create menus
 	// ============
-
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
 
@@ -83,6 +82,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	this->AddMenuButton(menu, "_Find", "find", buttonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Help");
+	this->AddMenuButton(menu, "_Help", "help", buttonCB, cbData);
 	this->AddMenuButton(menu, "_About", "about", buttonCB, cbData);
 
 	// Create the status bar
@@ -572,7 +572,23 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 }
 
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData) {
-	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
+	GtkWidget *menuItem;
+	if (strcmp(name, "help") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_HELP, NULL);
+	else if (strcmp(name, "open") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, NULL);
+	else if (strcmp(name, "close") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CLOSE, NULL);
+	else if (strcmp(name, "about") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
+	else if (strcmp(name, "quit") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, NULL);
+	else if (strcmp(name, "paste") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
+	else if (strcmp(name, "find") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, NULL);
+	else
+		menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), name);
 	g_signal_connect(menuItem, "activate", cb, cbData);
@@ -586,7 +602,25 @@ void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCal
 	gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
 }
 
-void View::About() {
+void View::Help(const std::string &message) const {
+   GtkWidget *dialog, *label, *content_area;
+   /* Create the widgets */
+   dialog = gtk_dialog_new_with_buttons("Message",
+                                         mWindow,
+                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                         GTK_STOCK_OK,
+                                         GTK_RESPONSE_NONE,
+                                         NULL);
+   content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+   label = gtk_label_new (message.c_str());
+   /* Ensure that the dialog box is destroyed when the user responds. */
+   g_signal_connect_swapped(dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
+   /* Add the label, and show everything we've added to the dialog. */
+   gtk_container_add (GTK_CONTAINER(content_area), label);
+   gtk_widget_show_all(dialog);
+}
+
+void View::About() const {
 	const char *license =
 		"LPlog is free software: you can redistribute it and/or modify\n"
 		"it under the terms of the GNU General Public License as published by\n"
