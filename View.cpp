@@ -467,7 +467,7 @@ void View::FindNext(Document *doc, std::string str, bool restart) {
 		std::string currentLine = gtk_text_buffer_get_text(buff, &lineStart, &lineEnd, FALSE);
 		if (!mCaseSensitive)
 			std::transform(currentLine.begin(), currentLine.end(),currentLine.begin(), ::tolower);
-		unsigned pos = currentLine.find(str);
+		std::string::size_type pos = currentLine.find(str);
 		if (pos != std::string::npos) {
 			g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
 			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.0, 0.0); // Scroll the found line into view
