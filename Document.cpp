@@ -88,7 +88,7 @@ void Document::AddSourceFile(const std::string &fileName) {
 	struct stat st;
 	if (stat(mFileName.c_str(), &st) == 0) {
 		mFileTime = st.st_ctime;
-		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), st.st_size);
+		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
 	} else {
 		g_debug("Document::AddSourceFile failed to open (%d)", errno);
 		mFileTime = 0;
@@ -101,7 +101,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mCurrentPosition = 0;
 	mLines.clear();
 	this->SplitLines(text, size);
-	g_debug("Document::AddSourceText %d characters %lu lines", size, mLines.size());
+	g_debug("Document::AddSourceText %d characters %u lines", size, (unsigned)mLines.size());
 	std::localtime(&mFileTime);
 }
 
@@ -177,7 +177,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		mIncompleteLastLine = "";
 		p = next;
 	}
-	g_debug("Document::SplitLines total %lu, incomplete last %d in document %p", mLines.size(), mIncompleteLastLine != "", this);
+	g_debug("Document::SplitLines total %u, incomplete last %d in document %p", (unsigned)mLines.size(), mIncompleteLastLine != "", this);
 }
 
 std::string Document::GetFileNameShort() const {

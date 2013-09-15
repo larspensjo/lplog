@@ -305,16 +305,13 @@ void View::ToggleLineNumbers(Document *doc) {
 }
 
 void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine) {
-	GtkTreeIter iter;
-	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
-	g_assert(!empty);
 	std::string separator = ""; // Start empty
 	unsigned startLine = mFoundLines;
 	if (mFoundLines > 0)
 		separator = '\n';
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
 	auto TestLine = [&] (const std::string &str, unsigned line) {
-		if (isShown(str, GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
+		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) != Evaluation::Nomatch) {
 			ss << separator;
 			if (mShowLineNumbers) {
 				ss << line+1 << "\t";
