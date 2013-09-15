@@ -319,7 +319,9 @@ void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstL
 			ss << str;
 			separator = "\n";
 			++mFoundLines;
+			return true;
 		}
+		return false;
 	};
 	doc->IterateLines(TestLine, restartFirstLine);
 	g_debug("[%d] View::FilterString starting line %d, ending %d", GetCurrentTabId(), startLine, mFoundLines);

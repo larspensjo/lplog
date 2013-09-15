@@ -141,12 +141,17 @@ Document::UpdateResult Document::UpdateInputData() {
 	return UpdateResult::Grow;
 }
 
-void Document::IterateLines(std::function<void (const std::string&, unsigned)> f, bool restartFirstLine) {
-	if (restartFirstLine)
+void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f, bool restartFirstLine) {
+	if (restartFirstLine) {
 		mFirstNewLine = 0;
-	g_debug("Document::IterateLines from line %d restart %d", mFirstNewLine, restartFirstLine);
+		mLineMap.clear();
+	}
+	g_debug("Document::IterateLines from line %u restart '%s' printed line# %u", mFirstNewLine, restartFirstLine?"true":"false", mLineMap.size());
 	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
-		f(mLines[line], line);
+		bool accepted = f(mLines[line], line);
+		if (accepted) {
+			mLineMap.push_back(line);
+		}
 	}
 }
 

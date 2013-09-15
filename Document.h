@@ -23,6 +23,8 @@
 #include <functional>
 #include <ctime>
 
+// This class represents the "model" of MVC.
+
 class Document
 {
 public:
@@ -36,7 +38,8 @@ public:
 	UpdateResult UpdateInputData(); // Update from file
 	const std::string &GetFileName() const;
 	std::string GetFileNameShort() const; // Get the last part of the filename
-	void IterateLines(std::function<void (const std::string&, unsigned)> f, bool restartFirstLine);
+	// Iterate a function over the lines in the input document. 'f' shall return true for lines that were added.
+	void IterateLines(std::function<bool (const std::string&, unsigned)> f, bool restartFirstLine);
 	unsigned GetNumLines() { return mLines.size(); }
 	std::string Date() const;
 	void StopUpdate();
@@ -45,13 +48,14 @@ public:
 	GtkTextView *mTextView = 0;           // TODO: Should not be public, manage in a better way.
 	unsigned mNextSearchLine = 0;          // To know where "find next" should continue
 private:
-	std::vector<std::string> mLines;
+	std::vector<std::string> mLines;        // The input document
 	std::string mFileName;
 	std::ifstream::pos_type mCurrentPosition = 0;
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	std::time_t mFileTime = {0};
+	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
 
 	void SplitLines(char *, unsigned size); // This will modify the argument
 };
