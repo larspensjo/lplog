@@ -88,7 +88,7 @@ PROGRAM   = lplog
 
 # The source file types (headers excluded).
 # .c indicates C source files, and others C++ ones.
-SRCEXTS = .c .C .cc .cpp .CPP .c++ .cxx .cp
+SRCEXTS = .c .C .cc .cpp .CPP .c++ .cxx .cp .rc
 
 # The header file types.
 HDREXTS = .h .H .hh .hpp .HPP .h++ .hxx .hp
@@ -218,6 +218,9 @@ objs:$(OBJS)
 
 %.o:%.cxx
 	$(COMPILE.cxx) $< -o $@
+
+%.o:%.rc
+	windres $< -o $@
 
 # Rules for generating the tags.
 #-------------------------------------

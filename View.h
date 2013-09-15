@@ -24,8 +24,8 @@ class Document;
 class View
 {
 public:
-	void Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
-				GCallback togglePattern, GCallback changePage, GCallback quitCB, gpointer cbData);
+	void Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
+				GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
@@ -39,8 +39,13 @@ public:
 	void CloseCurrentTab();
 	int GetCurrentTabId() const;
 
+	void SetFocusFind();
+	void FindNext(Document *, std::string, bool restart);
+	void FindSetCaseSensitive(Document *doc);
+	const std::string GetSearchString() const;
+
 	void TogglePattern(gchar *path);
-	void OpenPatternForEditing(Document *);
+	void OpenPatternForEditing();
 	void DeletePattern();
 	void AddPatternLine();
 	void AddPatternLineIndented();
@@ -49,12 +54,14 @@ public:
 
 	int nextId = 0; // Create a new unique number for each tab. TODO: Should be private
 private:
-	GtkLabel *mStatusBar = 0;
+	GtkLabel *mStatusText = 0;
 	GtkWidget *mAutoScroll = 0;
 	GtkWindow *mWindow = 0;
 	bool mShowLineNumbers = false;
+	GtkWidget *mFindEntry = 0;
 	unsigned mFoundLines = 0;
 	GtkWidget *mNotebook = 0;
+	bool mCaseSensitive = false;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;

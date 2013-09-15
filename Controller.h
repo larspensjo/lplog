@@ -11,20 +11,24 @@ class View;
 class Controller
 {
 public:
-	void Run(int argc, char *argv[]);
-	gboolean KeyEvent(GdkEvent *event);
+	gboolean TextViewKeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
+	gboolean KeyPressedOther(GtkWidget *, GdkEvent *);
+	gboolean TextViewKeyPress(guint keyval);
+
+	void Run(int argc, char *argv[], GdkPixbuf *icon);
 	void FileOpenDialog();
 	void OpenURI(const std::string &uri);
-	gboolean TextViewKeyPress(guint keyval);
 	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
-	void ToggleButton(const std::string &name);
+	void ToggleButton(const std::string &name);                              // Click toggle button and other buttons
 	void PollInput();
 	void About() { mView.About(); }
 	void ChangeDoc(int id);                                                  // Change current document
 	void Quit() { mQuitNow = true; }                                         // Request application to shut down
 	void CloseCurrentTab();
+	void InitiateFind();                                                     // User pressed Find, to search in text view
+	void Find(const std::string &);
 private:
 	bool mValidSelectedPatternIter = false;
 	View mView;
