@@ -4,3 +4,5 @@
 * Some log files contains escape characters to get colors in terminal output. These escape characters should be removed, or used to actually create colors.
 * Save the last search pattern. And load it again next time application starts.
 * Create a proper Windows installation package
+* Use CTRL-F4 to close a tab
+* Implement proper use of acceleratosrs, instead of testing for same keys in many places.
