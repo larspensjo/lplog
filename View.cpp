@@ -158,8 +158,10 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	// Create tags
 	// ===========
-	GtkTextTagTable *mTextTagTable = gtk_text_tag_table_new();
-	GtkTextTag *mBoldTag = gtk_text_tag_new("bold");
+	mTextTagTable = gtk_text_tag_table_new();
+	mBoldTag = gtk_text_tag_new("bold");
+	g_object_set(mBoldTag, "weight", PANGO_WEIGHT_BOLD, NULL);
+	gtk_text_tag_table_add(mTextTagTable, mBoldTag);
 
 	gtk_widget_show_all(win);
 }
