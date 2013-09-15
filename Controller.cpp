@@ -107,6 +107,8 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 		return false; // Ignore all SHIF, CTRL, etc.
 	if (!(event->key.state & GDK_CONTROL_MASK) && !(keyval >= GDK_KEY_F1 && keyval <= GDK_KEY_F35))
 		return true; // Consume all normal characters, to prevent from being inserted
+	else if ((event->key.state & GDK_CONTROL_MASK) && keyval == GDK_KEY_c)
+		return false; // Copy
 	else {
 		switch(keyval) {
 		case GDK_KEY_v:
