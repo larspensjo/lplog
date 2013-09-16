@@ -19,7 +19,7 @@ public:
 	void Run(int argc, char *argv[], GdkPixbuf *icon);
 	void FileOpenDialog();
 	void OpenURI(const std::string &uri);
-	void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString);
+	void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
 	void ToggleButton(const std::string &name);                              // Click toggle button and other buttons
 	void PollInput();

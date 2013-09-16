@@ -26,7 +26,7 @@ using std::endl;
 
 static const std::string filePrefixURI = "file://";
 
-// A key was pressed in the tree view
+// A key was pressed elsewhere than the tree view
 static gboolean KeyPressedOther(GtkWidget *widget, GdkEvent *event, Controller *c) {
 	return c->KeyPressedOther(widget, event);
 }
@@ -41,20 +41,12 @@ gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
 		return true;
 	}
-	if (!(state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_Escape && name == "findentry") {
-		gtk_widget_grab_focus(GTK_WIDGET(mCurrentDoc->mTextView));
-		return true;
-	}
 	return false;
 }
 
 // A key was pressed in the tree view
 static gboolean TreeViewKeyPressed(GtkWidget *, GdkEvent *event, Controller *c) {
 	guint state = event->key.state;
-	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_f) {
-		c->InitiateFind();
-		return true;
-	}
 	if (state & GDK_CONTROL_MASK)
 		return false;
 	g_debug("TreeViewKeyPressed state 0x%x", event->key.state);
@@ -95,9 +87,9 @@ static gboolean TestForeChanges(Controller *c)
 	return true; // Keep timer going for ever
 }
 
-static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, Controller *c)
+static void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString, Controller *c)
 {
-	c->EditCell(renderer, path, newString);
+	c->PatternCellUpdated(renderer, path, newString);
 }
 
 // A key was pressed in the main text editor.
@@ -268,7 +260,7 @@ void Controller::ToggleButton(const std::string &name) {
 		g_debug("[%d] Controller::ToggleButton unknown %s", mView.GetCurrentTabId(), name.c_str());
 }
 
-void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
+void Controller::PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	mView.EditPattern(path, newString);
 	// Inhibit update if root pattern is disabled
 	if (!mRootPatternDisabled)
@@ -343,7 +335,7 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 }
 
 void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
-	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::EditCell),
+	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::PatternCellUpdated),
 				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
