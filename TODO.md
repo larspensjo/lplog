@@ -5,3 +5,4 @@
 * Save the last search pattern. And load it again next time application starts.
 * Use CTRL-F4 to close a tab
 * Implement proper use of accelerators, instead of testing for same keys in many places.
+* Use CTRL-mouse wheel to change font size.
