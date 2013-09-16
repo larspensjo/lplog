@@ -60,6 +60,9 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	g_signal_connect(win, "destroy", quitCB, cbData);
 	gtk_window_set_default_size(mWindow, 1024, 480);
 
+	mAccelGroup = gtk_accel_group_new();
+	gtk_window_add_accel_group(mWindow, mAccelGroup);
+
 #if GTK_CHECK_VERSION(3,0,0)
 	GtkWidget *mainbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 #else
@@ -574,19 +577,24 @@ void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name,
 	GtkWidget *menuItem;
 	if (strcmp(name, "help") == 0)
 		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_HELP, NULL);
-	else if (strcmp(name, "open") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, NULL);
-	else if (strcmp(name, "close") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CLOSE, NULL);
-	else if (strcmp(name, "about") == 0)
+	else if (strcmp(name, "open") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_o, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "close") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CLOSE, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_F4, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "about") == 0)
 		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
-	else if (strcmp(name, "quit") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, NULL);
-	else if (strcmp(name, "paste") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
-	else if (strcmp(name, "find") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, NULL);
-	else
+	else if (strcmp(name, "quit") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "paste") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_v, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "find") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_f, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else
 		menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), name);

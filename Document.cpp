@@ -146,7 +146,7 @@ void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f
 		mFirstNewLine = 0;
 		mLineMap.clear();
 	}
-	g_debug("Document::IterateLines from line %u restart '%s' printed line# %u", mFirstNewLine, restartFirstLine?"true":"false", mLineMap.size());
+	g_debug("Document::IterateLines from line %u restart '%s' printed line# %u", mFirstNewLine, restartFirstLine?"true":"false", (unsigned)mLineMap.size());
 	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
 		bool accepted = f(mLines[line], line);
 		if (accepted) {

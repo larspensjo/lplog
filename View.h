@@ -63,6 +63,7 @@ private:
 	unsigned mFoundLines = 0;
 	GtkWidget *mNotebook = 0;
 	bool mCaseSensitive = false;
+	GtkAccelGroup *mAccelGroup = 0;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;
