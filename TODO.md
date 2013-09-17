@@ -5,3 +5,4 @@
 * Save the last search pattern. And load it again next time application starts.
 * Use CTRL-mouse wheel to change font size.
 * Create a menu button "Find next", and attach accelerator F3.
+* Use Ctrl-g to jump to a line.
