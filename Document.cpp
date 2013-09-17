@@ -78,11 +78,11 @@ void Document::StopUpdate() {
 void Document::AddSourceFile(const std::string &fileName) {
 	mFileName = fileName;
 #ifdef _WIN32
-	if (mFileName[0] == '/')
+	// Change name path /C:/xx into C:/xx, but do not change //server/xx
+	if (mFileName[0] == '/' && mFileName[1] != '/')
 		mFileName = mFileName.substr(1);
 #endif
 	mStopUpdates = false;
-	mFileName = mFileName;
 	mCurrentPosition = 0;
 	mLines.clear();
 	struct stat st = { 0 };
@@ -90,7 +90,7 @@ void Document::AddSourceFile(const std::string &fileName) {
 		mFileTime = st.st_mtime;
 		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
 	} else {
-		g_debug("Document::AddSourceFile failed to open (%d)", errno);
+		g_debug("Document::AddSourceFile failed to open '%s' (err %d)", mFileName.c_str(), errno);
 		mFileTime = 0;
 	}
 }
