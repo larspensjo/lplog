@@ -102,7 +102,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mLines.clear();
 	this->SplitLines(text, size);
 	g_debug("Document::AddSourceText %d characters %u lines", size, (unsigned)mLines.size());
-	std::localtime(&mFileTime);
+	mFileTime = std::time(nullptr);
 }
 
 Document::UpdateResult Document::UpdateInputData() {
