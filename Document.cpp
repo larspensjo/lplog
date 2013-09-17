@@ -85,9 +85,9 @@ void Document::AddSourceFile(const std::string &fileName) {
 	mFileName = mFileName;
 	mCurrentPosition = 0;
 	mLines.clear();
-	struct stat st;
+	struct stat st = { 0 };
 	if (stat(mFileName.c_str(), &st) == 0) {
-		mFileTime = st.st_ctime;
+		mFileTime = st.st_mtime;
 		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
 	} else {
 		g_debug("Document::AddSourceFile failed to open (%d)", errno);
@@ -119,6 +119,12 @@ Document::UpdateResult Document::UpdateInputData() {
 		}
 		return UpdateResult::NoChange;
 	}
+
+	// Update the time stamp of the file to latest
+	struct stat st = { 0 };
+	if (stat(mFileName.c_str(), &st) == 0)
+		mFileTime = st.st_mtime;
+
 	std::ifstream::pos_type startPos = mCurrentPosition;
 	input.seekg (0, ios::end);
 	std::ifstream::pos_type end = input.tellg();
