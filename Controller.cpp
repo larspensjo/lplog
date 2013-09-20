@@ -151,7 +151,7 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 	c->ChangeDoc(atoi(name));
 }
 
-static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
+static gboolean DestroyMainWindow(GtkWidget *widget, Controller *c) {
 	c->Quit();
 	return false;
 }
@@ -202,7 +202,7 @@ void Controller::OpenURI(const std::string &uri) {
 		return;
 	const std::string filename = uri.substr(prefixSize);
 	mCurrentDoc = &mDocumentList[mView.nextId];
-	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), uri.c_str(), mCurrentDoc);
+	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), filename.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 }
@@ -336,7 +336,7 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 
 void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::PatternCellUpdated),
-				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
+				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyMainWindow), G_CALLBACK(::EditEntry), this);
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
