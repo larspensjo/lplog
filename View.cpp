@@ -483,7 +483,8 @@ void View::FindNext(Document *doc, std::string str, bool restart) {
 
 void View::FindSetCaseSensitive(Document *doc) {
 	mCaseSensitive = !mCaseSensitive;
-	this->FindNext(doc, GetSearchString(), true);
+	if (doc != nullptr)
+		this->FindNext(doc, GetSearchString(), true);
 }
 
 const std::string View::GetSearchString() const {
