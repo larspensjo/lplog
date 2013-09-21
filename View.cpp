@@ -33,7 +33,7 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	std::string newTitle = "LPlog 2.0b       " + str;
+	std::string newTitle = "LPlog 2.0       " + str;
 	gtk_window_set_title(mWindow, newTitle.c_str());
 }
 
@@ -635,7 +635,7 @@ void View::About() const {
 	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
 
 	gtk_show_about_dialog(NULL,
-		"version", "2.0 beta",
+		"version", "2.0",
 		"website", "https://github.com/larspensjo/lplog",
 		"comments", "A program to display and filter a log file.",
 		"authors", authors,
