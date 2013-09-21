@@ -17,6 +17,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <algorithm>
+#include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
 #include "Document.h"
 #include "View.h"
