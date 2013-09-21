@@ -26,7 +26,7 @@ using std::endl;
 
 static const std::string filePrefixURI = "file://";
 
-// A key was pressed in the tree view
+// A key was pressed elsewhere than the tree view
 static gboolean KeyPressedOther(GtkWidget *widget, GdkEvent *event, Controller *c) {
 	return c->KeyPressedOther(widget, event);
 }
@@ -41,20 +41,12 @@ gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
 		return true;
 	}
-	if (!(state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_Escape && name == "findentry") {
-		gtk_widget_grab_focus(GTK_WIDGET(mCurrentDoc->mTextView));
-		return true;
-	}
 	return false;
 }
 
 // A key was pressed in the tree view
 static gboolean TreeViewKeyPressed(GtkWidget *, GdkEvent *event, Controller *c) {
 	guint state = event->key.state;
-	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_f) {
-		c->InitiateFind();
-		return true;
-	}
 	if (state & GDK_CONTROL_MASK)
 		return false;
 	g_debug("TreeViewKeyPressed state 0x%x", event->key.state);
@@ -75,6 +67,8 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 		c->KeyPressed(GDK_KEY_a);
 	else if (name == "about")
 		c->About();
+	else if (name == "help")
+		c->Help();
 	else if (name == "open")
 		c->FileOpenDialog();
 	else if (name == "find")
@@ -93,9 +87,9 @@ static gboolean TestForeChanges(Controller *c)
 	return true; // Keep timer going for ever
 }
 
-static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, Controller *c)
+static void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString, Controller *c)
 {
-	c->EditCell(renderer, path, newString);
+	c->PatternCellUpdated(renderer, path, newString);
 }
 
 // A key was pressed in the main text editor.
@@ -157,7 +151,7 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 	c->ChangeDoc(atoi(name));
 }
 
-static gboolean DestroyWindow(GtkWidget *widget, Controller *c) {
+static gboolean DestroyMainWindow(GtkWidget *widget, Controller *c) {
 	c->Quit();
 	return false;
 }
@@ -208,7 +202,7 @@ void Controller::OpenURI(const std::string &uri) {
 		return;
 	const std::string filename = uri.substr(prefixSize);
 	mCurrentDoc = &mDocumentList[mView.nextId];
-	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), uri.c_str(), mCurrentDoc);
+	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), filename.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 }
@@ -266,7 +260,7 @@ void Controller::ToggleButton(const std::string &name) {
 		g_debug("[%d] Controller::ToggleButton unknown %s", mView.GetCurrentTabId(), name.c_str());
 }
 
-void Controller::EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
+void Controller::PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
 	mView.EditPattern(path, newString);
 	// Inhibit update if root pattern is disabled
 	if (!mRootPatternDisabled)
@@ -341,8 +335,9 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 }
 
 void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
-	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::EditCell),
-				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyWindow), G_CALLBACK(::EditEntry), this);
+	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::PatternCellUpdated),
+				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyMainWindow), G_CALLBACK(::EditEntry), this);
+	mView.SetWindowTitle("");
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
@@ -361,6 +356,17 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 		mQueueAppend = false;
 		mQueueReplace = false;
 	}
+}
+
+void Controller::Help() const {
+	const std::string msg =
+		"LPlog\n"
+		"\n"
+		"Enter pattern in tree on the left side.\n"
+		"Add additional patterns with '+' and\n"
+		"new children with 'a'\n"
+		"For example, the NOT operator '!' takes one child.\n";
+	mView.Help(msg);
 }
 
 void Controller::FileOpenDialog() {

@@ -31,7 +31,8 @@ public:
 	void Replace(Document *); // Replace the lines in the view
 	void ToggleLineNumbers(Document *);
 	void FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine);
-	void About();
+	void About() const;
+	void Help(const std::string &message) const;
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
 	int AddTab(Document *, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress, bool switchTab = false);
@@ -62,6 +63,7 @@ private:
 	unsigned mFoundLines = 0;
 	GtkWidget *mNotebook = 0;
 	bool mCaseSensitive = false;
+	GtkAccelGroup *mAccelGroup = 0;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;
