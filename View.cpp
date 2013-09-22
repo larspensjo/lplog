@@ -84,6 +84,10 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	menu = this->AddMenu(menubar, "_Edit");
 	this->AddMenuButton(menu, "_Paste", "paste", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Find", "find", buttonCB, cbData);
+	GtkWidget *menuItem = gtk_check_menu_item_new_with_mnemonic("_Case sensitive");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "casesensitive");
+	g_signal_connect(menuItem, "toggled", toggleButtonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Help");
 	this->AddMenuButton(menu, "_Help", "help", buttonCB, cbData);
@@ -118,11 +122,8 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_name(button, "findnext");
 	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
 
-	GtkWidget *toggleButton = gtk_check_button_new_with_label("Case sensitive");
-	gtk_button_set_focus_on_click(GTK_BUTTON(toggleButton), false);
-	gtk_widget_set_name(toggleButton, "casesensitive");
-	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
-	gtk_box_pack_start(GTK_BOX(statusBar), toggleButton, FALSE, FALSE, 0);
+//	GClosure *findAgain = g_cclosure_new_swap(G_CALLBACK(mainwindow_new_tab), cbData, NULL);
+//	gtk_accel_group_connect(mAccelGroup, GDK_KEY_F3, GdkModifierType(0), GTK_ACCEL_VISIBLE, findAgain);
 
 	// Create left pane with buttons
 	// =============================
@@ -152,7 +153,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
-	toggleButton = gtk_toggle_button_new_with_label("Line numbers");
+	GtkWidget *toggleButton = gtk_toggle_button_new_with_label("Line numbers");
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
@@ -487,10 +488,8 @@ void View::FindNext(Document *doc, std::string str, bool restart) {
 	}
 }
 
-void View::FindSetCaseSensitive(Document *doc) {
+void View::FindSetCaseSensitive() {
 	mCaseSensitive = !mCaseSensitive;
-	if (doc != nullptr)
-		this->FindNext(doc, GetSearchString(), true);
 }
 
 const std::string View::GetSearchString() const {

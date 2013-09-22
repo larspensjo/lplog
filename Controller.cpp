@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
+#include <string>
 
 #include "Controller.h"
 #include "Document.h"
@@ -250,9 +251,11 @@ void Controller::ToggleButton(const std::string &name) {
 	g_debug("[%d] Controller::ToggleButton %s", mView.GetCurrentTabId(), name.c_str());
 	if (name == "autoscroll")
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
-	else if (name == "casesensitive")
-		mView.FindSetCaseSensitive(mCurrentDoc);
-	else if (name == "findnext")
+	else if (name == "casesensitive") {
+		mView.FindSetCaseSensitive();
+		if (mCurrentDoc)
+			mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+	} else if (name == "findnext")
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
 	else if (name == "linenumbers")
 		mView.ToggleLineNumbers(mCurrentDoc);

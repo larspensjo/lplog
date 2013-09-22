@@ -1,3 +1,5 @@
+#pragma once
+
 // Copyright 2013 Lars Pensjö
 //
 // Lplog is free software: you can redistribute it and/or modify
@@ -42,7 +44,7 @@ public:
 
 	void SetFocusFind();
 	void FindNext(Document *, std::string, bool restart);
-	void FindSetCaseSensitive(Document *doc);
+	void FindSetCaseSensitive();
 	const std::string GetSearchString() const;
 
 	void TogglePattern(gchar *path);
