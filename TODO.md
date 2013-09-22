@@ -7,3 +7,4 @@
 * Create a menu button "Find next", and attach accelerator F3.
 * Use Ctrl-g to jump to a line.
 * Enable swicthing between case sensitive and insensitive mode.
+* CTRL-V in search pattern is overriden by CTRL-V on highest level, starting a new tab.
