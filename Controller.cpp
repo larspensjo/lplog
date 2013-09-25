@@ -131,7 +131,10 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 }
 
 static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *data, guint info, guint time, Controller *c) {
-	g_assert(info == 0); // Only support one type for now
+	if (info != 0) {
+		g_debug("DragDataReceived unknown info %d", info);
+		return;
+	}
 	char **str = gtk_selection_data_get_uris(data);
 	bool success = false;
 	g_debug("DragDataReceived %s", str[0]);

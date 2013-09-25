@@ -590,8 +590,8 @@ void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name,
 		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, mAccelGroup);
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else if (strcmp(name, "paste") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, mAccelGroup);
-		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_v, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
+		// gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_v, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else if (strcmp(name, "find") == 0) {
 		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, mAccelGroup);
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_f, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
