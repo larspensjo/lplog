@@ -11,3 +11,4 @@
 * Produce a deb installation for Linux.
 * Detect ASCII input and convert to UTF-8.
 * Get page up/page down to work in 3.0.
+* There may be a better way to install GTK+ libraries and themes: http://sourceforge.net/userapps/mediawiki/alex-sh/index.php?title=Main_Page
