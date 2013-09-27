@@ -1,4 +1,4 @@
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include "View.h"
 #include "Document.h"
 #include "Controller.h"
+#include "SaveFile.h"
 
 // Return the full path to the application, including the application name
 static std::string GetInstallDir() {
@@ -55,7 +56,10 @@ int main (int argc, char *argv[])
 	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
 	if (icon == nullptr)
 		g_debug("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);
+	SaveFile saveFile("lplog");
+	saveFile.Read();
 	Controller c;
-	c.Run(argc, argv, icon);
+	c.Run(argc, argv, icon, saveFile);
+	saveFile.Write();
 	return 0;
 }

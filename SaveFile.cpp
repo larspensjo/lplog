@@ -24,17 +24,42 @@
 
 using std::string;
 
-const string OptionPrefix = "OPT";
+const string sOptionPrefix = "OPT";
+const string sCommentPrefix = "#";
 
 void SaveFile::Read() {
 	const string path = GetPath();
+	std::ifstream input(path);
+	if (!input.is_open()) {
+		g_debug("SaveFile::Read Failed to open '%s'", path.c_str());
+		return;
+	}
+	g_debug("SaveFile::Read from %s", path.c_str());
+	while(!input.eof()) {
+		string line;
+		input >> line;
+		string::size_type p = line.find(sCommentPrefix);
+		if (p != string::npos)
+			line = line.substr(0, p);
+		if (line.size() == 0)
+			continue;
+		p = line.find(':');
+		if (p == string::npos) {
+			g_debug("SaveFile::Read illegal line '%s'", line.c_str());
+			continue;
+		}
+		string key = line.substr(0, p-1);
+		string val = line.substr(p);
+		g_debug("SaveFile::Read key '%s' is '%s'", key.c_str(), val.c_str());
+		mData[key] = val;
+	}
 }
 
 void SaveFile::Write() {
 	const string path = GetPath();
 	std::ofstream output(path);
 	if (!output.is_open()) {
-		g_debug("SaveFile::Write Failed to open %s", path.c_str());
+		g_debug("SaveFile::Write Failed to open '%s'", path.c_str());
 		return;
 	}
 	g_debug("SaveFile::Write Saving to %s", path.c_str());
@@ -52,7 +77,7 @@ void SaveFile::SetOption(const std::string &key, const std::string&val) {
 		g_debug("SaveFile::SetOption Invalid value %s", val.c_str());
 		return;
 	}
-	mData[OptionPrefix + key] = val;
+	mData[sOptionPrefix + key] = val;
 }
 
 string SaveFile::GetOption(const string &key) const {
@@ -60,13 +85,13 @@ string SaveFile::GetOption(const string &key) const {
 		g_debug("SaveFile::GetOption Invalid key %s", key.c_str());
 		return "";
 	}
-	return mData.at(OptionPrefix + key);
+	return mData.at(sOptionPrefix + key);
 }
 
 string SaveFile::GetPath() const {
 	string dataDir; // The directory where the client can save data
 	string optionsFilename;
-#ifdef unix
+#ifdef __gnu_linux__
 	dataDir = getenv("HOME");
 	optionsFilename = dataDir + "/." + mFileName;
 #endif

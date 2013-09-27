@@ -22,6 +22,7 @@
 #include "Document.h"
 
 class View;
+class SaveFile;
 
 class Controller
 {
@@ -31,7 +32,7 @@ public:
 	gboolean KeyPressedOther(GtkWidget *, GdkEvent *);
 	gboolean TextViewKeyPress(guint keyval);                                 // Manage a key in our own way for the text view
 
-	void Run(int argc, char *argv[], GdkPixbuf *icon);
+	void Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &);
 	void FileOpenDialog();
 	void OpenURI(const std::string &uri);
 	void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString);
