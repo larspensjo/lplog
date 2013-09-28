@@ -209,7 +209,14 @@ void Controller::OpenURI(const std::string &uri) {
 	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), filename.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
-	mRecentFileNames.push_back(uri);
+	// Move the URI to the front of the recently used list
+	for (auto it = mRecentFileNames.begin(); it != mRecentFileNames.end(); ++it) {
+		if (*it == uri) {
+			mRecentFileNames.erase(it);
+			break;
+		}
+	}
+	mRecentFileNames.push_front(uri);
 }
 
 void Controller::PollInput() {
@@ -363,11 +370,13 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile
 		mQueueAppend = false;
 		mQueueReplace = false;
 	}
-	int numRecentFiles = saveFile.GetIntOption("NumRecentFiles", 4);
+	int numRecentFiles = saveFile.GetIntOption("NumRecentFiles", 9);
 	int i = 0;
 	for (auto fn : mRecentFileNames) {
 		saveFile.SetRecentFileName(i, fn);
 		i++;
+		if (i >= numRecentFiles)
+			break;
 	}
 }
 
@@ -396,7 +405,7 @@ void Controller::FileOpenDialog() {
 void Controller::PrepareRecentFiles(SaveFile &saveFile) {
 	mRecentManager = gtk_recent_manager_get_default();
 	int n = gtk_recent_manager_purge_items(mRecentManager, NULL);
-	n = saveFile.GetIntOption("NumRecentFiles", 4);
+	n = saveFile.GetIntOption("NumRecentFiles", 9);
 	mRecentFileNames.clear();
 	for (int i=0; i < n; i++) {
 		std::string fn = saveFile.GetRecentFileName(i);
