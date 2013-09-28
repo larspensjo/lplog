@@ -20,6 +20,7 @@
 
 #include "Controller.h"
 #include "Document.h"
+#include "SaveFile.h"
 
 static const std::string filePrefixURI = "file://";
 
@@ -208,6 +209,7 @@ void Controller::OpenURI(const std::string &uri) {
 	g_debug("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), filename.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
+	mRecentFileNames.push_back(uri);
 }
 
 void Controller::PollInput() {
@@ -339,6 +341,7 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 }
 
 void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile) {
+	PrepareRecentFiles(saveFile);
 	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::PatternCellUpdated),
 				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyMainWindow), G_CALLBACK(::EditEntry), this);
 	mView.SetWindowTitle("");
@@ -359,6 +362,12 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile
 		}
 		mQueueAppend = false;
 		mQueueReplace = false;
+	}
+	int numRecentFiles = saveFile.GetIntOption("NumRecentFiles", 4);
+	int i = 0;
+	for (auto fn : mRecentFileNames) {
+		saveFile.SetRecentFileName(i, fn);
+		i++;
 	}
 }
 
@@ -381,4 +390,36 @@ void Controller::FileOpenDialog() {
 		g_free(filename);
 	}
 	gtk_widget_destroy(dialog);
+}
+
+// We only want to show files used by LPlog, not by any other application.
+void Controller::PrepareRecentFiles(SaveFile &saveFile) {
+	mRecentManager = gtk_recent_manager_get_default();
+	int n = gtk_recent_manager_purge_items(mRecentManager, NULL);
+	n = saveFile.GetIntOption("NumRecentFiles", 4);
+	mRecentFileNames.clear();
+	for (int i=0; i < n; i++) {
+		std::string fn = saveFile.GetRecentFileName(i);
+		if (fn != "") {
+			mRecentFileNames.push_back(fn);
+			bool ok = gtk_recent_manager_add_item(mRecentManager, fn.c_str());
+			if (ok)
+				g_debug("Controller::PrepareRecentFiles add %s", fn.c_str());
+			else
+				g_debug("Controller::PrepareRecentFiles failed to add %s", fn.c_str());
+		}
+	}
+#if 0
+	GList *list = gtk_recent_manager_get_items(mRecentManager);
+	for (GList *iter = list; iter; iter = iter->next) {
+		GtkRecentInfo *info = (GtkRecentInfo *)iter->data;
+		g_debug("uri: %s", gtk_recent_info_get_uri(info));
+		g_debug("displ: %s", gtk_recent_info_get_display_name(info));
+		g_debug("descr: %s", gtk_recent_info_get_description(info));
+		g_debug("mime: %s", gtk_recent_info_get_mime_type(info));
+		g_debug("private: %d", gtk_recent_info_get_private_hint(info));
+		gtk_recent_info_unref(info);
+	}
+	g_list_free(list);
+#endif
 }

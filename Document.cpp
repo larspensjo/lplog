@@ -58,15 +58,15 @@ static bool findNL(const char *source, unsigned *length, const char **next) {
 }
 
 std::string Document::Date() const {
-    int ret;
-    char buf[100];
+	int ret;
+	char buf[100];
 
 	std::tm *tm = std::localtime(&mFileTime);
-    ret = std::strftime(buf, sizeof buf, "%c", tm);
-    if (ret == 0)
-        return "";
+	ret = std::strftime(buf, sizeof buf, "%c", tm);
+	if (ret == 0)
+		return "";
 
-    return buf;
+	return buf;
 }
 
 void Document::StopUpdate() {

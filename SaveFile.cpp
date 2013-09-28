@@ -27,6 +27,7 @@ using std::string;
 const string sStringPrefix = "STR-";
 const string sNumberPrefix = "NUM-";
 const string sCommentPrefix = "#";
+const string sRecentFileNamePrefix = "REC-";
 
 void SaveFile::Read() {
 	const string path = GetPath();
@@ -38,10 +39,12 @@ void SaveFile::Read() {
 	g_debug("SaveFile::Read from %s", path.c_str());
 	while(!input.eof()) {
 		string line;
-		input >> line;
+		std::getline(input, line);
 		string::size_type p = line.find(sCommentPrefix);
+		if (p == 0)
+			continue;
 		if (p != string::npos)
-			line = line.substr(0, p);
+			line = line.substr(0, p-1);
 		if (line.size() == 0)
 			continue;
 		p = line.find(':');
@@ -49,8 +52,8 @@ void SaveFile::Read() {
 			g_debug("SaveFile::Read illegal line '%s'", line.c_str());
 			continue;
 		}
-		string key = line.substr(0, p-1);
-		string val = line.substr(p);
+		string key = line.substr(0, p);
+		string val = line.substr(p+1);
 		g_debug("SaveFile::Read key '%s' is '%s'", key.c_str(), val.c_str());
 		mData[key] = val;
 	}
@@ -64,9 +67,12 @@ void SaveFile::Write() {
 		return;
 	}
 	g_debug("SaveFile::Write Saving to %s", path.c_str());
+	output << sCommentPrefix << std::endl;
+	output << sCommentPrefix << " Options file for LPlog" << std::endl;
+	output << sCommentPrefix << std::endl;
 	for (auto pair : mData) {
-        if (pair.second == "")
-            continue;
+		if (pair.second == "")
+			continue; // Ignore empty values
 		output << pair.first << ":" << pair.second << std::endl;
 	}
 }
@@ -83,12 +89,16 @@ void SaveFile::SetStringOption(const std::string &key, const std::string&val) {
 	mData[sStringPrefix + key] = val;
 }
 
-string SaveFile::GetStringOption(const string &key) {
-	if (!IsValidKey(key)) {
-		g_debug("SaveFile::GetStringOption Invalid key %s", key.c_str());
+string SaveFile::GetStringOption(const string &id, const std::string &def) {
+	if (!IsValidKey(id)) {
+		g_debug("SaveFile::GetStringOption Invalid key %s", id.c_str());
 		return "";
 	}
-	return mData[sStringPrefix + key];
+	string key = sStringPrefix + id;
+	auto it = mData.find(key);
+	if (it == mData.end())
+		mData[key] = def;
+	return mData[key];
 }
 
 void SaveFile::SetIntOption(const std::string &key, int val) {
@@ -96,15 +106,29 @@ void SaveFile::SetIntOption(const std::string &key, int val) {
 		g_debug("SaveFile::SetIntOption Invalid key %s", key.c_str());
 		return;
 	}
-	mData[sStringPrefix + key] = std::to_string(val);
+	mData[sNumberPrefix + key] = std::to_string(val);
 }
 
-int SaveFile::GetIntOption(const std::string &key) {
-	if (!IsValidKey(key)) {
-		g_debug("SaveFile::GetIntOption Invalid key %s", key.c_str());
+int SaveFile::GetIntOption(const std::string &id, int def) {
+	if (!IsValidKey(id)) {
+		g_debug("SaveFile::GetIntOption Invalid key %s", id.c_str());
 		return 0;
 	}
-	return std::stoi(mData[sNumberPrefix + key]);
+	string key = sNumberPrefix + id;
+	auto it = mData.find(key);
+	if (it == mData.end())
+		mData[key] = std::to_string(def);
+	return std::stoi(mData[key]);
+}
+
+std::string SaveFile::GetRecentFileName(int n) {
+	string key = sRecentFileNamePrefix + std::to_string(n);
+	return mData[key];
+}
+
+void SaveFile::SetRecentFileName(int n, const std::string &fn) {
+	string key = sRecentFileNamePrefix + std::to_string(n);
+	mData[key] = fn;
 }
 
 string SaveFile::GetPath() const {

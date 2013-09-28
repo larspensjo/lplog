@@ -24,10 +24,15 @@ public:
 	SaveFile(const std::string &fn) : mFileName(fn) {}
 	void Read();
 	void Write();
-	void SetStringOption(const std::string &key, const std::string&val);
-	std::string GetStringOption(const std::string &key);
-	void SetIntOption(const std::string &key, int val);
-	int GetIntOption(const std::string &key);
+
+	void SetStringOption(const std::string &id, const std::string&val);
+	std::string GetStringOption(const std::string &id, const std::string &def = "");
+
+	void SetIntOption(const std::string &id, int val);
+	int GetIntOption(const std::string &id, int def = 0);
+
+	std::string GetRecentFileName(int);
+	void SetRecentFileName(int, const std::string &);
 private:
 	const std::string mFileName;
 	std::map<std::string, std::string> mData;

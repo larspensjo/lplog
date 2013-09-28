@@ -17,6 +17,7 @@
 
 #include <gtk/gtk.h>
 #include <map>
+#include <vector>
 
 #include "View.h"
 #include "Document.h"
@@ -55,4 +56,8 @@ private:
 	bool mQueueReplace = false;
 	bool mQueueAppend = false;
 	bool mRootPatternDisabled = false;
+	GtkRecentManager *mRecentManager = 0;
+	std::vector<std::string> mRecentFileNames;
+
+	void PrepareRecentFiles(SaveFile &saveFile);
 };
