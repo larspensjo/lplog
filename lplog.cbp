@@ -84,6 +84,7 @@
 		<Unit filename="TODO.md" />
 		<Unit filename="View.cpp" />
 		<Unit filename="View.h" />
+		<Unit filename="changelog" />
 		<Unit filename="extract_dep.sh" />
 		<Unit filename="lplog.rc">
 			<Option compilerVar="WINDRES" />
