@@ -263,10 +263,10 @@ debian: $(PROGRAM)
 	cp $(PROGRAM) $(DESTDIR)/usr/bin
 	cp changelog $(DESTDIR)/usr/share/doc/pkg
 	fpm --verbose -s dir -t deb -n lplog -v 2.0 -f --deb-changelog $(DESTDIR)/usr/share/doc/pkg/changelog\
-		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0\
+		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0 --category debug\
 		--description "Log viewer that supports easy filtering and will update automatcally."\
 		--deb-user root --deb-group root --vendor 'Lars Pensjö'\
-		--url https://github.com/larspensjo/lplog --maintainer lars.pensjo@gmail.com .
+		--url https://github.com/larspensjo/lplog --maintainer "Lars Pensjö <lars.pensjo@gmail.com>" .
 
 clean:
 	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe
