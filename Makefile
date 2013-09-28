@@ -253,12 +253,12 @@ endif
 
 # This uses fpm to create a debian package.
 # Install ruby and fpm with:
-#    sudo apt-get install ruby1.9.1 Ruby19.91-dev
+#    sudo apt-get install ruby1.9.1 ruby1.9.1-dev
 #    sudo gem install fpm
 DESTDIR := distro
 debian: $(PROGRAM)
 	rm -rf $(DESTDIR)
-	mkdir -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/doc/pkg
+	(umask 0022; mkdir --mode=0755 -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/doc/pkg)
 	strip $(PROGRAM)
 	cp $(PROGRAM) $(DESTDIR)/usr/bin
 	cp changelog $(DESTDIR)/usr/share/doc/pkg
