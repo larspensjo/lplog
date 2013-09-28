@@ -34,7 +34,7 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	std::string newTitle = "LPlog 2.1b       " + str;
+	std::string newTitle = "LPlog 3.0b       " + str;
 	gtk_window_set_title(mWindow, newTitle.c_str());
 }
 

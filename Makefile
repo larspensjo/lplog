@@ -262,7 +262,7 @@ debian: $(PROGRAM)
 	strip $(PROGRAM)
 	cp $(PROGRAM) $(DESTDIR)/usr/bin
 	cp changelog $(DESTDIR)/usr/share/doc/pkg
-	fpm --verbose -s dir -t deb -n lplog -v 2.0 -f --deb-changelog $(DESTDIR)/usr/share/doc/pkg/changelog\
+	fpm --verbose -s dir -t deb -n lplog -v 3.0b -f --deb-changelog $(DESTDIR)/usr/share/doc/pkg/changelog\
 		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0 --category debug\
 		--description "Log viewer that supports easy filtering and will update automatcally."\
 		--deb-user root --deb-group root --vendor 'Lars Pensjö'\
