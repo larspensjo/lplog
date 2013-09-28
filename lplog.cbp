@@ -82,6 +82,8 @@
 		<Unit filename="LPlog.iss" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
+		<Unit filename="SaveFile.cpp" />
+		<Unit filename="SaveFile.h" />
 		<Unit filename="TODO.md" />
 		<Unit filename="View.cpp" />
 		<Unit filename="View.h" />

@@ -24,7 +24,8 @@
 
 using std::string;
 
-const string sOptionPrefix = "OPT";
+const string sStringPrefix = "STR-";
+const string sNumberPrefix = "NUM-";
 const string sCommentPrefix = "#";
 
 void SaveFile::Read() {
@@ -64,28 +65,46 @@ void SaveFile::Write() {
 	}
 	g_debug("SaveFile::Write Saving to %s", path.c_str());
 	for (auto pair : mData) {
+        if (pair.second == "")
+            continue;
 		output << pair.first << ":" << pair.second << std::endl;
 	}
 }
 
-void SaveFile::SetOption(const std::string &key, const std::string&val) {
+void SaveFile::SetStringOption(const std::string &key, const std::string&val) {
 	if (!IsValidKey(key)) {
-		g_debug("SaveFile::SetOption Invalid key %s", key.c_str());
+		g_debug("SaveFile::SetStringOption Invalid key %s", key.c_str());
 		return;
 	}
 	if (!IsValidValue(val)) {
-		g_debug("SaveFile::SetOption Invalid value %s", val.c_str());
+		g_debug("SaveFile::SetStringOption Invalid value %s", val.c_str());
 		return;
 	}
-	mData[sOptionPrefix + key] = val;
+	mData[sStringPrefix + key] = val;
 }
 
-string SaveFile::GetOption(const string &key) const {
+string SaveFile::GetStringOption(const string &key) {
 	if (!IsValidKey(key)) {
-		g_debug("SaveFile::GetOption Invalid key %s", key.c_str());
+		g_debug("SaveFile::GetStringOption Invalid key %s", key.c_str());
 		return "";
 	}
-	return mData.at(sOptionPrefix + key);
+	return mData[sStringPrefix + key];
+}
+
+void SaveFile::SetIntOption(const std::string &key, int val) {
+	if (!IsValidKey(key)) {
+		g_debug("SaveFile::SetIntOption Invalid key %s", key.c_str());
+		return;
+	}
+	mData[sStringPrefix + key] = std::to_string(val);
+}
+
+int SaveFile::GetIntOption(const std::string &key) {
+	if (!IsValidKey(key)) {
+		g_debug("SaveFile::GetIntOption Invalid key %s", key.c_str());
+		return 0;
+	}
+	return std::stoi(mData[sNumberPrefix + key]);
 }
 
 string SaveFile::GetPath() const {

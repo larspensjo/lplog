@@ -24,8 +24,10 @@ public:
 	SaveFile(const std::string &fn) : mFileName(fn) {}
 	void Read();
 	void Write();
-	void SetOption(const std::string &key, const std::string&val);
-	std::string GetOption(const std::string &key) const;
+	void SetStringOption(const std::string &key, const std::string&val);
+	std::string GetStringOption(const std::string &key);
+	void SetIntOption(const std::string &key, int val);
+	int GetIntOption(const std::string &key);
 private:
 	const std::string mFileName;
 	std::map<std::string, std::string> mData;
