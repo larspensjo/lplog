@@ -251,6 +251,23 @@ ifneq ($(DEPS),)
 endif
 endif
 
+# This uses fpm to create a debian package.
+# Install ruby and fpm with:
+#    sudo apt-get install ruby1.9.1 Ruby19.91-dev
+#    sudo gem install fpm
+DESTDIR := distro
+debian: $(PROGRAM)
+	rm -rf $(DESTDIR)
+	mkdir -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/doc/pkg
+	strip $(PROGRAM)
+	cp $(PROGRAM) $(DESTDIR)/usr/bin
+	cp changelog $(DESTDIR)/usr/share/doc/pkg
+	fpm --verbose -s dir -t deb -n lplog -v 2.0 -f --deb-changelog $(DESTDIR)/usr/share/doc/pkg/changelog\
+		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0\
+		--description "Log viewer that supports easy filtering and will update automatcally."\
+		--deb-user root --deb-group root --vendor 'Lars Pensjö'\
+		--url https://github.com/larspensjo/lplog --maintainer lars.pensjo@gmail.com .
+
 clean:
 	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe
 
