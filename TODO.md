@@ -8,6 +8,7 @@ High priority
 * Produce a deb installation for Linux.
 * The icon should be loaded from the resource file instead from the icon file.
 * Improved detection of new file, by looking at content.
+* Windows header doesn't get updated sometimes.
 
 Medium priority
 ===============
