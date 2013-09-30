@@ -56,6 +56,9 @@ private:
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	std::time_t mFileTime = {0};
 	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
+	unsigned mChecksum = 0;                 // Checksum of the current file
+	unsigned mChecksumSize = 0;             // The number of initial bytes used for the checksum
 
 	void SplitLines(char *, unsigned size); // This will modify the argument
+	unsigned Checksum(std::ifstream &input, unsigned size);
 };

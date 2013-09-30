@@ -15,6 +15,7 @@
 #undef __STRICT_ANSI__ // Needed for "struct stat" in MinGW.
 
 #include <sstream>
+#include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -105,6 +106,21 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mFileTime = std::time(nullptr);
 }
 
+unsigned Document::Checksum(std::ifstream &input, unsigned size) {
+	g_assert(input.is_open());
+	g_assert(size > 0);
+	char buff[size];
+	input.read(buff, size);
+	auto count = input.gcount();
+	g_assert(count == size);
+	unsigned sum = 0;
+	for (char ch : buff) {
+		// Just something simple
+		sum = (sum << 2) + sum + ch;
+	}
+	return sum;
+}
+
 Document::UpdateResult Document::UpdateInputData() {
 	mFirstNewLine = mLines.size(); // Remember where the new lines started after the update
 	if (mFileName == "" || mStopUpdates)
@@ -126,11 +142,18 @@ Document::UpdateResult Document::UpdateInputData() {
 		mFileTime = st.st_mtime;
 
 	std::ifstream::pos_type startPos = mCurrentPosition;
-	input.seekg (0, ios::end);
-	std::ifstream::pos_type end = input.tellg();
-	if (end == mCurrentPosition)
+	if (st.st_size == mCurrentPosition)
 		return UpdateResult::NoChange;
-	mCurrentPosition = end;
+	mCurrentPosition = st.st_size;
+
+	unsigned requestedChecksumSize = 1024; // Small enough to be quick to read, big enough to consistently detect changed file content
+	if (mCurrentPosition != startPos && mChecksumSize < requestedChecksumSize) {
+		mChecksumSize = std::min(off_t(requestedChecksumSize), st.st_size);
+		mChecksum = Checksum(input, mChecksumSize);
+		g_debug("Document::UpdateResult Checksum %04X, size %u", mChecksum, mChecksumSize);
+		input.seekg (startPos, ios::beg);
+	}
+
 	if (mCurrentPosition <= startPos) {
 		// There is a new file
 		g_debug("Document::UpdateInputData new content");
@@ -138,7 +161,6 @@ Document::UpdateResult Document::UpdateInputData() {
 		return UpdateResult::Replaced;
 	}
 	auto size = mCurrentPosition - startPos;
-	input.seekg (startPos, ios::beg);
 	char *buff = new char[size+1];
 	input.read(buff, size);
 	// On MinGW, the actual number of characters will be smaller as CRNL is converted to NL.
