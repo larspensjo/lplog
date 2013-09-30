@@ -21,6 +21,7 @@ Medium priority
 * Detect ASCII input and convert to UTF-8.
 * Get page up/page down to work.
 * Enable Alt-TAB to switch between tabs.
+* Define a debug mode where log output is sent to its own tab.
 
 Low priority
 ============
