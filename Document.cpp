@@ -88,11 +88,9 @@ void Document::AddSourceFile(const std::string &fileName) {
 	mLines.clear();
 	struct stat st = { 0 };
 	if (stat(mFileName.c_str(), &st) == 0) {
-		mFileTime = st.st_mtime;
 		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
 	} else {
 		g_debug("Document::AddSourceFile failed to open '%s' (err %d)", mFileName.c_str(), errno);
-		mFileTime = 0;
 	}
 }
 
@@ -138,8 +136,10 @@ Document::UpdateResult Document::UpdateInputData() {
 
 	// Update the time stamp of the file to latest
 	struct stat st = { 0 };
+	time_t prevModTime = mFileTime;
 	if (stat(mFileName.c_str(), &st) == 0)
 		mFileTime = st.st_mtime;
+	bool documentIsModified = (prevModTime != mFileTime);
 
 	std::ifstream::pos_type startPos = mCurrentPosition;
 	if (st.st_size == mCurrentPosition)
@@ -147,7 +147,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	mCurrentPosition = st.st_size;
 
 	unsigned requestedChecksumSize = 1024; // Small enough to be quick to read, big enough to consistently detect changed file content
-	if (mCurrentPosition != startPos && mChecksumSize < requestedChecksumSize) {
+	if (documentIsModified && mChecksumSize < requestedChecksumSize) {
 		mChecksumSize = std::min(off_t(requestedChecksumSize), st.st_size);
 		mChecksum = Checksum(input, mChecksumSize);
 		g_debug("Document::UpdateResult Checksum %04X, size %u", mChecksum, mChecksumSize);
