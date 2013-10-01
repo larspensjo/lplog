@@ -150,7 +150,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	if (documentIsModified && mChecksumSize < requestedChecksumSize) {
 		mChecksumSize = std::min(off_t(requestedChecksumSize), st.st_size);
 		mChecksum = Checksum(input, mChecksumSize);
-		g_debug("Document::UpdateResult Checksum %04X, size %u", mChecksum, mChecksumSize);
+		g_debug("Document::UpdateInputData Checksum %04X, size %u", mChecksum, mChecksumSize);
 		input.seekg (startPos, ios::beg);
 	}
 
@@ -161,8 +161,9 @@ Document::UpdateResult Document::UpdateInputData() {
 		return UpdateResult::Replaced;
 	}
 	auto size = mCurrentPosition - startPos;
-	char *buff = new char[size+1];
+	char *buff = new char[size+1]; // Reserve space for null byte
 	input.read(buff, size);
+	g_debug("Document::UpdateInputData Size %u, read %u", (unsigned)size, (unsigned)input.gcount());
 	// On MinGW, the actual number of characters will be smaller as CRNL is converted to NL.
 	this->SplitLines(buff, input.gcount());
 	delete [] buff;
@@ -210,7 +211,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		mIncompleteLastLine = "";
 		p = next;
 	}
-	g_debug("Document::SplitLines total %u, incomplete last %d in document %p", (unsigned)mLines.size(), mIncompleteLastLine != "", this);
+	g_debug("Document::SplitLines total %u,%s document %p", (unsigned)mLines.size(), mIncompleteLastLine != "" ? " incomplete last, " : "", this);
 }
 
 std::string Document::GetFileNameShort() const {

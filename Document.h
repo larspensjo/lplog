@@ -59,6 +59,6 @@ private:
 	unsigned mChecksum = 0;                 // Checksum of the current file
 	unsigned mChecksumSize = 0;             // The number of initial bytes used for the checksum
 
-	void SplitLines(char *, unsigned size); // This will modify the argument
+	void SplitLines(char *, unsigned size); // This will modify the buffer content
 	unsigned Checksum(std::ifstream &input, unsigned size);
 };
