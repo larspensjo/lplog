@@ -109,12 +109,11 @@ unsigned Document::Checksum(std::ifstream &input, unsigned size) {
 	g_assert(size > 0);
 	char buff[size];
 	input.read(buff, size);
-	auto count = input.gcount();
-	g_assert(count == size);
+	unsigned count = input.gcount(); // On Windows, the actual size will not be the same
 	unsigned sum = 0;
-	for (char ch : buff) {
+	for (unsigned i = 0; i<count; i++) {
 		// Just something simple
-		sum = (sum << 2) + sum + ch;
+		sum = (sum << 2) + sum + buff[i];
 	}
 	return sum;
 }
