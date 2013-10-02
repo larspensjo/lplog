@@ -123,47 +123,47 @@ Document::UpdateResult Document::UpdateInputData() {
 	mFirstNewLine = mLines.size(); // Remember where the new lines started after the update
 	if (mFileName == "" || mStopUpdates)
 		return UpdateResult::NoChange;
+
+	// Update the time stamp of the file to latest
+	struct stat st = { 0 };
+	bool statFailed = stat(mFileName.c_str(), &st) != 0;
+
 	std::ifstream input(mFileName);
-	if (!input.is_open()) {
-		// There is no file to open
+	if (statFailed || !input.is_open()) {
+		// There is no file
 		if (mCurrentPosition != 0) {
-			g_debug("Document::UpdateInputData no file");
+			g_debug("Document::UpdateInputData file removed");
 			mStopUpdates = true;
 			return UpdateResult::Replaced;
 		}
 		return UpdateResult::NoChange;
 	}
 
-	// Update the time stamp of the file to latest
-	struct stat st = { 0 };
-	time_t prevModTime = mFileTime;
-	if (stat(mFileName.c_str(), &st) == 0)
-		mFileTime = st.st_mtime;
-	bool documentIsModified = (prevModTime != mFileTime);
+	bool documentIsModified = (st.st_mtime != mFileTime);
+	mFileTime = st.st_mtime;
 
-	std::ifstream::pos_type startPos = mCurrentPosition;
-	if (st.st_size == mCurrentPosition)
+	if (mCurrentPosition > st.st_size) {
+		// There is a new file
+		g_debug("Document::UpdateInputData new content");
+		mStopUpdates = true;
+		return UpdateResult::Replaced;
+	}
+
+	if (mCurrentPosition == st.st_size)
 		return UpdateResult::NoChange;
-	mCurrentPosition = st.st_size;
 
 	unsigned requestedChecksumSize = 1024; // Small enough to be quick to read, big enough to consistently detect changed file content
 	if (documentIsModified && mChecksumSize < requestedChecksumSize) {
 		mChecksumSize = std::min(off_t(requestedChecksumSize), st.st_size);
 		mChecksum = Checksum(input, mChecksumSize);
 		g_debug("Document::UpdateInputData Checksum %04X, size %u", mChecksum, mChecksumSize);
-		input.seekg (startPos, ios::beg);
 	}
-
-	if (mCurrentPosition <= startPos) {
-		// There is a new file
-		g_debug("Document::UpdateInputData new content");
-		mStopUpdates = true;
-		return UpdateResult::Replaced;
-	}
-	auto size = mCurrentPosition - startPos;
+	auto size = st.st_size - mCurrentPosition;
 	char *buff = new char[size+1]; // Reserve space for null byte
+	input.seekg(mCurrentPosition, ios::beg);
 	input.read(buff, size);
-	g_debug("Document::UpdateInputData Size %u, read %u", (unsigned)size, (unsigned)input.gcount());
+	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)size, (unsigned)input.gcount());
+	mCurrentPosition += input.gcount();
 	// On MinGW, the actual number of characters will be smaller as CRNL is converted to NL.
 	this->SplitLines(buff, input.gcount());
 	delete [] buff;
@@ -187,6 +187,7 @@ void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f
 void Document::SplitLines(char *buff, unsigned size) {
 	const char *last;
 	while(!g_utf8_validate(buff, size, &last)) {
+		// TODO: Convert from ASCII to utf-8 instead
 		unsigned pos = last - buff;
 		// cout << "Bad character at pos " << pos << endl;
 		buff[pos] = ' ';
@@ -201,7 +202,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		if (p[len] == '\0') {
 			// No newline, means the line is incomplete.
 			mIncompleteLastLine += std::string(p, len);
-			g_debug("Document::SplitLines incomplete last line '%s'", mIncompleteLastLine.c_str());
+			g_debug("Document::SplitLines incomplete last line (%u chars) '%s'", len, mIncompleteLastLine.c_str());
 			break;
 		}
 		// Add a new line
