@@ -162,7 +162,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	input.seekg(mCurrentPosition, ios::beg);
 	input.read(buff, size);
 	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)size, (unsigned)input.gcount());
-	mCurrentPosition += input.gcount();
+	mCurrentPosition += size;
 	// On MinGW, the actual number of characters will be smaller as CRNL is converted to NL.
 	this->SplitLines(buff, input.gcount());
 	delete [] buff;
