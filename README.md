@@ -20,7 +20,8 @@ Compiles for Windows and Linux, GTK+-2.0 and gtk+-3.0.
 
 For Windows:
 * install MinGW+MSYS
-* Download the gtk+ super bundle from http://www.gtk.org/download/win32.php and unpack it in /usr/local
+* Download the gtk3 super bundle from http://sourceforge.net/projects/gtk-mingw/
+(or GTK2 from http://www.gtk.org/download/win32.php) and unpack it in /usr/local
 * Make sure /local/bin is in the PATH if you use the MinGW shell
 * If CodeBlocks is used, start it from the MinGW shell (to get the PATH).
 
