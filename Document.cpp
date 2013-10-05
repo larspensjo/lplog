@@ -104,12 +104,10 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mFileTime = std::time(nullptr);
 }
 
-unsigned Document::Checksum(std::ifstream &input, unsigned size) {
-	g_assert(input.is_open());
-	g_assert(size > 0);
+unsigned Document::Checksum(std::FILE *input, unsigned size) {
 	char buff[size];
-	input.read(buff, size);
-	unsigned count = input.gcount(); // On Windows, the actual size will not be the same
+	unsigned count = std::fread(buff, 1, sizeof buff, input);
+	g_assert(count == size);
 	unsigned sum = 0;
 	for (unsigned i = 0; i<count; i++) {
 		// Just something simple
@@ -127,8 +125,8 @@ Document::UpdateResult Document::UpdateInputData() {
 	struct stat st = { 0 };
 	bool statFailed = stat(mFileName.c_str(), &st) != 0;
 
-	std::ifstream input(mFileName);
-	if (statFailed || !input.is_open()) {
+	std::FILE *input = std::fopen(mFileName.c_str(), "rb");
+	if (statFailed || input == nullptr) {
 		// There is no file
 		if (mCurrentPosition != 0) {
 			g_debug("Document::UpdateInputData file removed");
@@ -159,12 +157,11 @@ Document::UpdateResult Document::UpdateInputData() {
 	}
 	auto size = st.st_size - mCurrentPosition;
 	char *buff = new char[size+1]; // Reserve space for null byte
-	input.seekg(mCurrentPosition, ios::beg);
-	input.read(buff, size);
-	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)size, (unsigned)input.gcount());
-	mCurrentPosition += size;
-	// On MinGW, the actual number of characters will be smaller as CRNL is converted to NL.
-	this->SplitLines(buff, input.gcount());
+	std::fseek(input, mCurrentPosition, SEEK_SET);
+	unsigned n = (unsigned)std::fread(buff, 1, size, input);
+	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)size, n);
+	mCurrentPosition += n;
+	this->SplitLines(buff, n);
 	delete [] buff;
 	return UpdateResult::Grow;
 }
