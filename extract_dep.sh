@@ -10,9 +10,10 @@ make clean
 make -j CXXFLAGS=-O3
 mkdir -p distro
 depends22_x86/depends.exe -c -f:1 -ot:out.txt lplog.exe
-rm -f distro/*
+rm -rf distro/*
 files=`cat out.txt | grep '^\[' | grep mingw | sed 's/^.*c://' | sed 's/\\.DLL.*/.DLL/' | sed 's/\\\\/\\//g'`
 rm out.txt
 cp $files distro
 cp lplog.exe distro
+cp -r gtk-themes-MinGW/* distro
 strip distro/lplog.exe
