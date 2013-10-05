@@ -14,7 +14,6 @@
 //
 #undef __STRICT_ANSI__ // Needed for "struct stat" in MinGW.
 
-#include <sstream>
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,10 +24,6 @@
 #endif
 
 #include "Document.h"
-
-using std::ios;
-using std::cout;
-using std::endl;
 
 static bool findNL(const char *source, unsigned *length, const char **next) {
 	const char *p = source;

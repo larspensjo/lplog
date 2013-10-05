@@ -15,8 +15,6 @@
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
-#include <iostream>
-#include <fstream>
 #include <string>
 
 #ifdef __linux__
@@ -48,9 +46,6 @@ static std::string GetInstallDir() {
 	return path.substr(0,pos+1);
 #endif // _WIN32
 }
-
-using std::cout;
-using std::endl;
 
 int main (int argc, char *argv[])
 {

@@ -1,4 +1,4 @@
-// Copyright 2013 Lars PensjÃ¶
+// Copyright 2013 Lars Pensjö
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,6 @@
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
@@ -21,9 +20,6 @@
 
 #include "Controller.h"
 #include "Document.h"
-
-using std::cout;
-using std::endl;
 
 static const std::string filePrefixURI = "file://";
 
@@ -79,7 +75,7 @@ static void ButtonClicked(GtkButton *button, Controller *c) {
 	else if (name == "paste")
 		c->TextViewKeyPress(GDK_KEY_Paste);
 	else
-		cout << "Unknown button: " << name << endl;
+		g_debug("Unknown button: %s", name.c_str());
 }
 
 static gboolean TestForeChanges(Controller *c)
@@ -290,7 +286,6 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 			GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 			gchar *p = gtk_clipboard_wait_for_text(clipboard);
 			if (p != nullptr) {
-				// cout << "Pasted text: " << p << " key " << endl;
 				mCurrentDoc = &mDocumentList[mView.nextId];
 				g_debug("[%d] Controller::TextViewKeyPress new document %p", mView.GetCurrentTabId(), mCurrentDoc);
 				unsigned size = strlen(p);
