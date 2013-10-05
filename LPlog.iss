@@ -29,11 +29,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "lplog.exe"; DestDir: "{app}"; DestName: "lplog.exe"; Flags: ignoreversion
-Source: "lplog.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "readme.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "distro/*.DLL"; DestDir: "{app}"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "distro\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
 Name: "{group}\LPlog"; Filename: "{app}\lplog.exe"; IconFilename: "{app}\icon.bmp"
