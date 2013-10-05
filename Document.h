@@ -49,7 +49,7 @@ public:
 private:
 	std::vector<std::string> mLines;        // The input document
 	std::string mFileName;
-	std::fpos_t mCurrentPosition = 0; // Position in input buffer where next read should start.
+	long mCurrentPosition = 0; // Position in input buffer where next read should start.
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
