@@ -11,7 +11,7 @@ The data should remember what search pattern was used for each file.
 * The icon should be loaded from the resource file instead from the icon file.
 * Improved detection of new file, by looking at content.
 * Windows header doesn't get updated sometimes.
-* Create a mode which maximises the test window and hides all other widgets.
+* Create a mode which maximises the test window and hides all other widgets (using the expander widget).
 The purpose is to show a read-only window to display status.
 
 Medium priority
