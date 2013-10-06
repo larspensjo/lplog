@@ -22,6 +22,7 @@ Medium priority
 * Get page up/page down to work.
 * Enable Alt-TAB to switch between tabs.
 * Define a debug mode where log output is sent to its own tab.
+* Create a snapshot function. It should freeze the current tab, and start a new one that continues on the same log file.
 
 Low priority
 ============
