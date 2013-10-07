@@ -135,14 +135,17 @@ Document::UpdateResult Document::UpdateInputData() {
 	mFileTime = st.st_mtime;
 
 	if (mCurrentPosition > st.st_size) {
+		fclose(input);
 		// There is a new file
 		g_debug("Document::UpdateInputData new content");
 		mStopUpdates = true;
 		return UpdateResult::Replaced;
 	}
 
-	if (mCurrentPosition == st.st_size)
+	if (mCurrentPosition == st.st_size) {
+		fclose(input);
 		return UpdateResult::NoChange;
+	}
 
 	unsigned requestedChecksumSize = 1024; // Small enough to be quick to read, big enough to consistently detect changed file content
 	if (documentIsModified && mChecksumSize < requestedChecksumSize) {
@@ -154,6 +157,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	char *buff = new char[size+1]; // Reserve space for null byte
 	std::fseek(input, mCurrentPosition, SEEK_SET);
 	unsigned n = (unsigned)std::fread(buff, 1, size, input);
+	fclose(input);
 	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)size, n);
 	mCurrentPosition += n;
 	this->SplitLines(buff, n);
