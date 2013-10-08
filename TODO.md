@@ -25,6 +25,8 @@ Medium priority
 * Create a snapshot function. It should freeze the current tab, and start a new one that continues on the same log file.
 * Create a slider that can be used to hide initial part of the log line.
 This is useful when the log lines all start with a similar pattern.
+* There should be some kid of notification if a search string contains leading or trailing blanks.
+This may lead to failed searches.
 
 Low priority
 ============
