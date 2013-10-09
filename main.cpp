@@ -33,11 +33,7 @@
 // Return the full path to the application, including the application name
 static std::string GetInstallDir() {
 #ifdef __linux__
-	char result[ PATH_MAX ];
-	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-	auto path = std::string( result, (count > 0) ? count : 0 );
-	auto pos = path.rfind('/');
-	return path.substr(0,pos+1);
+	return "/usr/share/lplog/";
 #endif // unix
 #ifdef _WIN32
 	char result[ MAX_PATH ];
@@ -55,7 +51,7 @@ int main (int argc, char *argv[])
 	g_debug("main: Argc after %d", argc);
 
 	GError *err = 0;
-	const std::string iconFile = GetInstallDir() + "lplog.ico";
+	const std::string iconFile = GetInstallDir() + "applicon.xpm";
 	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
 	if (icon == nullptr)
 		g_debug("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);

@@ -258,10 +258,11 @@ endif
 DESTDIR := distro
 debian: $(PROGRAM)
 	rm -rf $(DESTDIR)
-	(umask 0022; mkdir --mode=0755 -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/doc/pkg)
+	(umask 0022; mkdir --mode=0755 -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/doc/pkg $(DESTDIR)/usr/share/lplog)
 	strip $(PROGRAM)
 	cp $(PROGRAM) $(DESTDIR)/usr/bin
 	cp changelog $(DESTDIR)/usr/share/doc/pkg
+	cp applicon.xpm $(DESTDIR)/usr/share/lplog
 	fpm --verbose -s dir -t deb -n lplog -v 3.0b -f --deb-changelog $(DESTDIR)/usr/share/doc/pkg/changelog\
 		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0 --category debug\
 		--description "Log viewer that supports easy filtering and will update automatcally."\
