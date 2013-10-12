@@ -29,7 +29,7 @@ public:
 	gboolean TextViewKeyEvent(GdkEvent *event);
 	gboolean KeyPressed(guint keyval);
 	gboolean KeyPressedOther(GtkWidget *, GdkEvent *);
-	gboolean TextViewKeyPress(guint keyval);
+	gboolean TextViewKeyPress(guint keyval);                                 // Manage a key in our own way for the text view
 
 	void Run(int argc, char *argv[], GdkPixbuf *icon);
 	void FileOpenDialog();

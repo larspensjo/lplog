@@ -34,8 +34,11 @@ gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
 	gint keyval = event->key.keyval;
 	g_debug("KeyPressedOther state 0x%x key 0x%x name %s", event->key.state, keyval, name.c_str());
 	if (!(state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_F3) {
-		// Ignore widget name
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+		return true;
+	}
+	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_F4) {
+		mView.CloseCurrentTab();
 		return true;
 	}
 	return false;
@@ -95,7 +98,7 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 	g_debug("TextViewKeyPress %s: 0x%x modifier %d state 0x%x hardware_keycode 0x%x type %d",
 			event->key.string, keyval, event->key.is_modifier, event->key.state, event->key.hardware_keycode, event->key.type);
 	if (event->key.is_modifier)
-		return false; // Ignore all SHIF, CTRL, etc.
+		return false; // Ignore all SHIFT, CTRL, etc.
 	if (!(event->key.state & GDK_CONTROL_MASK) && !(keyval >= GDK_KEY_F1 && keyval <= GDK_KEY_F35))
 		return true; // Consume all normal characters, to prevent from being inserted
 	else if ((event->key.state & GDK_CONTROL_MASK) && keyval == GDK_KEY_c)

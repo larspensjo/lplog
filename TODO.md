@@ -5,27 +5,29 @@ High priority
 There should be no Replace() initiated from View.
 * Save the last search pattern. And load it again next time application starts.
 The data should remember what search pattern was used for each file.
-* Create a menu button "Find next", and attach accelerator F3.
 * Use Ctrl-g to jump to a line.
-* The icon should be loaded from the resource file instead from the icon file.
 * Improved detection of new file, by looking at content.
 * Windows header doesn't get updated sometimes.
 * Create a mode which maximises the test window and hides all other widgets (using the expander widget).
 The purpose is to show a read-only window to display status.
+* Get page up/page down to work.
+* Enable drag-and-drop to the empty document.
 
 Medium priority
 ===============
 * Color code selected strings in display window.
 * Use CTRL-mouse wheel to change font size.
 * Detect ASCII input and convert to UTF-8.
-* Get page up/page down to work.
-* Enable Alt-TAB to switch between tabs.
+* Enable CTRL-TAB to switch between tabs.
 * Define a debug mode where log output is sent to its own tab.
 * Create a snapshot function. It should freeze the current tab, and start a new one that continues on the same log file.
 * Create a slider that can be used to hide initial part of the log line.
 This is useful when the log lines all start with a similar pattern.
 * There should be some kid of notification if a search string contains leading or trailing blanks.
 This may lead to failed searches.
+* The icon should be loaded from the resource file instead from the icon file.
+* Improve the view of the search tree.
+When a field is empty, you can't see that there is a field.
 
 Low priority
 ============
