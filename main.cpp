@@ -56,7 +56,7 @@ int main (int argc, char *argv[])
 	g_debug("main: Argc after %d", argc);
 
 	GError *err = 0;
-	const std::string iconFile = GetInstallDir() + "applicon.xpm";
+	const std::string iconFile = GetInstallDir() + "lplog.ico";
 	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
 	if (icon == nullptr)
 		g_debug("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);

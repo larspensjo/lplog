@@ -251,19 +251,19 @@ ifneq ($(DEPS),)
 endif
 endif
 
-# This uses fpm to create a debian package.
+# This uses fpm (https://github.com/jordansissel/fpm) to create a debian package.
 # Install ruby and fpm with:
 #    sudo apt-get install ruby1.9.1 ruby1.9.1-dev
 #    sudo gem install fpm
 DESTDIR := distro
 debian: $(PROGRAM)
 	rm -rf $(DESTDIR)
-	(umask 0022; mkdir --mode=0755 -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/doc/pkg $(DESTDIR)/usr/share/lplog)
+	(umask 0022; mkdir --mode=0755 -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/applications $(DESTDIR)/usr/share/lplog)
 	strip $(PROGRAM)
-	cp $(PROGRAM) $(DESTDIR)/usr/bin
-	cp changelog $(DESTDIR)/usr/share/doc/pkg
-	cp applicon.xpm $(DESTDIR)/usr/share/lplog
-	fpm --verbose -s dir -t deb -n lplog -v 2.0 -f --deb-changelog $(DESTDIR)/usr/share/doc/pkg/changelog\
+	cp $(PROGRAM) $(DESTDIR)/usr/bin/
+	cp lplog.desktop $(DESTDIR)/usr/share/applications/
+	cp lplog.ico $(DESTDIR)/usr/share/lplog/
+	fpm --verbose -s dir -t deb -n lplog -v 2.0 -f\
 		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0 --category debug\
 		--description "Log viewer that supports easy filtering and will update automatcally."\
 		--deb-user root --deb-group root --vendor 'Lars Pensjö'\
@@ -291,6 +291,7 @@ help:
 	@echo '  distclean clean objects, the executable and dependencies.'
 	@echo '  show      show variables (for debug use only).'
 	@echo '  help      print this message.'
+	@echo '  debian    create debian installation package.'
 	@echo
 	@echo 'Report bugs to <whyglinux AT gmail DOT com>.'
 
