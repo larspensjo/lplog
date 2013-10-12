@@ -7,7 +7,6 @@ There should be no Replace() initiated from View.
 The data should remember what search pattern was used for each file.
 * Create a menu button "Find next", and attach accelerator F3.
 * Use Ctrl-g to jump to a line.
-* Produce a deb installation for Linux.
 * The icon should be loaded from the resource file instead from the icon file.
 * Improved detection of new file, by looking at content.
 * Windows header doesn't get updated sometimes.
