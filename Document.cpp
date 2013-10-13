@@ -99,16 +99,10 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mFileTime = std::time(nullptr);
 }
 
-unsigned Document::Checksum(std::FILE *input, unsigned size) {
-	char buff[size];
-	unsigned count = std::fread(buff, 1, sizeof buff, input);
-	g_assert(count == size);
-	unsigned sum = 0;
-	for (unsigned i = 0; i<count; i++) {
-		// Just something simple
-		sum = (sum << 2) + sum + buff[i];
-	}
-	return sum;
+void Document::CopyToTestBuffer(std::FILE *input, unsigned size) {
+	mTestBufferCurrentSize = std::min(unsigned(sizeof mTestBuffer), size);
+	unsigned count = std::fread(mTestBuffer, 1, mTestBufferCurrentSize, input);
+	g_assert(count == mTestBufferCurrentSize);
 }
 
 Document::UpdateResult Document::UpdateInputData() {
@@ -147,12 +141,9 @@ Document::UpdateResult Document::UpdateInputData() {
 		return UpdateResult::NoChange;
 	}
 
-	unsigned requestedChecksumSize = 1024; // Small enough to be quick to read, big enough to consistently detect changed file content
-	if (documentIsModified && mChecksumSize < requestedChecksumSize) {
-		mChecksumSize = std::min(off_t(requestedChecksumSize), st.st_size);
-		mChecksum = Checksum(input, mChecksumSize);
-		g_debug("Document::UpdateInputData Checksum %04X, size %u", mChecksum, mChecksumSize);
-	}
+	unsigned requestedChecksumSize = sizeof mTestBuffer; // Small enough to be quick to read, big enough to consistently detect changed file content
+	if (documentIsModified && mTestBufferCurrentSize < requestedChecksumSize)
+		CopyToTestBuffer(input, st.st_size);
 	auto size = st.st_size - mCurrentPosition;
 	char *buff = new char[size+1]; // Reserve space for null byte
 	std::fseek(input, mCurrentPosition, SEEK_SET);
