@@ -14,20 +14,37 @@
 //
 
 #ifdef _WIN32
-#include <windows.h>
+	#undef __STRICT_ANSI__ // Needed for "struct stat" in MinGW.
+	#include <sys/stat.h>
+	#include <windows.h>
+	#include <Shlobj.h>
 #endif // _WIN32
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "SaveFile.h"
 
 using std::string;
 
+#ifdef _WIN32
+string to_string(int val) {
+	std::stringstream ss;
+	ss << val;
+	return ss.str();
+}
+int stoi(const string &str) {
+	return atoi(str.c_str());
+}
+#else
+using std::to_string;
+using std::stoi;
+#endif
+
 const string sStringPrefix = "STR-";
 const string sNumberPrefix = "NUM-";
 const string sCommentPrefix = "#";
-const string sRecentFileNamePrefix = "REC-";
 
 void SaveFile::Read() {
 	const string path = GetPath();
@@ -106,7 +123,7 @@ void SaveFile::SetIntOption(const std::string &key, int val) {
 		g_debug("SaveFile::SetIntOption Invalid key %s", key.c_str());
 		return;
 	}
-	mData[sNumberPrefix + key] = std::to_string(val);
+	mData[sNumberPrefix + key] = to_string(val);
 }
 
 int SaveFile::GetIntOption(const std::string &id, int def) {
@@ -117,18 +134,8 @@ int SaveFile::GetIntOption(const std::string &id, int def) {
 	string key = sNumberPrefix + id;
 	auto it = mData.find(key);
 	if (it == mData.end())
-		mData[key] = std::to_string(def);
-	return std::stoi(mData[key]);
-}
-
-std::string SaveFile::GetRecentFileName(int n) {
-	string key = sRecentFileNamePrefix + std::to_string(n);
-	return mData[key];
-}
-
-void SaveFile::SetRecentFileName(int n, const std::string &fn) {
-	string key = sRecentFileNamePrefix + std::to_string(n);
-	mData[key] = fn;
+		mData[key] = to_string(def);
+	return stoi(mData[key]);
 }
 
 string SaveFile::GetPath() const {
@@ -144,8 +151,9 @@ string SaveFile::GetPath() const {
 	if (res == S_OK) {
 		dataDir = string(home) + "\\lplog";
 		struct _stat st;
-		if (_stat(dataDir,&st) != 0) {
-			res = _mkdir(dataDir);
+		if (_stat(dataDir.c_str(),&st) != 0) {
+			bool ok = CreateDirectory(dataDir.c_str(), NULL);
+			g_debug("Created application folder '%s' [%s]", dataDir.c_str(), ok?"SUCCESS":"FAIL");
 		}
 		optionsFilename = dataDir + "\\" + mFileName + ".ini";
 	}

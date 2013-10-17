@@ -56,8 +56,6 @@ private:
 	bool mQueueReplace = false;
 	bool mQueueAppend = false;
 	bool mRootPatternDisabled = false;
-	GtkRecentManager *mRecentManager = 0;
-	std::list<std::string> mRecentFileNames;
 
 	void PrepareRecentFiles(SaveFile &saveFile);
 };
