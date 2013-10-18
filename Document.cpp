@@ -189,12 +189,21 @@ void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f
 
 void Document::SplitLines(char *buff, unsigned size) {
 	const char *last;
-	while(!g_utf8_validate(buff, size, &last)) {
+	unsigned pos = 0;
+	unsigned numBad = 0;
+	for(char *p = buff; !g_utf8_validate(p, size - pos, &last); p += pos) {
 		// TODO: Convert from ASCII to utf-8 instead
 		unsigned pos = last - buff;
-		// cout << "Bad character at pos " << pos << endl;
+		if (buff[pos] == 0) {
+			g_debug("Document::SplitLines premature zero byte at pos %d", pos);
+			size = pos;
+			break;
+		}
 		buff[pos] = ' ';
+		numBad++;
 	}
+	if (numBad > 0)
+		g_debug("Document::SplitLines %d bad characters", numBad);
 	buff[size] = 0;
 	// Split the source into list of lines
 	for (const char *p=buff;;) {
