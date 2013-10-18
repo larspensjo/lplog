@@ -1,4 +1,4 @@
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,12 +18,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <string.h>
 
 #ifndef _WIN32
 #include <unistd.h>
 #endif
 
 #include "Document.h"
+#include "Defer.h"
 
 static bool findNL(const char *source, unsigned *length, const char **next) {
 	const char *p = source;
@@ -100,9 +102,20 @@ void Document::AddSourceText(char *text, unsigned size) {
 }
 
 void Document::CopyToTestBuffer(std::FILE *input, unsigned size) {
+	std::fseek(input, 0, SEEK_SET);
 	mTestBufferCurrentSize = std::min(unsigned(sizeof mTestBuffer), size);
 	unsigned count = std::fread(mTestBuffer, 1, mTestBufferCurrentSize, input);
 	g_assert(count == mTestBufferCurrentSize);
+}
+
+bool Document::EqualToTestBuffer(std::FILE *input, unsigned size) {
+	std::fseek(input, 0, SEEK_SET);
+	if (size > mTestBufferCurrentSize)
+		size = mTestBufferCurrentSize;
+	char localBuffer[size];
+	unsigned count = std::fread(localBuffer, 1, size, input);
+	g_assert(count == size);
+	return strncmp(localBuffer, mTestBuffer, size) == 0;
 }
 
 Document::UpdateResult Document::UpdateInputData() {
@@ -115,6 +128,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	bool statFailed = stat(mFileName.c_str(), &st) != 0;
 
 	std::FILE *input = std::fopen(mFileName.c_str(), "rb");
+	Defer close([input]() { if (input != nullptr) std::fclose(input);});
 	if (statFailed || input == nullptr) {
 		// There is no file
 		if (mCurrentPosition != 0) {
@@ -125,34 +139,31 @@ Document::UpdateResult Document::UpdateInputData() {
 		return UpdateResult::NoChange;
 	}
 
+	bool newDocument = (mFileTime == 0);
 	bool documentIsModified = (st.st_mtime != mFileTime);
+	if (!documentIsModified)
+		return UpdateResult::NoChange; // The usual case for a document that wasn't changed
 	mFileTime = st.st_mtime;
 
-	if (mCurrentPosition > st.st_size) {
-		fclose(input);
-		// There is a new file
+	if (!newDocument && documentIsModified && (st.st_size < mCurrentPosition || !EqualToTestBuffer(input, st.st_size))) {
+		// There is a replaced file
 		g_debug("Document::UpdateInputData new content");
 		mStopUpdates = true;
 		return UpdateResult::Replaced;
 	}
 
-	if (mCurrentPosition == st.st_size) {
-		fclose(input);
+	if (mCurrentPosition == st.st_size)
 		return UpdateResult::NoChange;
-	}
 
-	unsigned requestedChecksumSize = sizeof mTestBuffer; // Small enough to be quick to read, big enough to consistently detect changed file content
-	if (documentIsModified && mTestBufferCurrentSize < requestedChecksumSize)
+	if (documentIsModified && mTestBufferCurrentSize < sizeof mTestBuffer)
 		CopyToTestBuffer(input, st.st_size);
-	auto size = st.st_size - mCurrentPosition;
-	char *buff = new char[size+1]; // Reserve space for null byte
+	auto addedSize = st.st_size - mCurrentPosition;
+	char buff[addedSize+1]; // Reserve space for null byte
 	std::fseek(input, mCurrentPosition, SEEK_SET);
-	unsigned n = (unsigned)std::fread(buff, 1, size, input);
-	fclose(input);
-	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)size, n);
+	unsigned n = (unsigned)std::fread(buff, 1, addedSize, input);
+	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)addedSize, n);
 	mCurrentPosition += n;
 	this->SplitLines(buff, n);
-	delete [] buff;
 	return UpdateResult::Grow;
 }
 

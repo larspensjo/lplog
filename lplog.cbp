@@ -76,6 +76,7 @@
 		<Unit filename=".gitignore" />
 		<Unit filename="Controller.cpp" />
 		<Unit filename="Controller.h" />
+		<Unit filename="Defer.h" />
 		<Unit filename="Document.cpp" />
 		<Unit filename="Document.h" />
 		<Unit filename="LPlog.iss" />

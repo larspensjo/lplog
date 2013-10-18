@@ -1,4 +1,4 @@
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -57,8 +57,9 @@ private:
 	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
 	void SplitLines(char *, unsigned size); // This will modify the buffer content
 
-	static const unsigned cTestSize = 1024;
+	static const unsigned cTestSize = 1024; //  // Small enough to be quick to read, big enough to consistently detect changed file content
 	char mTestBuffer[cTestSize];
 	unsigned mTestBufferCurrentSize = 0;
 	void CopyToTestBuffer(std::FILE *input, unsigned size);
+	bool EqualToTestBuffer(std::FILE *input, unsigned size);
 };
