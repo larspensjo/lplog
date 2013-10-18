@@ -158,7 +158,8 @@ Document::UpdateResult Document::UpdateInputData() {
 	if (documentIsModified && mTestBufferCurrentSize < sizeof mTestBuffer)
 		CopyToTestBuffer(input, st.st_size);
 	auto addedSize = st.st_size - mCurrentPosition;
-	char buff[addedSize+1]; // Reserve space for null byte
+	char *buff = new char[addedSize+1]; // Reserve space for null byte. Heap allocation needed, as it may be too big for stack.
+	Defer b([buff](){ delete[]buff;});
 	std::fseek(input, mCurrentPosition, SEEK_SET);
 	unsigned n = (unsigned)std::fread(buff, 1, addedSize, input);
 	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)addedSize, n);
