@@ -57,7 +57,7 @@ private:
 	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
 	void SplitLines(char *, unsigned size); // This will modify the buffer content
 
-	static const unsigned cTestSize = 1024; //  // Small enough to be quick to read, big enough to consistently detect changed file content
+	static const unsigned cTestSize = 4*1024; // Small enough to be quick to read, big enough to consistently detect changed file content
 	char mTestBuffer[cTestSize];
 	unsigned mTestBufferCurrentSize = 0;
 	void CopyToTestBuffer(std::FILE *input, unsigned size);

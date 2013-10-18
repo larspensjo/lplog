@@ -139,21 +139,26 @@ Document::UpdateResult Document::UpdateInputData() {
 		return UpdateResult::NoChange;
 	}
 
-	bool newDocument = (mFileTime == 0);
+	bool firstTime = (mFileTime == 0);
 	bool documentIsModified = (st.st_mtime != mFileTime);
-	if (!documentIsModified)
+	if (!documentIsModified) {
+		// g_debug("Document::UpdateResult not modified"); // Too verbose for normal debugging
 		return UpdateResult::NoChange; // The usual case for a document that wasn't changed
+	}
 	mFileTime = st.st_mtime;
 
-	if (!newDocument && documentIsModified && (st.st_size < mCurrentPosition || !EqualToTestBuffer(input, st.st_size))) {
+	if (!firstTime && documentIsModified && (st.st_size < mCurrentPosition || !EqualToTestBuffer(input, st.st_size))) {
 		// There is a replaced file
 		g_debug("Document::UpdateInputData new content");
 		mStopUpdates = true;
 		return UpdateResult::Replaced;
 	}
 
-	if (mCurrentPosition == st.st_size)
+	if (mCurrentPosition == st.st_size) {
+		g_debug("Document::UpdateResult same size [%s] [%s]", firstTime?"first":"notfirst",
+			documentIsModified?"modifed":"notmodifed");
 		return UpdateResult::NoChange;
+	}
 
 	if (documentIsModified && mTestBufferCurrentSize < sizeof mTestBuffer)
 		CopyToTestBuffer(input, st.st_size);
