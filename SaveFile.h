@@ -30,10 +30,14 @@ public:
 
 	void SetIntOption(const std::string &id, int val);
 	int GetIntOption(const std::string &id, int def = 0);
+
+	void SetPattern(const std::string &id, const std::string&val);
+	std::string GetPattern(const std::string &id, const std::string &def = "");
 private:
 	const std::string mFileName;
 	std::map<std::string, std::string> mData;
 	std::string GetPath() const;
 	static bool IsValidKey(const std::string &);
 	static bool IsValidValue(const std::string &);
+	std::map<std::string, std::string> mPatterns; // The filter patterns are extracted to a map
 };

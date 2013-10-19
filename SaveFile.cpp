@@ -44,6 +44,7 @@ using std::stoi;
 
 const string sStringPrefix = "STR-";
 const string sNumberPrefix = "NUM-";
+const string sPatternPrefix = "PAT-";
 const string sCommentPrefix = "#";
 
 void SaveFile::Read() {
@@ -71,8 +72,17 @@ void SaveFile::Read() {
 		}
 		string key = line.substr(0, p);
 		string val = line.substr(p+1);
-		g_debug("SaveFile::Read key '%s' is '%s'", key.c_str(), val.c_str());
-		mData[key] = val;
+		if (key.substr(0, sPatternPrefix.size()) == sPatternPrefix) {
+			const string patterName = key.substr(sPatternPrefix.size());
+			gsize size;
+			guchar *p = g_base64_decode(patterName.c_str(), &size);
+			g_debug("SaveFile::Read pattern '%s' is '%s'", (const char *)p, val.c_str());
+			mPatterns[(const char *)p] = val;
+			g_free(p);
+		} else {
+			g_debug("SaveFile::Read key '%s' is '%s'", key.c_str(), val.c_str());
+			mData[key] = val;
+		}
 	}
 }
 
@@ -91,6 +101,12 @@ void SaveFile::Write() {
 		if (pair.second == "")
 			continue; // Ignore empty values
 		output << pair.first << ":" << pair.second << std::endl;
+	}
+	for (auto pair : mPatterns) {
+		if (pair.second == "")
+			continue; // Ignore empty values
+		const char *key = g_base64_encode((const guchar*)pair.first.c_str(), pair.first.size());
+		output << sPatternPrefix << key << ":" << pair.second << std::endl;
 	}
 }
 
@@ -175,4 +191,17 @@ bool SaveFile::IsValidValue(const std::string &val) {
 	if (val.find('\r') != string::npos)
 		return false;
 	return true;
+}
+
+void SaveFile::SetPattern(const std::string &id, const std::string&val)
+{
+	mPatterns[id] = val;
+}
+
+std::string SaveFile::GetPattern(const std::string &id, const std::string &def)
+{
+	auto it = mPatterns.find(id);
+	if (it == mPatterns.end())
+		return def;
+	return it->second;
 }
