@@ -33,3 +33,5 @@ Low priority
 ============
 * Deselected patterns should be gray (including sub tree).
 * Some log files contains escape characters to get colors in terminal output. These escape characters should be removed, or used to actually create colors.
+* Actually allow editing of the file.
+This shall correctly identify the line that is edited, and update the original.
