@@ -415,6 +415,35 @@ View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, G
 	return ret;
 }
 
+void View::Serialize(std::stringstream &ss) {
+	Serialize(ss, GTK_TREE_MODEL(mPattern), &mPatternRoot);
+}
+
+void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *iter) const {
+	GValue val = { 0 };
+	gtk_tree_model_get_value(pattern, iter, 0, &val);
+	const gchar *str = g_value_get_string(&val);
+	GtkTreeIter child;
+	bool childFound = gtk_tree_model_iter_children(pattern, &child, iter);
+	if (str == 0) {
+	} else if ((strcmp(str, "|") == 0 || strcmp(str, "&") == 0) && childFound) {
+		ss << str << "(";
+		do {
+			Serialize(ss, pattern, &child);
+			ss << ",";
+			childFound = gtk_tree_model_iter_next(pattern, &child);
+		} while (childFound);
+		ss << ")";
+	} else if (strcmp(str, "!") == 0 && childFound) {
+		ss << "!(";
+		Serialize(ss, pattern, &child);
+		ss << ")";
+	} else {
+		ss << str;
+	}
+	g_value_unset(&val);
+}
+
 void View::TogglePattern(gchar *path) {
 	GtkTreeIter iter;
 	bool found = gtk_tree_model_get_iter_from_string( GTK_TREE_MODEL( mPattern ), &iter, path );
