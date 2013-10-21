@@ -19,6 +19,10 @@
 	#include <windows.h>
 	#include <Shlobj.h>
 #endif // _WIN32
+#ifdef __linux__
+   #include <sys/stat.h>
+   #include <sys/types.h>
+#endif // _linux
 #include <gtk/gtk.h>
 #include <iostream>
 #include <fstream>
@@ -157,11 +161,11 @@ int SaveFile::GetIntOption(const std::string &id, int def) {
 string SaveFile::GetPath() const {
 	string dataDir; // The directory where the client can save data
 	string optionsFilename;
-#ifdef __gnu_linux__
-	dataDir = getenv("HOME");
-	optionsFilename = dataDir + "/." + mFileName;
-#endif
-#ifdef _WIN32
+#if defined(__linux__)
+	dataDir = getenv("HOME") + string("/.config");
+	mkdir(dataDir.c_str(), 0700); // Make sure it exists, ignore result
+	optionsFilename = dataDir + "/" + mFileName + ".ini";
+#elif defined(_WIN32)
 	TCHAR home[MAX_PATH];
 	HRESULT res = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, 0, 0, home);
 	if (res == S_OK) {
@@ -173,6 +177,8 @@ string SaveFile::GetPath() const {
 		}
 		optionsFilename = dataDir + "\\" + mFileName + ".ini";
 	}
+#else
+	error Neither linux nor windows
 #endif
 	return optionsFilename;
 }
