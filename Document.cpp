@@ -96,6 +96,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mFileName = "[Paste]";
 	mCurrentPosition = 0;
 	mLines.clear();
+	DetectFileType((const unsigned char *)text, size);
 	this->SplitLines(text, size);
 	g_debug("Document::AddSourceText %d characters %u lines", size, (unsigned)mLines.size());
 	mFileTime = std::time(nullptr);
@@ -116,6 +117,21 @@ bool Document::EqualToTestBuffer(std::FILE *input, unsigned size) {
 	unsigned count = std::fread(localBuffer, 1, size, input);
 	g_assert(count == size);
 	return strncmp(localBuffer, mTestBuffer, size) == 0;
+}
+
+void Document::DetectFileType(const unsigned char *p, unsigned size) {
+	if (size >= 4 && p[0] == 0xff && p[1] == 0xfe && p[3] == 0) {
+		mInputType = InputType::UTF16LittleEndian;
+		g_debug("Document::DetectFileType UTF-16 little endian");
+		return;
+	}
+	if (size >= 4 && p[0] == 0xfe && p[1] == 0xff && p[2] == 0) {
+		mInputType = InputType::UTF16BigEndian;
+		g_debug("Document::DetectFileType UTF-16 big endian");
+		return;
+	}
+	mInputType = InputType::Ascii;
+	g_debug("Document::DetectFileType ASCII");
 }
 
 Document::UpdateResult Document::UpdateInputData() {
@@ -160,8 +176,10 @@ Document::UpdateResult Document::UpdateInputData() {
 		return UpdateResult::NoChange;
 	}
 
-	if (documentIsModified && mTestBufferCurrentSize < sizeof mTestBuffer)
+	if (documentIsModified && mTestBufferCurrentSize < sizeof mTestBuffer) {
 		CopyToTestBuffer(input, st.st_size);
+		DetectFileType((const unsigned char *)mTestBuffer, mTestBufferCurrentSize);
+	}
 	auto addedSize = st.st_size - mCurrentPosition;
 	char *buff = new char[addedSize+1]; // Reserve space for null byte. Heap allocation needed, as it may be too big for stack.
 	Defer b([buff](){ delete[]buff;});
@@ -191,19 +209,33 @@ void Document::SplitLines(char *buff, unsigned size) {
 	const char *last;
 	unsigned pos = 0;
 	unsigned numBad = 0;
-	for(char *p = buff; !g_utf8_validate(p, size - pos, &last); p += pos) {
-		// TODO: Convert from ASCII to utf-8 instead
-		unsigned pos = last - buff;
-		if (buff[pos] == 0) {
-			g_debug("Document::SplitLines premature zero byte at pos %d", pos);
-			size = pos;
-			break;
+	Defer freeTmp; // Default, nothing done
+	if (mInputType == InputType::UTF16BigEndian || mInputType == InputType::UTF16LittleEndian) {
+		long numWritten;
+		char *ret = g_utf16_to_utf8((const gunichar2 *)buff, size, NULL, &numWritten, NULL);
+		if (ret == nullptr) {
+			g_debug("Document::SplitLines failed conversion");
+		} else {
+			freeTmp = [ret]() { g_free(ret); };
+			g_debug("Document::SplitLines parsed %ld chars from %d",numWritten, size);
+			buff = ret; // Use this buffer instead
+			size = numWritten;
 		}
-		buff[pos] = ' ';
-		numBad++;
+	} else {
+		for(char *p = buff; !g_utf8_validate(p, size - pos, &last); p += pos) {
+			// TODO: Convert from ASCII to utf-8 instead
+			unsigned pos = last - buff;
+			if (buff[pos] == 0) {
+				g_debug("Document::SplitLines premature zero byte at pos %d", pos);
+				size = pos;
+				break;
+			}
+			buff[pos] = ' ';
+			numBad++;
+		}
+		if (numBad > 0)
+			g_debug("Document::SplitLines %d bad characters", numBad);
 	}
-	if (numBad > 0)
-		g_debug("Document::SplitLines %d bad characters", numBad);
 	buff[size] = 0;
 	// Split the source into list of lines
 	for (const char *p=buff;;) {

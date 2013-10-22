@@ -62,4 +62,12 @@ private:
 	unsigned mTestBufferCurrentSize = 0;
 	void CopyToTestBuffer(std::FILE *input, unsigned size);
 	bool EqualToTestBuffer(std::FILE *input, unsigned size);
+
+	enum class InputType {
+		Ascii,
+		UTF16LittleEndian,
+		UTF16BigEndian,
+	};
+	InputType mInputType = InputType::Ascii;
+	void DetectFileType(const unsigned char *, unsigned size);
 };

@@ -18,8 +18,12 @@
 // Deferred execution of a function. It will be called when the object goes out of scope.
 class Defer {
 public:
-	Defer(std::function<void (void)> f) : mFunction(f) { }
-	~Defer() { mFunction(); }
+	typedef std::function<void (void)> ptr;
+	Defer() : mFunction(nullptr) {}
+	Defer(ptr f) : mFunction(f) { }
+	~Defer() { if (mFunction != nullptr) mFunction(); }
+	void Set(ptr f) { mFunction = f; }
+	void operator=(ptr f) { mFunction = f; }
 private:
-	std::function<void (void)> mFunction;
+	ptr mFunction;
 };
