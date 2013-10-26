@@ -22,8 +22,7 @@
 #include "Document.h"
 #include "View.h"
 
-using std::cout;
-using std::endl;
+using std::string;
 
 static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 	// I know, the proper way is to compare the iter to a path first.
@@ -430,8 +429,9 @@ void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *
 		ss << str << "(";
 		do {
 			Serialize(ss, pattern, &child);
-			ss << ",";
 			childFound = gtk_tree_model_iter_next(pattern, &child);
+			if (childFound)
+				ss << ",";
 		} while (childFound);
 		ss << ")";
 	} else if (strcmp(str, "!") == 0 && childFound) {
@@ -442,6 +442,24 @@ void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *
 		ss << str;
 	}
 	g_value_unset(&val);
+}
+
+string::size_type View::DeSerialize(const string &str, unsigned level) {
+	auto opening = str.find('(');
+	auto closing = str.find(')');
+	auto comma = str.find(',');
+	auto stopper = std::min(std::min(comma, str.size()), std::min(closing, opening));
+	g_debug("View::DeSerialize %*s'%s'", level*2, "", str.substr(0, stopper).c_str());
+	if (opening > stopper)
+		return stopper;
+	// Now we know it is in the form "str(...".
+	string::size_type next = opening+1;
+	while(str.size() > next && str[next] != ')') {
+		next += DeSerialize(str.substr(next), level+1);
+		if (str[next] == ',')
+			next++;
+	}
+	return next+1; // Skipping parenthesis
 }
 
 void View::TogglePattern(gchar *path) {
