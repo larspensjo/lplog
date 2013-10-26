@@ -346,7 +346,7 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
-	g_timeout_add(1000, GSourceFunc(::TestForeChanges), this);
+	g_timeout_add(saveFile.GetIntOption("PollPeriod", 1000), GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
 		if (mQueueReplace && mCurrentDoc != nullptr) {
