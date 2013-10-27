@@ -58,8 +58,7 @@ int main (int argc, char *argv[])
 		g_debug("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);
 	SaveFile saveFile("lplog");
 	saveFile.Read();
-	Controller c;
-	c.Run(argc, argv, icon, saveFile);
+	Controller().Run(argc, argv, icon, saveFile);
 	saveFile.Write();
 	return 0;
 }

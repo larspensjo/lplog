@@ -29,25 +29,25 @@ class Controller
 {
 public:
 	gboolean TextViewKeyEvent(GdkEvent *event);
-	gboolean KeyPressed(guint keyval);
 	gboolean KeyPressedOther(GtkWidget *, GdkEvent *);
 	gboolean TextViewKeyPress(guint keyval);                                 // Manage a key in our own way for the text view
 
 	void Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &);
-	void FileOpenDialog();
 	void OpenURI(const std::string &uri);
 	void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
 	void ToggleButton(const std::string &name);                              // Click toggle button and other buttons
 	void PollInput();
-	void About() const { mView.About(); }
-	void Help() const;
 	void ChangeDoc(int id);                                                  // Change current document
 	void Quit() { mQuitNow = true; }                                         // Request application to shut down
-	void CloseCurrentTab();
-	void InitiateFind();                                                     // User pressed Find, to search in text view
 	void Find(const std::string &);
+	void ExecuteCommand(const std::string &); // String is from the button
+
 private:
+	void CloseCurrentTab();
+	void FileOpenDialog();
+	void Help() const;
+	gboolean KeyPressed(guint keyval);
 	bool mValidSelectedPatternIter = false;
 	View mView;
 	Document *mCurrentDoc = 0;

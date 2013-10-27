@@ -58,26 +58,30 @@ static gboolean TreeViewKeyPressed(GtkWidget *, GdkEvent *event, Controller *c) 
 static void ButtonClicked(GtkButton *button, Controller *c) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
 	g_debug("ButtonClicked %s", name.c_str());
+	c->ExecuteCommand(name);
+}
+
+void Controller::ExecuteCommand(const std::string &name) {
 	if (name == "quit")
-		c->Quit();
+		Quit();
 	else if (name == "line")
-		c->KeyPressed(GDK_KEY_o);
+		KeyPressed(GDK_KEY_o);
 	else if (name == "remove")
-		c->KeyPressed(GDK_KEY_Delete);
+		KeyPressed(GDK_KEY_Delete);
 	else if (name == "child")
-		c->KeyPressed(GDK_KEY_a);
+		KeyPressed(GDK_KEY_a);
 	else if (name == "about")
-		c->About();
+		mView.About();
 	else if (name == "help")
-		c->Help();
+		Help();
 	else if (name == "open")
-		c->FileOpenDialog();
+		FileOpenDialog();
 	else if (name == "find")
-		c->InitiateFind();
+		mView.SetFocusFind();
 	else if (name == "close")
-		c->CloseCurrentTab();
+		CloseCurrentTab();
 	else if (name == "paste")
-		c->TextViewKeyPress(GDK_KEY_Paste);
+		TextViewKeyPress(GDK_KEY_Paste);
 	else
 		g_debug("Unknown button: %s", name.c_str());
 }
@@ -171,10 +175,6 @@ void Controller::Find(const std::string &str) {
 		return;
 	g_debug("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
 	mView.FindNext(mCurrentDoc, str, true);
-}
-
-void Controller::InitiateFind() {
-	mView.SetFocusFind();
 }
 
 void Controller::CloseCurrentTab() {
