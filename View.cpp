@@ -1,4 +1,4 @@
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -460,16 +460,14 @@ string::size_type View::DeSerialize(const string &str, GtkTreeIter *parent, GtkT
 		return stopper;
 	// Now we know it is in the form "str(...".
 	string::size_type next = opening+1;
-	for(bool first = true; str.size() > next && str[next] != ')'; first = false) {
+	do {
+		// Use a do-while to make sure there is at least one search pattern
 		GtkTreeIter child;
-		if (first)
-			gtk_tree_store_insert_before(mPattern, &child, node, nullptr);
-		else
-			gtk_tree_store_insert_before(mPattern, &child, node, nullptr);
+		gtk_tree_store_insert_before(mPattern, &child, node, nullptr);
 		next += DeSerialize(str.substr(next), node, &child, level+1);
 		if (str[next] == ',')
 			next++;
-	}
+	} while(str.size() > next && str[next] != ')');
 	return next+1; // Skipping parenthesis
 }
 
