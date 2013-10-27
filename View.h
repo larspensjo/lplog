@@ -1,6 +1,6 @@
 #pragma once
 
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
