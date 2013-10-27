@@ -42,7 +42,7 @@ public:
 	void CloseCurrentTab();
 	int GetCurrentTabId() const;
 	void Serialize(std::stringstream &ss);
-	std::string::size_type DeSerialize(const std::string &, unsigned level = 0);
+	void DeSerialize(const std::string &);
 
 	void SetFocusFind();
 	void FindNext(Document *, std::string, bool restart);
@@ -81,6 +81,7 @@ private:
 	// Test if a line is shown, given the specified tree.
 	Evaluation isShown(const std::string &, GtkTreeModel *pattern, GtkTreeIter *iter);
 	void Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *iter) const;
+	std::string::size_type DeSerialize(const std::string &, GtkTreeIter *parent, GtkTreeIter *node, unsigned level);
 
 	void AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);
 	void AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData);

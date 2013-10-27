@@ -346,6 +346,7 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
+	mView.DeSerialize(saveFile.GetPattern("default"));
 	g_timeout_add(saveFile.GetIntOption("PollPeriod", 1000), GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
@@ -361,6 +362,9 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile
 		mQueueAppend = false;
 		mQueueReplace = false;
 	}
+	std::stringstream ss;
+	mView.Serialize(ss);
+	saveFile.SetPattern("default", ss.str());
 }
 
 void Controller::Help() const {

@@ -173,14 +173,9 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_size_request (frame2, 300, -1);
 	gtk_box_pack_start(GTK_BOX(hbox), hpaned, TRUE, TRUE, 0);
 
-	// Create the tree model and add some initial pattern
-	// ==================================================
+	// Create an empty tree model
+	// ==========================
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
-	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
-	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 
 	// Create the tree view
 	// ====================
@@ -208,7 +203,6 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_size_request(scrollview, 150, -1);
 	gtk_container_add(GTK_CONTAINER(scrollview), tree);
 	gtk_container_add(GTK_CONTAINER(frame1), scrollview);
-	gtk_tree_view_expand_all(mTreeView);
 
 	// Create the notebook
 	// ===================
@@ -444,18 +438,35 @@ void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *
 	g_value_unset(&val);
 }
 
-string::size_type View::DeSerialize(const string &str, unsigned level) {
+void View::DeSerialize(const std::string &str) {
+	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
+	DeSerialize(str, nullptr, &mPatternRoot, 0);
+	gtk_tree_view_expand_all(mTreeView);
+}
+
+// Input string will have one out of 4 possible patterns:
+// s
+// s(...)
+// s,
+// s)
+string::size_type View::DeSerialize(const string &str, GtkTreeIter *parent, GtkTreeIter *node, unsigned level) {
 	auto opening = str.find('(');
 	auto closing = str.find(')');
 	auto comma = str.find(',');
 	auto stopper = std::min(std::min(comma, str.size()), std::min(closing, opening));
 	g_debug("View::DeSerialize %*s'%s'", level*2, "", str.substr(0, stopper).c_str());
+	gtk_tree_store_set(mPattern, node, 0, str.substr(0, stopper).c_str(), 1, true, -1);
 	if (opening > stopper)
 		return stopper;
 	// Now we know it is in the form "str(...".
 	string::size_type next = opening+1;
-	while(str.size() > next && str[next] != ')') {
-		next += DeSerialize(str.substr(next), level+1);
+	for(bool first = true; str.size() > next && str[next] != ')'; first = false) {
+		GtkTreeIter child;
+		if (first)
+			gtk_tree_store_insert_before(mPattern, &child, node, nullptr);
+		else
+			gtk_tree_store_insert_before(mPattern, &child, node, nullptr);
+		next += DeSerialize(str.substr(next), node, &child, level+1);
 		if (str[next] == ',')
 			next++;
 	}
