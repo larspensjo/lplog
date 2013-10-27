@@ -32,7 +32,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "distro\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\LPlog"; Filename: "{app}\lplog.exe"; IconFilename: "{app}\icon.bmp"
+Name: "{group}\LPlog"; Filename: "{app}\lplog.exe"; IconFilename: "{app}\lplog.exe"
 Name: "{group}\{cm:UninstallProgram,LPLog}"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\LPlog"; Filename: "{app}\lplog.exe"; Tasks: desktopicon; IconFilename: "{app}\icon.bmp"
 
