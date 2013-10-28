@@ -28,11 +28,13 @@ class SaveFile;
 class Controller
 {
 public:
+	Controller(SaveFile &savefile) : mSaveFile(savefile) {}
+
 	gboolean TextViewKeyEvent(GdkEvent *event);
 	gboolean KeyPressedOther(GtkWidget *, GdkEvent *);
 	gboolean TextViewKeyPress(guint keyval);                                 // Manage a key in our own way for the text view
 
-	void Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &);
+	void Run(int argc, char *argv[], GdkPixbuf *icon);
 	void OpenURI(const std::string &uri);
 	void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString);
 	void TogglePattern(GtkCellRendererToggle *renderer, gchar *path);
@@ -56,6 +58,7 @@ private:
 	bool mQueueReplace = false;
 	bool mQueueAppend = false;
 	bool mRootPatternDisabled = false;
+	SaveFile &mSaveFile;
 
 	void PrepareRecentFiles(SaveFile &saveFile);
 };

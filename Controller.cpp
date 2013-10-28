@@ -339,15 +339,15 @@ gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
 	return this->KeyPressed(event->key.keyval);
 }
 
-void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile) {
+void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 	mView.Create(icon, G_CALLBACK(::ButtonClicked), G_CALLBACK(::ToggleButton), G_CALLBACK(::TreeViewKeyPressed), G_CALLBACK(::KeyPressedOther), G_CALLBACK(::PatternCellUpdated),
 				 G_CALLBACK(::TogglePattern), G_CALLBACK(::ChangeCurrentPage), G_CALLBACK(::DestroyMainWindow), G_CALLBACK(::EditEntry), this);
 	mView.SetWindowTitle("");
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
-	mView.DeSerialize(saveFile.GetPattern("default", "|(,)"));
-	g_timeout_add(saveFile.GetIntOption("PollPeriod", 1000), GSourceFunc(::TestForeChanges), this);
+	mView.DeSerialize(mSaveFile.GetPattern("default", "|(,)"));
+	g_timeout_add(mSaveFile.GetIntOption("PollPeriod", 1000), GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();
 		if (mQueueReplace && mCurrentDoc != nullptr) {
@@ -364,7 +364,7 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon, SaveFile &saveFile
 	}
 	std::stringstream ss;
 	mView.Serialize(ss);
-	saveFile.SetPattern("default", ss.str());
+	mSaveFile.SetPattern("default", ss.str());
 }
 
 void Controller::Help() const {
