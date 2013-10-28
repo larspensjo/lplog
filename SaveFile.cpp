@@ -201,7 +201,10 @@ bool SaveFile::IsValidValue(const std::string &val) {
 
 void SaveFile::SetPattern(const std::string &id, const std::string&val)
 {
-	mPatterns[id] = val;
+	if (val == "")
+		mPatterns.erase(id);
+	else
+		mPatterns[id] = val;
 }
 
 std::string SaveFile::GetPattern(const std::string &id, const std::string &def)

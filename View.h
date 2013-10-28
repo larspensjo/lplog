@@ -22,6 +22,7 @@
 #include <sstream>
 
 class Document;
+class SaveFile;
 
 class View
 {
@@ -43,6 +44,7 @@ public:
 	int GetCurrentTabId() const;
 	void Serialize(std::stringstream &ss);
 	void DeSerialize(const std::string &);
+	void DisplayPatternStore(SaveFile &);
 
 	void SetFocusFind();
 	void FindNext(Document *, std::string, bool restart);

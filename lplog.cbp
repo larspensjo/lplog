@@ -81,6 +81,8 @@
 		<Unit filename="Document.h" />
 		<Unit filename="LPlog.iss" />
 		<Unit filename="Makefile" />
+		<Unit filename="PatternTable.cpp" />
+		<Unit filename="PatternTable.h" />
 		<Unit filename="README.md" />
 		<Unit filename="SaveFile.cpp" />
 		<Unit filename="SaveFile.h" />

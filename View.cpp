@@ -21,6 +21,7 @@
 
 #include "Document.h"
 #include "View.h"
+#include "PatternTable.h"
 
 using std::string;
 
@@ -44,6 +45,10 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	gtk_drag_get_data(widget, context, target_type, time);
 	g_debug("DragDrop");
 	return true;
+}
+
+void View::DisplayPatternStore(SaveFile &save) {
+	PatternTable(mWindow).Display(save);
 }
 
 void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,

@@ -82,6 +82,8 @@ void Controller::ExecuteCommand(const std::string &name) {
 		CloseCurrentTab();
 	else if (name == "paste")
 		TextViewKeyPress(GDK_KEY_Paste);
+	else if (name == "patternstore")
+		mView.DisplayPatternStore(mSaveFile);
 	else
 		g_debug("Unknown button: %s", name.c_str());
 }
