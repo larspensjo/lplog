@@ -17,6 +17,7 @@
 
 #include <string>
 #include <map>
+#include <functional>
 
 class SaveFile
 {
@@ -33,6 +34,8 @@ public:
 
 	void SetPattern(const std::string &id, const std::string&val);
 	std::string GetPattern(const std::string &id, const std::string &def = "");
+	// Iterate a function for each pair of pattern name and pattern content.
+	void IteratePatterns(std::function<void (const std::string &name, const std::string &value)>);
 private:
 	const std::string mFileName;
 	std::map<std::string, std::string> mData;

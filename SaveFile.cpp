@@ -211,3 +211,9 @@ std::string SaveFile::GetPattern(const std::string &id, const std::string &def)
 		return def;
 	return it->second;
 }
+
+void SaveFile::IteratePatterns(std::function<void (const std::string &name, const std::string &value)> f) {
+	for (auto &pair : mPatterns) {
+		f(pair.first, pair.second);
+	}
+}
