@@ -188,6 +188,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
 	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressedTreeCB, cbData );
+	gtk_tree_view_set_enable_tree_lines(mTreeView, true);
 
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);

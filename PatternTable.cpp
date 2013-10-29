@@ -46,6 +46,7 @@ void PatternTable::Display(SaveFile &save) {
 
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
 	gtk_box_pack_end(GTK_BOX(mainbox), tree, FALSE, FALSE, 0);
+	gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(tree), GTK_TREE_VIEW_GRID_LINES_BOTH);
 
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
