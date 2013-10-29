@@ -83,6 +83,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	auto menu = this->AddMenu(menubar, "_File");
 	this->AddMenuButton(menu, "_Open", "open", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Close", "close", buttonCB, cbData);
+	this->AddMenuButton(menu, "_Pattern storage", "patternstore", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Exit", "quit", buttonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Edit");
