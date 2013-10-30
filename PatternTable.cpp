@@ -35,7 +35,11 @@ void PatternTable::Display(SaveFile &save) {
 										NULL);
 	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG (dialog));
 
+#if GTK_CHECK_VERSION(3,0,0)
 	GtkWidget *mainbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
+	GtkWidget *mainbox = gtk_vbox_new (FALSE, 0);
+#endif // GTK_CHECK_VERSION
 	gtk_container_add(GTK_CONTAINER (content_area), mainbox);
 
 	// Create a list store, and populate it
