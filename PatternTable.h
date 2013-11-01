@@ -26,4 +26,5 @@ public:
 	void Display(SaveFile &);
 private:
 	GtkWindow *mMainWindow = 0;
+	GtkTreeView *mTreeView = 0;
 };
