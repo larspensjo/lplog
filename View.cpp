@@ -22,6 +22,7 @@
 #include "Document.h"
 #include "View.h"
 #include "PatternTable.h"
+#include "Defer.h"
 
 using std::string;
 
@@ -363,6 +364,7 @@ View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, G
 	if (!active)
 		return Evaluation::Neither;
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
+	Defer valFree([&val](){g_value_unset(&val);});
 	Evaluation ret = Evaluation::Neither; // Use this as default
 	const gchar *str = g_value_get_string(&val);
 	GtkTreeIter child;
@@ -411,7 +413,6 @@ View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, G
 		else
 			ret = Evaluation::Nomatch;
 	}
-	g_value_unset(&val);
 	return ret;
 }
 

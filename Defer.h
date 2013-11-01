@@ -16,6 +16,7 @@
 #include <functional>
 
 // Deferred execution of a function. It will be called when the object goes out of scope.
+// Always use a named object, or it will go out of scope immediately.
 class Defer {
 public:
 	typedef std::function<void (void)> ptr;

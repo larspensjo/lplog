@@ -21,6 +21,7 @@
 #include "Controller.h"
 #include "Document.h"
 #include "SaveFile.h"
+#include "Defer.h"
 
 static const std::string filePrefixURI = "file://";
 
@@ -291,12 +292,12 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 		{
 			GtkClipboard *clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 			gchar *p = gtk_clipboard_wait_for_text(clipboard);
+			Defer pFree([p](){if (p != nullptr) (g_free(p));});
 			if (p != nullptr) {
 				mCurrentDoc = &mDocumentList[mView.nextId];
 				g_debug("[%d] Controller::TextViewKeyPress new document %p", mView.GetCurrentTabId(), mCurrentDoc);
 				unsigned size = strlen(p);
 				mCurrentDoc->AddSourceText(p, size);
-				g_free(p);
 				mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 				mQueueReplace = true;
 			}
