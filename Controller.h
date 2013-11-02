@@ -59,6 +59,4 @@ private:
 	bool mQueueAppend = false;
 	bool mRootPatternDisabled = false;
 	SaveFile &mSaveFile;
-
-	void PrepareRecentFiles(SaveFile &saveFile);
 };

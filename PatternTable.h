@@ -23,8 +23,10 @@ class PatternTable
 {
 public:
 	PatternTable(GtkWindow *win) : mMainWindow(win) {}
+	~PatternTable();
 	void Display(SaveFile &);
 private:
 	GtkWindow *mMainWindow = 0;
 	GtkTreeView *mTreeView = 0;
+	GtkWidget *mDialog = nullptr;
 };

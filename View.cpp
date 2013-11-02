@@ -447,6 +447,7 @@ void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *
 }
 
 void View::DeSerialize(const std::string &str) {
+	gtk_tree_store_clear(mPattern); // Remove the old, if any.
 	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
 	DeSerialize(str, nullptr, &mPatternRoot, 0);
 	gtk_tree_view_expand_all(mTreeView);

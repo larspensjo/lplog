@@ -21,6 +21,12 @@
 
 using std::string;
 
+PatternTable::~PatternTable() {
+	if (mDialog != nullptr)
+		gtk_widget_destroy(mDialog);
+	mDialog = nullptr;
+}
+
 static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkListStore *store) {
 	GtkTreeIter iter;
 	bool found = gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &iter, path);
@@ -75,8 +81,8 @@ void PatternTable::Display(SaveFile &save) {
 	column = gtk_tree_view_column_new_with_attributes("Pattern", renderer, "text", 1, NULL);
 	gtk_tree_view_append_column(mTreeView, column);
 
-	gtk_widget_show_all(dialog);
-	gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_show_all(mDialog);
+	gint response = gtk_dialog_run(GTK_DIALOG(mDialog));
 	g_debug("PatternTable::Display response %d", response);
 	switch(response) {
 	case GTK_RESPONSE_NONE:
@@ -102,6 +108,7 @@ void PatternTable::Display(SaveFile &save) {
 			g_free(patternName);
 			g_free(patternValue);
 		}
+		break;
 	}
 	case GTK_RESPONSE_CANCEL:
 		g_debug("PatternTable::Display cancel");
@@ -126,5 +133,4 @@ void PatternTable::Display(SaveFile &save) {
 		g_warning("PatternTable::Display: Unknown return code");
 		break;
 	}
-	gtk_widget_destroy(dialog);
 }
