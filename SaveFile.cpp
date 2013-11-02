@@ -79,10 +79,12 @@ void SaveFile::Read() {
 		if (key.substr(0, sPatternPrefix.size()) == sPatternPrefix) {
 			const string patterName = key.substr(sPatternPrefix.size());
 			gsize size;
-			guchar *p = g_base64_decode(patterName.c_str(), &size);
-			g_debug("SaveFile::Read pattern '%s' is '%s'", (const char *)p, val.c_str());
-			mPatterns[(const char *)p] = val;
-			g_free(p);
+			guchar *name = g_base64_decode(patterName.c_str(), &size);
+			guchar *patt = g_base64_decode(val.c_str(), &size);
+			g_debug("SaveFile::Read pattern '%s' is '%s'", (const char *)name, (const char *)patt);
+			mPatterns[(const char *)name] = (const char *)patt;
+			g_free(name);
+			g_free(patt);
 		} else {
 			g_debug("SaveFile::Read key '%s' is '%s'", key.c_str(), val.c_str());
 			mData[key] = val;
@@ -110,7 +112,10 @@ void SaveFile::Write() {
 		if (pair.second == "")
 			continue; // Ignore empty values
 		const char *key = g_base64_encode((const guchar*)pair.first.c_str(), pair.first.size());
-		output << sPatternPrefix << key << ":" << pair.second << std::endl;
+		const char *patt = g_base64_encode((const guchar*)pair.second.c_str(), pair.second.size());
+		output << sPatternPrefix << key << ":" << patt << std::endl;
+		g_free((gpointer)key);
+		g_free((gpointer)patt);
 	}
 }
 
