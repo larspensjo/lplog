@@ -23,6 +23,7 @@
 #include "View.h"
 #include "PatternTable.h"
 #include "Defer.h"
+#include "SaveFile.h"
 
 using std::string;
 
@@ -49,7 +50,9 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 }
 
 void View::DisplayPatternStore(SaveFile &save) {
-	PatternTable(mWindow).Display(save);
+	bool changed = PatternTable(mWindow).Display(save);
+	if (changed)
+		DeSerialize(save);
 }
 
 void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
@@ -446,10 +449,12 @@ void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *
 	g_value_unset(&val);
 }
 
-void View::DeSerialize(const std::string &str) {
+void View::DeSerialize(SaveFile &save) {
 	gtk_tree_store_clear(mPattern); // Remove the old, if any.
 	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
-	DeSerialize(str, nullptr, &mPatternRoot, 0);
+	// Use one step of indirection, to get the pattern to use.
+	auto current = save.GetStringOption("CurrentPattern", "default"); // Find what current pattern name to use
+	DeSerialize(save.GetPattern(current, "|(,)"), nullptr, &mPatternRoot, 0);
 	gtk_tree_view_expand_all(mTreeView);
 }
 

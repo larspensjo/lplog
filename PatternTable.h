@@ -16,6 +16,8 @@
 //
 
 #include <gtk/gtk.h>
+#include <string>
+#include <vector>
 
 class SaveFile;
 
@@ -24,9 +26,14 @@ class PatternTable
 public:
 	PatternTable(GtkWindow *win) : mMainWindow(win) {}
 	~PatternTable();
-	void Display(SaveFile &);
+	bool Display(SaveFile &); // Return true if a new pattern is selected
 private:
-	GtkWindow *mMainWindow = 0;
-	GtkTreeView *mTreeView = 0;
+	GtkWindow *mMainWindow = nullptr;
+	GtkTreeView *mTreeView = nullptr;
 	GtkWidget *mDialog = nullptr;
+	GtkTreeModel *mStore = nullptr;
+	std::vector<std::string> mOriginalNameList;
+
+	void Select(GtkTreeSelection *selection, SaveFile &save);
+	void UpdateList(SaveFile &);
 };

@@ -349,9 +349,7 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 	if (argc > 1) {
 		this->OpenURI(filePrefixURI + argv[1]);
 	}
-	// Use one step of indirection, to get the pattern to use.
-	auto current = mSaveFile.GetStringOption("CurrentPattern", "default"); // Find what current pattern name to use
-	mView.DeSerialize(mSaveFile.GetPattern(current, "|(,)"));
+	mView.DeSerialize(mSaveFile);
 	g_timeout_add(mSaveFile.GetIntOption("PollPeriod", 1000), GSourceFunc(::TestForeChanges), this);
 	while (!mQuitNow) {
 		gtk_main_iteration();

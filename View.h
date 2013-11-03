@@ -43,7 +43,7 @@ public:
 	void CloseCurrentTab();
 	int GetCurrentTabId() const;
 	void Serialize(std::stringstream &ss);
-	void DeSerialize(const std::string &);
+	void DeSerialize(SaveFile &);
 	void DisplayPatternStore(SaveFile &);
 
 	void SetFocusFind();

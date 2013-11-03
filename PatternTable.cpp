@@ -12,8 +12,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
-#include <string>
-#include <vector>
 
 #include "PatternTable.h"
 #include "SaveFile.h"
@@ -34,16 +32,13 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 	gtk_list_store_set(store, &iter, 0, newString, -1);
 }
 
-enum { BUTTON_USE };
-
-void PatternTable::Display(SaveFile &save) {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons("Pattern selection", mMainWindow,
+bool PatternTable::Display(SaveFile &save) {
+	mDialog = gtk_dialog_new_with_buttons("Select pattern to use", mMainWindow,
 										GTK_DIALOG_MODAL,
 										GTK_STOCK_OK, GTK_RESPONSE_OK,
-										"Use", BUTTON_USE,
 										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 										NULL);
-	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG (dialog));
+	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG (mDialog));
 
 #if GTK_CHECK_VERSION(3,0,0)
 	GtkWidget *mainbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -55,16 +50,16 @@ void PatternTable::Display(SaveFile &save) {
 	// Create a list store, and populate it
 	// ====================================
 	GtkListStore *store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
-	std::vector<string> originalNameList;
-	auto f = [store, &originalNameList](const string &name, const string &pattern) {
+	mStore = GTK_TREE_MODEL(store);
+	auto f = [store, this](const string &name, const string &pattern) {
 		GtkTreeIter iter;
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 0, name.c_str(), 1, pattern.c_str(), -1);
-		originalNameList.push_back(name);
+		mOriginalNameList.push_back(name);
 	};
 	save.IteratePatterns(f);
 
-	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+	GtkWidget *tree = gtk_tree_view_new_with_model(mStore);
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_box_pack_end(GTK_BOX(mainbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_set_grid_lines(mTreeView, GTK_TREE_VIEW_GRID_LINES_BOTH);
@@ -84,53 +79,61 @@ void PatternTable::Display(SaveFile &save) {
 	gtk_widget_show_all(mDialog);
 	gint response = gtk_dialog_run(GTK_DIALOG(mDialog));
 	g_debug("PatternTable::Display response %d", response);
+	bool ret = false;
 	switch(response) {
 	case GTK_RESPONSE_NONE:
 		g_debug("PatternTable::Display no response");
 		break;
 	case GTK_RESPONSE_OK: {
 		g_debug("PatternTable::Display Ok");
-		for (auto &name : originalNameList) {
-			g_debug("Clear pattern %s", name.c_str());
-			save.SetPattern(name, ""); // Clear entry
-		}
-		GtkTreeIter iter;
-		for (bool valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter); valid;
-			valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter))
-		{
-			gchar *patternName, *patternValue;
-			gtk_tree_model_get(GTK_TREE_MODEL(store), &iter,
-							   0, &patternName,
-							   1, &patternValue,
-							   -1);
-			g_debug("Set pattern %s to %s", patternName, patternValue);
-			save.SetPattern(patternName, patternValue);
-			g_free(patternName);
-			g_free(patternValue);
+		UpdateList(save);
+		GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
+		if (selection != nullptr) {
+			Select(selection, save);
+			ret = true;
 		}
 		break;
 	}
 	case GTK_RESPONSE_CANCEL:
 		g_debug("PatternTable::Display cancel");
 		break;
-	case BUTTON_USE: {
-		g_debug("PatternTable::Display use");
-		GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
-		if (selection != nullptr) {
-			GtkTreeIter selectedPattern = { 0 };
-			GtkTreeModel *pattern = 0;
-			bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
-			g_assert(found);
-			GValue val = { 0 };
-			gtk_tree_model_get_value(pattern, &selectedPattern, 1, &val);
-			Defer valFree([&val](){g_value_unset(&val);});
-			const gchar *str = g_value_get_string(&val);
-			g_debug("PatternTable::Display use '%s'", str);
-		}
-		break;
-	}
 	default:
 		g_warning("PatternTable::Display: Unknown return code");
 		break;
+	}
+	return ret;
+}
+
+void PatternTable::Select(GtkTreeSelection *selection, SaveFile &save) {
+	GtkTreeIter selectedPattern = { 0 };
+	GtkTreeModel *pattern = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
+	g_assert(found);
+	GValue val = { 0 };
+	gtk_tree_model_get_value(pattern, &selectedPattern, 0, &val);
+	Defer valFree([&val](){g_value_unset(&val);});
+	const gchar *str = g_value_get_string(&val);
+	g_debug("PatternTable::Select '%s'", str);
+	save.SetStringOption("CurrentPattern", str);
+}
+
+void PatternTable::UpdateList(SaveFile &save) {
+	for (auto &name : mOriginalNameList) {
+		g_debug("Clear pattern %s", name.c_str());
+		save.SetPattern(name, ""); // Clear entry
+	}
+	GtkTreeIter iter;
+	for (bool valid = gtk_tree_model_get_iter_first(mStore, &iter); valid;
+		valid = gtk_tree_model_iter_next(mStore, &iter))
+	{
+		gchar *patternName, *patternValue;
+		gtk_tree_model_get(mStore, &iter,
+						   0, &patternName,
+						   1, &patternValue,
+						   -1);
+		g_debug("Set pattern %s to %s", patternName, patternValue);
+		save.SetPattern(patternName, patternValue);
+		g_free(patternName);
+		g_free(patternValue);
 	}
 }
