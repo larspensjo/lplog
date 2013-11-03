@@ -263,7 +263,7 @@ debian: $(PROGRAM)
 	cp $(PROGRAM) $(DESTDIR)/usr/bin/
 	cp lplog.desktop $(DESTDIR)/usr/share/applications/
 	cp lplog.ico $(DESTDIR)/usr/share/lplog/
-	fpm --verbose -s dir -t deb -n lplog -v 3.0b1 -f\
+	fpm --verbose -s dir -t deb -n lplog -v 3.0b2 -f\
 		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0 --category debug\
 		--description "Log viewer that supports easy filtering and will update automatcally."\
 		--deb-user root --deb-group root --vendor 'Lars Pensjö'\
