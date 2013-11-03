@@ -27,6 +27,8 @@ public:
 	PatternTable(GtkWindow *win) : mMainWindow(win) {}
 	~PatternTable();
 	bool Display(SaveFile &); // Return true if a new pattern is selected
+
+	void ExecuteCommand(const std::string &name);
 private:
 	GtkWindow *mMainWindow = nullptr;
 	GtkTreeView *mTreeView = nullptr;

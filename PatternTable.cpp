@@ -32,6 +32,36 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 	gtk_list_store_set(store, &iter, 0, newString, -1);
 }
 
+static void ButtonClicked(GtkButton *button, PatternTable *c) {
+	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
+	g_debug("ButtonClicked %s", name.c_str());
+	c->ExecuteCommand(name);
+}
+
+void PatternTable::ExecuteCommand(const std::string &name) {
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
+	if (selection == nullptr)
+		return; // None selected
+	GtkTreeIter selectedPattern = { 0 };
+	GtkTreeModel *store = 0;
+	bool found = gtk_tree_selection_get_selected(selection, &store, &selectedPattern);
+	g_assert(found);
+
+	if (name == "delete") {
+		g_debug("PatternTable::ExecuteCommand delete");
+		(void)gtk_list_store_remove(GTK_LIST_STORE(store), &selectedPattern);
+	} else if (name == "copy") {
+		g_debug("PatternTable::ExecuteCommand copy");
+		gchar *patternName, *patternValue;
+		gtk_tree_model_get(store, &selectedPattern, 0, &patternName, 1, &patternValue, -1);
+		gtk_list_store_insert_after(GTK_LIST_STORE(store), &selectedPattern, &selectedPattern);
+		gtk_list_store_set(GTK_LIST_STORE(store), &selectedPattern, 0, patternName, 1, patternValue, -1);
+		g_debug("PatternTable::UpdateList: copy pattern %s:%s", patternName, patternValue);
+		g_free(patternName);
+		g_free(patternValue);
+	}
+}
+
 bool PatternTable::Display(SaveFile &save) {
 	mDialog = gtk_dialog_new_with_buttons("Select pattern to use", mMainWindow,
 										GTK_DIALOG_MODAL,
@@ -61,7 +91,7 @@ bool PatternTable::Display(SaveFile &save) {
 
 	GtkWidget *tree = gtk_tree_view_new_with_model(mStore);
 	mTreeView = GTK_TREE_VIEW(tree);
-	gtk_box_pack_end(GTK_BOX(mainbox), tree, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(mainbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_set_grid_lines(mTreeView, GTK_TREE_VIEW_GRID_LINES_BOTH);
 
 	auto renderer = gtk_cell_renderer_text_new();
@@ -75,6 +105,27 @@ bool PatternTable::Display(SaveFile &save) {
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes("Pattern", renderer, "text", 1, NULL);
 	gtk_tree_view_append_column(mTreeView, column);
+
+	// Add extra buttons
+	// =================
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *buttonBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
+	GtkWidget *buttonBox = gtk_hbox_new (FALSE, 0);
+#endif // GTK_CHECK_VERSION
+	gtk_box_pack_start(GTK_BOX(mainbox), buttonBox, FALSE, FALSE, 0);
+
+	GtkWidget *button = gtk_button_new_with_mnemonic("Delete");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), "delete");
+	g_signal_connect (button, "clicked", G_CALLBACK(::ButtonClicked), this);
+	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
+
+	button = gtk_button_new_with_mnemonic("Copy");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	gtk_widget_set_name(GTK_WIDGET(button), "copy");
+	g_signal_connect (button, "clicked", G_CALLBACK(::ButtonClicked), this);
+	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
 
 	gtk_widget_show_all(mDialog);
 	gint response = gtk_dialog_run(GTK_DIALOG(mDialog));
@@ -119,7 +170,7 @@ void PatternTable::Select(GtkTreeSelection *selection, SaveFile &save) {
 
 void PatternTable::UpdateList(SaveFile &save) {
 	for (auto &name : mOriginalNameList) {
-		g_debug("Clear pattern %s", name.c_str());
+		g_debug("PatternTable::UpdateList: Clear pattern %s", name.c_str());
 		save.SetPattern(name, ""); // Clear entry
 	}
 	GtkTreeIter iter;
@@ -131,7 +182,7 @@ void PatternTable::UpdateList(SaveFile &save) {
 						   0, &patternName,
 						   1, &patternValue,
 						   -1);
-		g_debug("Set pattern %s to %s", patternName, patternValue);
+		g_debug("PatternTable::UpdateList: Set pattern %s to %s", patternName, patternValue);
 		save.SetPattern(patternName, patternValue);
 		g_free(patternName);
 		g_free(patternValue);
