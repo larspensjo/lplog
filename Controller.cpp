@@ -367,7 +367,8 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 	}
 	std::stringstream ss;
 	mView.Serialize(ss);
-	mSaveFile.SetPattern("default", ss.str());
+	auto current = mSaveFile.GetStringOption("CurrentPattern", "default"); // Find what current pattern name to use
+	mSaveFile.SetPattern(current, ss.str());
 }
 
 void Controller::Help() const {
