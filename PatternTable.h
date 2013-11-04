@@ -36,6 +36,6 @@ private:
 	GtkTreeModel *mStore = nullptr;
 	std::vector<std::string> mOriginalNameList;
 
-	void Select(GtkTreeSelection *selection, SaveFile &save);
+	bool Select(GtkTreeSelection *selection, SaveFile &save);
 	void UpdateList(SaveFile &);
 };

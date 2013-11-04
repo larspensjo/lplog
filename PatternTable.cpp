@@ -139,10 +139,8 @@ bool PatternTable::Display(SaveFile &save) {
 		g_debug("PatternTable::Display Ok");
 		UpdateList(save);
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
-		if (selection != nullptr) {
-			Select(selection, save);
-			ret = true;
-		}
+		if (selection != nullptr)
+			ret = Select(selection, save);
 		break;
 	}
 	case GTK_RESPONSE_CANCEL:
@@ -155,17 +153,19 @@ bool PatternTable::Display(SaveFile &save) {
 	return ret;
 }
 
-void PatternTable::Select(GtkTreeSelection *selection, SaveFile &save) {
+bool PatternTable::Select(GtkTreeSelection *selection, SaveFile &save) {
 	GtkTreeIter selectedPattern = { 0 };
 	GtkTreeModel *pattern = 0;
 	bool found = gtk_tree_selection_get_selected(selection, &pattern, &selectedPattern);
-	g_assert(found);
+	if (!found)
+		return false;
 	GValue val = { 0 };
 	gtk_tree_model_get_value(pattern, &selectedPattern, 0, &val);
 	Defer valFree([&val](){g_value_unset(&val);});
 	const gchar *str = g_value_get_string(&val);
 	g_debug("PatternTable::Select '%s'", str);
 	save.SetStringOption("CurrentPattern", str);
+	return true;
 }
 
 void PatternTable::UpdateList(SaveFile &save) {
