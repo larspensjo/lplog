@@ -45,7 +45,8 @@ public:
 
 	GtkScrolledWindow *mScrolledView = 0; // TODO: Should not be public, manage in a better way.
 	GtkTextView *mTextView = 0;           // TODO: Should not be public, manage in a better way.
-	unsigned mNextSearchLine = 0;          // To know where "find next" should continue
+	int mLastSearchLine = -1;             // To know where "find next" should continue. -1 means before first line.
+	void ResetSearch() { mLastSearchLine = -1; }
 private:
 	std::vector<std::string> mLines;        // The input document
 	std::string mFileName;

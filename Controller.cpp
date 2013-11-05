@@ -35,8 +35,12 @@ gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
 	guint state = event->key.state;
 	gint keyval = event->key.keyval;
 	g_debug("KeyPressedOther state 0x%x key 0x%x name %s", event->key.state, keyval, name.c_str());
-	if (!(state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_F3) {
-		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+	if (!(state & GDK_CONTROL_MASK) && !(state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3) {
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
+		return true;
+	}
+	if (!(state & GDK_CONTROL_MASK) && (state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3) {
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), -1);
 		return true;
 	}
 	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_F4) {
@@ -111,6 +115,11 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 		return true; // Consume all normal characters, to prevent from being inserted
 	else if ((event->key.state & GDK_CONTROL_MASK) && keyval == GDK_KEY_c)
 		return false; // Copy
+
+	if (!(event->key.state & GDK_CONTROL_MASK) && !(event->key.state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3)
+		keyval = GDK_KEY_Next;
+	else if (!(event->key.state & GDK_CONTROL_MASK) && (event->key.state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3)
+		keyval = GDK_KEY_Prior;
 	else {
 		switch(keyval) {
 		case GDK_KEY_v:
@@ -118,8 +127,6 @@ static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller 
 			break;
 		case GDK_KEY_f:
 			keyval = GDK_KEY_Find;
-			break;
-		case GDK_KEY_F3:
 			break;
 		default:
 			return true; // Consume and ignore
@@ -177,7 +184,8 @@ void Controller::Find(const std::string &str) {
 	if (mCurrentDoc == nullptr)
 		return;
 	g_debug("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
-	mView.FindNext(mCurrentDoc, str, true);
+	mCurrentDoc->ResetSearch();
+	mView.FindNext(mCurrentDoc, str, 1);
 }
 
 void Controller::CloseCurrentTab() {
@@ -259,10 +267,14 @@ void Controller::ToggleButton(const std::string &name) {
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
 	else if (name == "casesensitive") {
 		mView.FindSetCaseSensitive();
-		if (mCurrentDoc)
-			mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+		if (mCurrentDoc) {
+			mCurrentDoc->ResetSearch();
+			mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
+		}
 	} else if (name == "findnext")
-		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
+	else if (name == "findprev")
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), -1);
 	else if (name == "linenumbers")
 		mView.ToggleLineNumbers(mCurrentDoc);
 	else
@@ -280,9 +292,13 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 	g_debug("[%d] Controller::TextViewKeyPress keyval 0x%x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
-	case GDK_KEY_F3:
+	case GDK_KEY_Next:
 		stopEvent = true;
-		mView.FindNext(mCurrentDoc, mView.GetSearchString(), false);
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
+		break;
+	case GDK_KEY_Prior:
+		stopEvent = true;
+		mView.FindNext(mCurrentDoc, mView.GetSearchString(), -1);
 		break;
 	case GDK_KEY_Find:
 		mView.SetFocusFind();

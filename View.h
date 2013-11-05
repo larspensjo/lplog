@@ -47,7 +47,7 @@ public:
 	void DisplayPatternStore(SaveFile &);
 
 	void SetFocusFind();
-	void FindNext(Document *, std::string, bool restart);
+	void FindNext(Document *, std::string, int direction);
 	void FindSetCaseSensitive();
 	const std::string GetSearchString() const;
 

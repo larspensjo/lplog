@@ -23,8 +23,6 @@ This is useful when the log lines all start with a similar pattern.
 * There should be some kind of notification if a search string contains leading or trailing blanks.
 This may lead to failed searches.
 * The icon should be loaded from the resource file instead from the icon file.
-* Improve the view of the search tree.
-When a field is empty, you can't see that there is a field.
 
 Low priority
 ============

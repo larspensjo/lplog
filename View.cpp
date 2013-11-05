@@ -131,6 +131,12 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_name(button, "findnext");
 	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
 
+	button = gtk_button_new_with_label("<");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(toggleButtonCB), cbData );
+	gtk_widget_set_name(button, "findprev");
+	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
+
 //	GClosure *findAgain = g_cclosure_new_swap(G_CALLBACK(mainwindow_new_tab), cbData, NULL);
 //	gtk_accel_group_connect(mAccelGroup, GDK_KEY_F3, GdkModifierType(0), GTK_ACCEL_VISIBLE, findAgain);
 
@@ -522,18 +528,16 @@ void View::Replace(Document *doc) {
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }
 
-void View::FindNext(Document *doc, std::string str, bool restart) {
+void View::FindNext(Document *doc, std::string str, int direction) {
 	if (!mCaseSensitive)
 		std::transform(str.begin(), str.end(),str.begin(), ::tolower);
 	g_debug("[%d] View::FindNext '%s'", GetCurrentTabId(), str.c_str());
 	GtkTextBuffer *buff = gtk_text_view_get_buffer(doc->mTextView);
-	unsigned lineCount = gtk_text_buffer_get_line_count(buff);
-	if (restart)
-		doc->mNextSearchLine = 0;
-	GtkTextIter lineStart;
-	gtk_text_buffer_get_iter_at_line(buff, &lineStart, doc->mNextSearchLine);
-	for (unsigned line=doc->mNextSearchLine; line < lineCount; line++) {
-		GtkTextIter lineEnd;
+	int lineCount = gtk_text_buffer_get_line_count(buff);
+	GtkTextIter lineStart = { 0 };
+	gtk_text_buffer_get_iter_at_line(buff, &lineStart, doc->mLastSearchLine+direction);
+	for (int line=doc->mLastSearchLine+direction; line < lineCount && line >= 0; line += direction) {
+		GtkTextIter lineEnd; // Find end of current line. Last line is special case.
 		if (line == lineCount-1)
 			gtk_text_buffer_get_iter_at_offset(buff, &lineEnd, -1);
 		else
@@ -543,15 +547,17 @@ void View::FindNext(Document *doc, std::string str, bool restart) {
 			std::transform(currentLine.begin(), currentLine.end(),currentLine.begin(), ::tolower);
 		std::string::size_type pos = currentLine.find(str);
 		if (pos != std::string::npos) {
-			g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
+			g_debug("FindNext: line %d", line);
 			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.0, 0.0); // Scroll the found line into view
 			GtkTextIter searchStart = { 0 }, searchEnd = { 0 };
 			gtk_text_buffer_get_iter_at_line_offset(buff, &searchStart, line, pos);
 			gtk_text_buffer_get_iter_at_line_offset(buff, &searchEnd, line, pos+str.size());
 			gtk_text_buffer_select_range(buff, &searchStart, &searchEnd); // Set selection on the found pattern
-			doc->mNextSearchLine = line+1;
-			if (doc->mNextSearchLine >= lineCount)
-				doc->mNextSearchLine = 0;
+			doc->mLastSearchLine = line;
+			if (doc->mLastSearchLine >= lineCount)
+				doc->mLastSearchLine = lineCount-1;
+			if (doc->mLastSearchLine < 0)
+				doc->mLastSearchLine = -1;
 			return;
 		}
 		lineStart = lineEnd;
