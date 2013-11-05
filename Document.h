@@ -55,6 +55,7 @@ private:
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	std::time_t mFileTime = {0};
+	long mFileSize = 0;
 	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
 	void SplitLines(char *, unsigned size); // This will modify the buffer content
 

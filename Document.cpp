@@ -156,7 +156,9 @@ Document::UpdateResult Document::UpdateInputData() {
 	}
 
 	bool firstTime = (mFileTime == 0);
-	bool documentIsModified = (st.st_mtime != mFileTime);
+	// On Windows, the modified time is not updated when new characters are added.
+	bool documentIsModified = (st.st_mtime != mFileTime || mFileSize != st.st_size);
+	mFileSize = st.st_size;
 	if (!documentIsModified) {
 		// g_debug("Document::UpdateResult not modified"); // Too verbose for normal debugging
 		return UpdateResult::NoChange; // The usual case for a document that wasn't changed
