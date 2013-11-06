@@ -320,10 +320,10 @@ void View::ToggleLineNumbers(Document *doc) {
 }
 
 void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine) {
-	std::string separator = ""; // Start empty
+	const char *separator = ""; // Start empty
 	unsigned startLine = mFoundLines;
 	if (mFoundLines > 0)
-		separator = '\n';
+		separator = "\n";
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
 	auto TestLine = [&] (const std::string &str, unsigned line) {
 		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) != Evaluation::Nomatch) {
@@ -339,7 +339,7 @@ void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstL
 		return false;
 	};
 	doc->IterateLines(TestLine, restartFirstLine);
-	g_debug("[%d] View::FilterString starting line %d, ending %d", GetCurrentTabId(), startLine, mFoundLines);
+	g_debug("[%d] View::FilterString starting line %d, total lines %d", GetCurrentTabId(), startLine, mFoundLines);
 }
 
 void View::OpenPatternForEditing() {

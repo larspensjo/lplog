@@ -55,8 +55,8 @@ private:
 	Document *mCurrentDoc = 0;
 	std::map<int, Document> mDocumentList;
 	bool mQuitNow = false;
-	bool mQueueReplace = false;
-	bool mQueueAppend = false;
+	bool mQueueReplace = false;              // The input file is completely replaced, and the display need to be updated.
+	bool mQueueAppend = false;               // The input file has grown, and there may be more lines that should be appended to the display
 	bool mRootPatternDisabled = false;
 	SaveFile &mSaveFile;
 };
