@@ -56,10 +56,10 @@ void SaveFile::Read() {
 	const string path = GetPath();
 	std::ifstream input(path);
 	if (!input.is_open()) {
-		LPLOG("SaveFile::Read Failed to open '%s'", path.c_str());
+		LPLOG("Failed to open '%s'", path.c_str());
 		return;
 	}
-	LPLOG("SaveFile::Read from %s", path.c_str());
+	LPLOG("from %s", path.c_str());
 	while(!input.eof()) {
 		string line;
 		std::getline(input, line);
@@ -72,7 +72,7 @@ void SaveFile::Read() {
 			continue;
 		p = line.find(':');
 		if (p == string::npos) {
-			LPLOG("SaveFile::Read illegal line '%s'", line.c_str());
+			LPLOG("illegal line '%s'", line.c_str());
 			continue;
 		}
 		string key = line.substr(0, p);
@@ -81,11 +81,11 @@ void SaveFile::Read() {
 			const string patterName = key.substr(sPatternPrefix.size());
 			gsize size;
 			guchar *p = g_base64_decode(patterName.c_str(), &size);
-			LPLOG("SaveFile::Read pattern '%s' is '%s'", (const char *)p, val.c_str());
+			LPLOG("pattern '%s' is '%s'", (const char *)p, val.c_str());
 			mPatterns[(const char *)p] = val;
 			g_free(p);
 		} else {
-			LPLOG("SaveFile::Read key '%s' is '%s'", key.c_str(), val.c_str());
+			LPLOG("key '%s' is '%s'", key.c_str(), val.c_str());
 			mData[key] = val;
 		}
 	}
@@ -95,10 +95,10 @@ void SaveFile::Write() {
 	const string path = GetPath();
 	std::ofstream output(path);
 	if (!output.is_open()) {
-		LPLOG("SaveFile::Write Failed to open '%s'", path.c_str());
+		LPLOG("Failed to open '%s'", path.c_str());
 		return;
 	}
-	LPLOG("SaveFile::Write Saving to %s", path.c_str());
+	LPLOG("Saving to %s", path.c_str());
 	output << sCommentPrefix << std::endl;
 	output << sCommentPrefix << " Options file for LPlog" << std::endl;
 	output << sCommentPrefix << std::endl;
@@ -118,11 +118,11 @@ void SaveFile::Write() {
 
 void SaveFile::SetStringOption(const std::string &key, const std::string&val) {
 	if (!IsValidKey(key)) {
-		LPLOG("SaveFile::SetStringOption Invalid key %s", key.c_str());
+		LPLOG("Invalid key %s", key.c_str());
 		return;
 	}
 	if (!IsValidValue(val)) {
-		LPLOG("SaveFile::SetStringOption Invalid value %s", val.c_str());
+		LPLOG("Invalid value %s", val.c_str());
 		return;
 	}
 	mData[sStringPrefix + key] = val;
@@ -130,7 +130,7 @@ void SaveFile::SetStringOption(const std::string &key, const std::string&val) {
 
 string SaveFile::GetStringOption(const string &id, const std::string &def) {
 	if (!IsValidKey(id)) {
-		LPLOG("SaveFile::GetStringOption Invalid key %s", id.c_str());
+		LPLOG("Invalid key %s", id.c_str());
 		return "";
 	}
 	string key = sStringPrefix + id;
@@ -142,7 +142,7 @@ string SaveFile::GetStringOption(const string &id, const std::string &def) {
 
 void SaveFile::SetIntOption(const std::string &key, int val) {
 	if (!IsValidKey(key)) {
-		LPLOG("SaveFile::SetIntOption Invalid key %s", key.c_str());
+		LPLOG("Invalid key %s", key.c_str());
 		return;
 	}
 	mData[sNumberPrefix + key] = to_string(val);
@@ -150,7 +150,7 @@ void SaveFile::SetIntOption(const std::string &key, int val) {
 
 int SaveFile::GetIntOption(const std::string &id, int def) {
 	if (!IsValidKey(id)) {
-		LPLOG("SaveFile::GetIntOption Invalid key %s", id.c_str());
+		LPLOG("Invalid key %s", id.c_str());
 		return 0;
 	}
 	string key = sNumberPrefix + id;

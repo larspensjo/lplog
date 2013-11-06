@@ -47,16 +47,16 @@ static std::string GetInstallDir() {
 
 int main (int argc, char *argv[])
 {
-	LPLOG("main: Argc before %d", argc);
+	LPLOG("Argc before %d", argc);
 	/* Initialize GTK+ */
 	gtk_init(&argc, &argv);
-	LPLOG("main: Argc after %d", argc);
+	LPLOG("Argc after %d", argc);
 
 	GError *err = 0;
 	const std::string iconFile = GetInstallDir() + "lplog.ico";
 	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
 	if (icon == nullptr)
-		LPLOG("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);
+		LPLOG("Failed to load icon %s (%s)", iconFile.c_str(), err->message);
 	SaveFile saveFile("lplog");
 	saveFile.Read();
 	Controller(saveFile).Run(argc, argv, icon);

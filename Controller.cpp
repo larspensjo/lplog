@@ -35,7 +35,7 @@ gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
 	const std::string name = gtk_widget_get_name(widget);
 	guint state = event->key.state;
 	gint keyval = event->key.keyval;
-	LPLOG("KeyPressedOther state 0x%x key 0x%x name %s", event->key.state, keyval, name.c_str());
+	LPLOG("state 0x%x key 0x%x name %s", event->key.state, keyval, name.c_str());
 	if (!(state & GDK_CONTROL_MASK) && !(state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3) {
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
 		return true;
@@ -56,14 +56,14 @@ static gboolean TreeViewKeyPressed(GtkWidget *, GdkEvent *event, Controller *c) 
 	guint state = event->key.state;
 	if (state & GDK_CONTROL_MASK)
 		return false;
-	LPLOG("TreeViewKeyPressed state 0x%x", event->key.state);
+	LPLOG("state 0x%x", event->key.state);
 	// GdkModifierType a;
 	return c->TextViewKeyEvent(event);
 }
 
 static void ButtonClicked(GtkButton *button, Controller *c) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
-	LPLOG("ButtonClicked %s", name.c_str());
+	LPLOG("%s", name.c_str());
 	c->ExecuteCommand(name);
 }
 
@@ -108,7 +108,7 @@ static void PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *ne
 // A key was pressed in the main text editor.
 static gboolean TextViewKeyPress(GtkWidget *widget, GdkEvent *event, Controller *c) {
 	gint keyval = event->key.keyval;
-	LPLOG("TextViewKeyPress %s: 0x%x modifier %d state 0x%x hardware_keycode 0x%x type %d",
+	LPLOG("%s: 0x%x modifier %d state 0x%x hardware_keycode 0x%x type %d",
 			event->key.string, keyval, event->key.is_modifier, event->key.state, event->key.hardware_keycode, event->key.type);
 	if (event->key.is_modifier)
 		return false; // Ignore all SHIFT, CTRL, etc.
@@ -147,12 +147,12 @@ static void ToggleButton(GtkToggleButton *togglebutton, Controller *c) {
 
 static void DragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *data, guint info, guint time, Controller *c) {
 	if (info != 0) {
-		LPLOG("DragDataReceived unknown info %d", info);
+		LPLOG("unknown info %d", info);
 		return;
 	}
 	char **str = gtk_selection_data_get_uris(data);
 	bool success = false;
-	LPLOG("DragDataReceived %s", str[0]);
+	LPLOG("%s", str[0]);
 	if (str != nullptr) {
 		c->OpenURI(str[0]); // Only get the first reference for now
 		g_strfreev(str);
@@ -166,7 +166,7 @@ static void ChangeCurrentPage(GtkNotebook *notebook, GtkWidget *page, gint tab, 
 	GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), tab);
 	GtkWidget *labelWidget = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), child);
 	const char *name = gtk_widget_get_name(labelWidget);
-	LPLOG("ChangeCurrentPage tab %d widget %s", tab, name);
+	LPLOG("tab %d widget %s", tab, name);
 	c->ChangeDoc(atoi(name));
 }
 
@@ -176,7 +176,7 @@ static gboolean DestroyMainWindow(GtkWidget *widget, Controller *c) {
 }
 
 static void EditEntry(GtkEditable *editable, Controller *c) {
-	LPLOG("EditEntry");
+	LPLOG("");
 	const std::string str = gtk_editable_get_chars(editable, 0, -1);
 	c->Find(str);
 }
@@ -184,7 +184,7 @@ static void EditEntry(GtkEditable *editable, Controller *c) {
 void Controller::Find(const std::string &str) {
 	if (mCurrentDoc == nullptr)
 		return;
-	LPLOG("[%d] Controller::Find '%s'", mView.GetCurrentTabId(), str.c_str());
+	LPLOG("[%d] '%s'", mView.GetCurrentTabId(), str.c_str());
 	mCurrentDoc->ResetSearch();
 	mView.FindNext(mCurrentDoc, str, 1);
 }
@@ -193,7 +193,7 @@ void Controller::CloseCurrentTab() {
 	int id = mView.GetCurrentTabId();
 	if (id == -1)
 		return;
-	LPLOG("[%d] Controller::CloseCurrentTab tab", id);
+	LPLOG("[%d] tab", id);
 	if (mCurrentDoc == &mDocumentList[id])
 		mCurrentDoc = nullptr;
 	mDocumentList.erase(id);
@@ -204,7 +204,7 @@ void Controller::CloseCurrentTab() {
 
 void Controller::ChangeDoc(int id) {
 	mCurrentDoc = &mDocumentList[id];
-	LPLOG("[%d] Controller::ChangeDoc doc (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
+	LPLOG("[%d] doc (%p), lines %u", id, mCurrentDoc, mCurrentDoc->GetNumLines());
 	this->PollInput();
 	mView.SetWindowTitle(mCurrentDoc->GetFileNameShort());
 	mQueueReplace = true;
@@ -218,7 +218,7 @@ void Controller::OpenURI(const std::string &uri) {
 		return;
 	const std::string filename = uri.substr(prefixSize);
 	mCurrentDoc = &mDocumentList[mView.nextId];
-	LPLOG("[%d] Controller::OpenURI %s new document %p", mView.GetCurrentTabId(), filename.c_str(), mCurrentDoc);
+	LPLOG("[%d] %s new document %p", mView.GetCurrentTabId(), filename.c_str(), mCurrentDoc);
 	mCurrentDoc->AddSourceFile(filename);
 	mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 }
@@ -233,7 +233,7 @@ void Controller::PollInput() {
 		mCurrentDoc->StopUpdate(); // The old tab shall no longer update
 		std::string fn = mCurrentDoc->GetFileName();
 		Document *newDoc = &mDocumentList[mView.nextId]; // Restarted new file
-		LPLOG("[%d] Controller::PollInput new document %p for %s", mView.GetCurrentTabId(), newDoc, fn.c_str());
+		LPLOG("[%d] new document %p for %s", mView.GetCurrentTabId(), newDoc, fn.c_str());
 		newDoc->AddSourceFile(fn);
 		mView.AddTab(newDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
 		break;
@@ -247,23 +247,23 @@ void Controller::PollInput() {
 }
 
 void Controller::TogglePattern(GtkCellRendererToggle *renderer, gchar *path) {
-	LPLOG("[%d] Controller::TogglePattern %s", mView.GetCurrentTabId(), path);
+	LPLOG("[%d] %s", mView.GetCurrentTabId(), path);
 	mView.TogglePattern(path);
 	// Inhibit update if root pattern is disabled
 	if (mRootPatternDisabled && mView.RootPatternActive()) {
-		LPLOG("[%d] Controller::TogglePattern Root pattern enabled", mView.GetCurrentTabId());
+		LPLOG("[%d] Root pattern enabled", mView.GetCurrentTabId());
 		mRootPatternDisabled = false;
 	}
 	if (!mRootPatternDisabled)
 		mQueueReplace = true;
 	if (!mView.RootPatternActive()) {
-		LPLOG("[%d] Controller::TogglePattern Root pattern disabled", mView.GetCurrentTabId());
+		LPLOG("[%d] Root pattern disabled", mView.GetCurrentTabId());
 		mRootPatternDisabled = true;
 	}
 }
 
 void Controller::ToggleButton(const std::string &name) {
-	LPLOG("[%d] Controller::ToggleButton %s", mView.GetCurrentTabId(), name.c_str());
+	LPLOG("[%d] %s", mView.GetCurrentTabId(), name.c_str());
 	if (name == "autoscroll")
 		mView.UpdateStatusBar(mCurrentDoc); // This will use the new automatic scrolling
 	else if (name == "casesensitive") {
@@ -279,7 +279,7 @@ void Controller::ToggleButton(const std::string &name) {
 	else if (name == "linenumbers")
 		mView.ToggleLineNumbers(mCurrentDoc);
 	else
-		LPLOG("[%d] Controller::ToggleButton unknown %s", mView.GetCurrentTabId(), name.c_str());
+		LPLOG("[%d] unknown %s", mView.GetCurrentTabId(), name.c_str());
 }
 
 void Controller::PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gchar *newString) {
@@ -290,7 +290,7 @@ void Controller::PatternCellUpdated(GtkCellRenderer *renderer, gchar *path, gcha
 }
 
 gboolean Controller::TextViewKeyPress(guint keyval) {
-	LPLOG("[%d] Controller::TextViewKeyPress keyval 0x%x", mView.GetCurrentTabId(), keyval);
+	LPLOG("[%d] keyval 0x%x", mView.GetCurrentTabId(), keyval);
 	bool stopEvent = false;
 	switch(keyval) {
 	case GDK_KEY_Next:
@@ -312,7 +312,7 @@ gboolean Controller::TextViewKeyPress(guint keyval) {
 			Defer pFree([p](){if (p != nullptr) (g_free(p));});
 			if (p != nullptr) {
 				mCurrentDoc = &mDocumentList[mView.nextId];
-				LPLOG("[%d] Controller::TextViewKeyPress new document %p", mView.GetCurrentTabId(), mCurrentDoc);
+				LPLOG("[%d] new document %p", mView.GetCurrentTabId(), mCurrentDoc);
 				unsigned size = strlen(p);
 				mCurrentDoc->AddSourceText(p, size);
 				mView.AddTab(mCurrentDoc, this, G_CALLBACK(::DragDataReceived), G_CALLBACK(::TextViewKeyPress), true);
@@ -355,7 +355,7 @@ gboolean Controller::KeyPressed(guint keyval) {
 }
 
 gboolean Controller::TextViewKeyEvent(GdkEvent *event) {
-	LPLOG("[%d] Controller::TextViewKeyEvent event type %d", mView.GetCurrentTabId(), event->type);
+	LPLOG("[%d] event type %d", mView.GetCurrentTabId(), event->type);
 	return this->KeyPressed(event->key.keyval);
 }
 
@@ -371,11 +371,11 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 	while (!mQuitNow) {
 		gtk_main_iteration();
 		if (mQueueReplace && mCurrentDoc != nullptr) {
-			LPLOG("[%d] Controller::Run queued replace", mView.GetCurrentTabId());
+			LPLOG("[%d] queued replace", mView.GetCurrentTabId());
 			mView.Replace(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
 		} else if (mQueueAppend && mCurrentDoc != nullptr) {
-			LPLOG("[%d] Controller::Run queued append", mView.GetCurrentTabId());
+			LPLOG("[%d] queued append", mView.GetCurrentTabId());
 			mView.Append(mCurrentDoc);
 			mView.UpdateStatusBar(mCurrentDoc);
 		}
