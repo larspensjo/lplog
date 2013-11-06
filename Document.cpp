@@ -26,6 +26,7 @@
 
 #include "Document.h"
 #include "Defer.h"
+#include "Debug.h"
 
 static bool findNL(const char *source, unsigned *length, const char **next) {
 	const char *p = source;
@@ -85,9 +86,9 @@ void Document::AddSourceFile(const std::string &fileName) {
 	mLines.clear();
 	struct stat st = { 0 };
 	if (stat(mFileName.c_str(), &st) == 0) {
-		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
+		LPLOG("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
 	} else {
-		g_debug("Document::AddSourceFile failed to open '%s' (err %d)", mFileName.c_str(), errno);
+		LPLOG("Document::AddSourceFile failed to open '%s' (err %d)", mFileName.c_str(), errno);
 	}
 }
 
@@ -98,7 +99,7 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mLines.clear();
 	DetectFileType((const unsigned char *)text, size);
 	this->SplitLines(text, size);
-	g_debug("Document::AddSourceText %d characters %u lines", size, (unsigned)mLines.size());
+	LPLOG("Document::AddSourceText %d characters %u lines", size, (unsigned)mLines.size());
 	mFileTime = std::time(nullptr);
 }
 
@@ -122,16 +123,16 @@ bool Document::EqualToTestBuffer(std::FILE *input, unsigned size) {
 void Document::DetectFileType(const unsigned char *p, unsigned size) {
 	if (size >= 4 && p[0] == 0xff && p[1] == 0xfe && p[3] == 0) {
 		mInputType = InputType::UTF16LittleEndian;
-		g_debug("Document::DetectFileType UTF-16 little endian");
+		LPLOG("Document::DetectFileType UTF-16 little endian");
 		return;
 	}
 	if (size >= 4 && p[0] == 0xfe && p[1] == 0xff && p[2] == 0) {
 		mInputType = InputType::UTF16BigEndian;
-		g_debug("Document::DetectFileType UTF-16 big endian");
+		LPLOG("Document::DetectFileType UTF-16 big endian");
 		return;
 	}
 	mInputType = InputType::Ascii;
-	g_debug("Document::DetectFileType ASCII");
+	LPLOG("Document::DetectFileType ASCII");
 }
 
 Document::UpdateResult Document::UpdateInputData() {
@@ -148,7 +149,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	if (statFailed || input == nullptr) {
 		// There is no file
 		if (mCurrentPosition != 0) {
-			g_debug("Document::UpdateInputData file removed");
+			LPLOG("Document::UpdateInputData file removed");
 			mStopUpdates = true;
 			return UpdateResult::Replaced;
 		}
@@ -160,20 +161,20 @@ Document::UpdateResult Document::UpdateInputData() {
 	bool documentIsModified = (st.st_mtime != mFileTime || mFileSize != st.st_size);
 	mFileSize = st.st_size;
 	if (!documentIsModified) {
-		// g_debug("Document::UpdateResult not modified"); // Too verbose for normal debugging
+		// LPLOG("Document::UpdateResult not modified"); // Too verbose for normal debugging
 		return UpdateResult::NoChange; // The usual case for a document that wasn't changed
 	}
 	mFileTime = st.st_mtime;
 
 	if (!firstTime && documentIsModified && (st.st_size < mCurrentPosition || !EqualToTestBuffer(input, st.st_size))) {
 		// There is a replaced file
-		g_debug("Document::UpdateInputData new content");
+		LPLOG("Document::UpdateInputData new content");
 		mStopUpdates = true;
 		return UpdateResult::Replaced;
 	}
 
 	if (mCurrentPosition == st.st_size) {
-		g_debug("Document::UpdateResult same size [%s] [%s]", firstTime?"first":"notfirst",
+		LPLOG("Document::UpdateResult same size [%s] [%s]", firstTime?"first":"notfirst",
 			documentIsModified?"modifed":"notmodifed");
 		return UpdateResult::NoChange;
 	}
@@ -187,7 +188,7 @@ Document::UpdateResult Document::UpdateInputData() {
 	Defer b([buff](){ delete[]buff;});
 	std::fseek(input, mCurrentPosition, SEEK_SET);
 	unsigned n = (unsigned)std::fread(buff, 1, addedSize, input);
-	g_debug("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)addedSize, n);
+	LPLOG("Document::UpdateInputData start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)addedSize, n);
 	mCurrentPosition += n;
 	this->SplitLines(buff, n);
 	return UpdateResult::Grow;
@@ -198,7 +199,7 @@ void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f
 		mFirstNewLine = 0;
 		mLineMap.clear();
 	}
-	g_debug("Document::IterateLines from line %u restart '%s' printed line# %u", mFirstNewLine, restartFirstLine?"[true]":"[false]", (unsigned)mLineMap.size());
+	LPLOG("Document::IterateLines from line %u restart '%s' printed line# %u", mFirstNewLine, restartFirstLine?"[true]":"[false]", (unsigned)mLineMap.size());
 	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
 		bool accepted = f(mLines[line], line);
 		if (accepted) {
@@ -216,10 +217,10 @@ void Document::SplitLines(char *buff, unsigned size) {
 		long numWritten;
 		char *ret = g_utf16_to_utf8((const gunichar2 *)buff, size, NULL, &numWritten, NULL);
 		if (ret == nullptr) {
-			g_debug("Document::SplitLines failed conversion");
+			LPLOG("Document::SplitLines failed conversion");
 		} else {
 			freeTmp = [ret]() { g_free(ret); };
-			g_debug("Document::SplitLines parsed %ld chars from %d",numWritten, size);
+			LPLOG("Document::SplitLines parsed %ld chars from %d",numWritten, size);
 			buff = ret; // Use this buffer instead
 			size = numWritten;
 		}
@@ -228,7 +229,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 			// TODO: Convert from ASCII to utf-8 instead
 			unsigned pos = last - buff;
 			if (buff[pos] == 0) {
-				g_debug("Document::SplitLines premature zero byte at pos %d", pos);
+				LPLOG("Document::SplitLines premature zero byte at pos %d", pos);
 				size = pos;
 				break;
 			}
@@ -236,7 +237,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 			numBad++;
 		}
 		if (numBad > 0)
-			g_debug("Document::SplitLines %d bad characters", numBad);
+			LPLOG("Document::SplitLines %d bad characters", numBad);
 	}
 	buff[size] = 0;
 	// Split the source into list of lines
@@ -248,17 +249,17 @@ void Document::SplitLines(char *buff, unsigned size) {
 		if (p[len] == '\0') {
 			// No newline, means the line is incomplete.
 			mIncompleteLastLine += std::string(p, len);
-			g_debug("Document::SplitLines incomplete last line (%u chars) '%s'", len, mIncompleteLastLine.c_str());
+			LPLOG("Document::SplitLines incomplete last line (%u chars) '%s'", len, mIncompleteLastLine.c_str());
 			break;
 		}
 		// Add a new line
 		mLines.push_back(mIncompleteLastLine + std::string(p, len));
 		if (mIncompleteLastLine != "")
-			g_debug("Document::SplitLines merged incomplete last line '%s'", (mIncompleteLastLine + std::string(p, len)).c_str());
+			LPLOG("Document::SplitLines merged incomplete last line '%s'", (mIncompleteLastLine + std::string(p, len)).c_str());
 		mIncompleteLastLine = "";
 		p = next;
 	}
-	g_debug("Document::SplitLines total %u,%s document %p", (unsigned)mLines.size(), mIncompleteLastLine != "" ? " incomplete last, " : "", this);
+	LPLOG("Document::SplitLines total %u,%s document %p", (unsigned)mLines.size(), mIncompleteLastLine != "" ? " incomplete last, " : "", this);
 }
 
 std::string Document::GetFileNameShort() const {

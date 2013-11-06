@@ -158,7 +158,8 @@ LINK.cxx    = $(CXX) $(MY_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 all: $(PROGRAM)
 
-Debug: $(PROGRAM)
+Debug:
+	$(MAKE) CXXFLAGS='-g -DDEBUG' LDFLAGS=
 
 # Rules for creating dependency files (.d).
 #------------------------------------------

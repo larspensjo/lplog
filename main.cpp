@@ -30,6 +30,7 @@
 #include "Document.h"
 #include "Controller.h"
 #include "SaveFile.h"
+#include "Debug.h"
 
 // Return the full path to the application, including the application name
 static std::string GetInstallDir() {
@@ -46,16 +47,16 @@ static std::string GetInstallDir() {
 
 int main (int argc, char *argv[])
 {
-	g_debug("main: Argc before %d", argc);
+	LPLOG("main: Argc before %d", argc);
 	/* Initialize GTK+ */
 	gtk_init(&argc, &argv);
-	g_debug("main: Argc after %d", argc);
+	LPLOG("main: Argc after %d", argc);
 
 	GError *err = 0;
 	const std::string iconFile = GetInstallDir() + "lplog.ico";
 	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
 	if (icon == nullptr)
-		g_debug("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);
+		LPLOG("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);
 	SaveFile saveFile("lplog");
 	saveFile.Read();
 	Controller(saveFile).Run(argc, argv, icon);

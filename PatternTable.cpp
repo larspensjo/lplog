@@ -16,6 +16,7 @@
 #include "PatternTable.h"
 #include "SaveFile.h"
 #include "Defer.h"
+#include "Debug.h"
 
 using std::string;
 
@@ -34,7 +35,7 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 
 static void ButtonClicked(GtkButton *button, PatternTable *c) {
 	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
-	g_debug("ButtonClicked %s", name.c_str());
+	LPLOG("ButtonClicked %s", name.c_str());
 	c->ExecuteCommand(name);
 }
 
@@ -48,15 +49,15 @@ void PatternTable::ExecuteCommand(const std::string &name) {
 	g_assert(found);
 
 	if (name == "delete") {
-		g_debug("PatternTable::ExecuteCommand delete");
+		LPLOG("PatternTable::ExecuteCommand delete");
 		(void)gtk_list_store_remove(GTK_LIST_STORE(store), &selectedPattern);
 	} else if (name == "copy") {
-		g_debug("PatternTable::ExecuteCommand copy");
+		LPLOG("PatternTable::ExecuteCommand copy");
 		gchar *patternName, *patternValue;
 		gtk_tree_model_get(store, &selectedPattern, 0, &patternName, 1, &patternValue, -1);
 		gtk_list_store_insert_after(GTK_LIST_STORE(store), &selectedPattern, &selectedPattern);
 		gtk_list_store_set(GTK_LIST_STORE(store), &selectedPattern, 0, patternName, 1, patternValue, -1);
-		g_debug("PatternTable::UpdateList: copy pattern %s:%s", patternName, patternValue);
+		LPLOG("PatternTable::UpdateList: copy pattern %s:%s", patternName, patternValue);
 		g_free(patternName);
 		g_free(patternValue);
 	}
@@ -129,14 +130,14 @@ bool PatternTable::Display(SaveFile &save) {
 
 	gtk_widget_show_all(mDialog);
 	gint response = gtk_dialog_run(GTK_DIALOG(mDialog));
-	g_debug("PatternTable::Display response %d", response);
+	LPLOG("PatternTable::Display response %d", response);
 	bool ret = false;
 	switch(response) {
 	case GTK_RESPONSE_NONE:
-		g_debug("PatternTable::Display no response");
+		LPLOG("PatternTable::Display no response");
 		break;
 	case GTK_RESPONSE_OK: {
-		g_debug("PatternTable::Display Ok");
+		LPLOG("PatternTable::Display Ok");
 		UpdateList(save);
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 		if (selection != nullptr)
@@ -144,7 +145,7 @@ bool PatternTable::Display(SaveFile &save) {
 		break;
 	}
 	case GTK_RESPONSE_CANCEL:
-		g_debug("PatternTable::Display cancel");
+		LPLOG("PatternTable::Display cancel");
 		break;
 	default:
 		g_warning("PatternTable::Display: Unknown return code");
@@ -163,14 +164,14 @@ bool PatternTable::Select(GtkTreeSelection *selection, SaveFile &save) {
 	gtk_tree_model_get_value(pattern, &selectedPattern, 0, &val);
 	Defer valFree([&val](){g_value_unset(&val);});
 	const gchar *str = g_value_get_string(&val);
-	g_debug("PatternTable::Select '%s'", str);
+	LPLOG("PatternTable::Select '%s'", str);
 	save.SetStringOption("CurrentPattern", str);
 	return true;
 }
 
 void PatternTable::UpdateList(SaveFile &save) {
 	for (auto &name : mOriginalNameList) {
-		g_debug("PatternTable::UpdateList: Clear pattern %s", name.c_str());
+		LPLOG("PatternTable::UpdateList: Clear pattern %s", name.c_str());
 		save.SetPattern(name, ""); // Clear entry
 	}
 	GtkTreeIter iter;
@@ -182,7 +183,7 @@ void PatternTable::UpdateList(SaveFile &save) {
 						   0, &patternName,
 						   1, &patternValue,
 						   -1);
-		g_debug("PatternTable::UpdateList: Set pattern %s to %s", patternName, patternValue);
+		LPLOG("PatternTable::UpdateList: Set pattern %s to %s", patternName, patternValue);
 		save.SetPattern(patternName, patternValue);
 		g_free(patternName);
 		g_free(patternValue);
