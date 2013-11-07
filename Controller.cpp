@@ -88,9 +88,14 @@ void Controller::ExecuteCommand(const std::string &name) {
 		CloseCurrentTab();
 	else if (name == "paste")
 		TextViewKeyPress(GDK_KEY_Paste);
-	else if (name == "patternstore")
-		mView.DisplayPatternStore(mSaveFile);
-	else
+	else if (name == "patternstore") {
+		bool changed = mView.DisplayPatternStore(mSaveFile);
+		if (changed) {
+			mView.DeSerialize(mSaveFile);
+			mQueueReplace = true;
+			mSaveFile.Write(); // Force early save, instead of waiting for application termination.
+		}
+	} else
 		LPLOG("Unknown button: %s", name.c_str());
 }
 

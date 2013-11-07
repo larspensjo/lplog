@@ -44,7 +44,7 @@ public:
 	int GetCurrentTabId() const;
 	void Serialize(std::stringstream &ss);
 	void DeSerialize(SaveFile &);
-	void DisplayPatternStore(SaveFile &);
+	bool DisplayPatternStore(SaveFile &); // Return true if there was a change
 
 	void SetFocusFind();
 	void FindNext(Document *, std::string, int direction);

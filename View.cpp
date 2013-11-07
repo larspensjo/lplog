@@ -50,10 +50,8 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	return true;
 }
 
-void View::DisplayPatternStore(SaveFile &save) {
-	bool changed = PatternTable(mWindow).Display(save);
-	if (changed)
-		DeSerialize(save);
+bool View::DisplayPatternStore(SaveFile &save) {
+	return PatternTable(mWindow).Display(save);
 }
 
 void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
