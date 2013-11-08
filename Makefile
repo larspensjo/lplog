@@ -66,7 +66,7 @@ MY_CFLAGS =
 MY_LIBS   := $(shell pkg-config --libs $(GTK))
 
 # The pre-processor options used by the cpp (man cpp for more).
-CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags $(GTK))
+CPPFLAGS  := -Wuninitialized -Wall -std=c++11 $(shell pkg-config --cflags $(GTK))
 
 # The options used in linking as well as in any direct use of ld.
 ifeq ($(OS), Windows_NT)

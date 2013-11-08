@@ -24,7 +24,9 @@ public:
 	Defer(ptr f) : mFunction(f) { }
 	~Defer() { if (mFunction != nullptr) mFunction(); }
 	void Set(ptr f) { mFunction = f; }
-	void operator=(ptr f) { mFunction = f; }
+	Defer &operator=(ptr f) { mFunction = f; return *this; }
 private:
 	ptr mFunction;
+	Defer(const Defer &) = delete;
+	Defer operator=(const Defer &) = delete;
 };
