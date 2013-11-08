@@ -82,11 +82,16 @@ bool PatternTable::Display(SaveFile &save) {
 	// ====================================
 	GtkListStore *store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 	mStore = GTK_TREE_MODEL(store);
-	auto f = [store, this](const string &name, const string &pattern) {
+	string currentSelectedName = save.GetStringOption("CurrentPattern");
+	auto f = [store, this, currentSelectedName](const string &name, const string &pattern) {
 		GtkTreeIter iter;
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 0, name.c_str(), 1, pattern.c_str(), -1);
 		mOriginalNameList.push_back(name);
+		if (name == currentSelectedName) {
+			LPLOG("Detect current: %s", pattern.c_str());
+			mIterFoundCurrent = iter;
+		}
 	};
 	save.IteratePatterns(f);
 
@@ -94,6 +99,12 @@ bool PatternTable::Display(SaveFile &save) {
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_box_pack_start(GTK_BOX(mainbox), tree, FALSE, FALSE, 0);
 	gtk_tree_view_set_grid_lines(mTreeView, GTK_TREE_VIEW_GRID_LINES_BOTH);
+
+	GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(store), &mIterFoundCurrent);
+	if (path != nullptr) {
+		gtk_tree_view_set_cursor(GTK_TREE_VIEW(tree), path, nullptr, false);
+		gtk_tree_path_free(path);
+	}
 
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);

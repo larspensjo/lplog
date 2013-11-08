@@ -35,6 +35,7 @@ private:
 	GtkWidget *mDialog = nullptr;
 	GtkTreeModel *mStore = nullptr;
 	std::vector<std::string> mOriginalNameList;
+	GtkTreeIter mIterFoundCurrent = { 0 };
 
 	bool Select(GtkTreeSelection *selection, SaveFile &save);
 	void UpdateList(SaveFile &);
