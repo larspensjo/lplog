@@ -36,15 +36,15 @@ gboolean Controller::KeyPressedOther(GtkWidget *widget, GdkEvent *event) {
 	guint state = event->key.state;
 	gint keyval = event->key.keyval;
 	LPLOG("state 0x%x key 0x%x name %s", event->key.state, keyval, name.c_str());
-	if (!(state & GDK_CONTROL_MASK) && !(state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3) {
+	if (!(state & GDK_CONTROL_MASK) && !(state & GDK_SHIFT_MASK) && keyval == GDK_KEY_F3) {
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
 		return true;
 	}
-	if (!(state & GDK_CONTROL_MASK) && (state & GDK_SHIFT_MASK) && event->key.keyval == GDK_KEY_F3) {
+	if (!(state & GDK_CONTROL_MASK) && (state & GDK_SHIFT_MASK) && keyval == GDK_KEY_F3) {
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), -1);
 		return true;
 	}
-	if ((state & GDK_CONTROL_MASK) && event->key.keyval == GDK_KEY_F4) {
+	if ((state & GDK_CONTROL_MASK) && keyval == GDK_KEY_F4) {
 		mView.CloseCurrentTab();
 		return true;
 	}

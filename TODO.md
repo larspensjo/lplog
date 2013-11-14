@@ -10,6 +10,7 @@ The purpose is to show a read-only window to display status.
 * Get page up/page down to work.
 * Enable drag-and-drop to the empty document.
 * Enable CTRL-TAB to switch between tabs.
+* Deleting or adding filters when filtering is disable in root should not redraw screen.
 
 Medium priority
 ===============
@@ -23,6 +24,7 @@ This is useful when the log lines all start with a similar pattern.
 * There should be some kind of notification if a search string contains leading or trailing blanks.
 This may lead to failed searches.
 * The icon should be loaded from the resource file instead from the icon file.
+* Busy cursor is needed for big documents.
 
 Low priority
 ============
