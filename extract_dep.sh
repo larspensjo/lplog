@@ -7,7 +7,7 @@
 #
 rm -r *.d
 make clean
-make -j CXXFLAGS=-O3
+make -j CXXFLAGS=-O3 GTK=gtk+-2.0
 mkdir -p distro
 depends22_x86/depends.exe -c -f:1 -ot:out.txt lplog.exe
 rm -rf distro/*
