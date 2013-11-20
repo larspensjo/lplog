@@ -25,6 +25,8 @@ This is useful when the log lines all start with a similar pattern.
 This may lead to failed searches.
 * The icon should be loaded from the resource file instead from the icon file.
 * Busy cursor is needed for big documents.
+* Use Shift-O to add another pattern above the current.
+* Use '/' to start a search.
 
 Low priority
 ============
