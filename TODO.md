@@ -12,6 +12,7 @@ The purpose is to show a read-only window to display status.
 * Enable CTRL-TAB to switch between tabs.
 * Deleting or adding filters when filtering is disable in root should not redraw screen.
 * Move the pattern edit menu button to the Edit menu.
+* Quick search should restart when filter changes.
 
 Medium priority
 ===============
