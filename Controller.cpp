@@ -277,6 +277,9 @@ void Controller::ToggleButton(const std::string &name) {
 			mCurrentDoc->ResetSearch();
 			mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
 		}
+	} else if (name == "ignoreduplicates") {
+		mView.ToggleIgnoreDuplicateLines();
+		mQueueReplace = true;
 	} else if (name == "findnext")
 		mView.FindNext(mCurrentDoc, mView.GetSearchString(), 1);
 	else if (name == "findprev")

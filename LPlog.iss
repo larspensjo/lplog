@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{BBC896CB-86E5-4F63-9AA8-967AE0F9ECEB}
 AppName=LPLog
-AppVersion=3.0b2
+AppVersion=3.0b3
 AppPublisher=LPLog
 AppPublisherURL=https://github.com/larspensjo/lplog
 AppSupportURL=https://github.com/larspensjo/lplog

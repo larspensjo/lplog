@@ -46,6 +46,8 @@ public:
 	void DeSerialize(SaveFile &);
 	bool DisplayPatternStore(SaveFile &); // Return true if there was a change
 
+	void ToggleIgnoreDuplicateLines() { mIgnoreDuplicateLines = !mIgnoreDuplicateLines; }
+
 	void SetFocusFind();
 	void FindNext(Document *, std::string, int direction);
 	void FindSetCaseSensitive();
@@ -70,6 +72,7 @@ private:
 	GtkWidget *mNotebook = 0;
 	bool mCaseSensitive = false;
 	GtkAccelGroup *mAccelGroup = 0;
+	bool mIgnoreDuplicateLines = false;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;

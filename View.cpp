@@ -37,7 +37,7 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	std::string newTitle = "LPlog 3.0b2     " + str;
+	std::string newTitle = "LPlog 3.0b3     " + str;
 	gtk_window_set_title(mWindow, newTitle.c_str());
 }
 
@@ -86,15 +86,21 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	auto menu = this->AddMenu(menubar, "_File");
 	this->AddMenuButton(menu, "_Open", "open", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Close", "close", buttonCB, cbData);
-	this->AddMenuButton(menu, "_Pattern storage", "patternstore", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Exit", "quit", buttonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Edit");
 	this->AddMenuButton(menu, "_Paste", "paste", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Find", "find", buttonCB, cbData);
+	this->AddMenuButton(menu, "_Pattern storage", "patternstore", buttonCB, cbData);
+
 	GtkWidget *menuItem = gtk_check_menu_item_new_with_mnemonic("_Case sensitive");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), "casesensitive");
+	g_signal_connect(menuItem, "toggled", toggleButtonCB, cbData);
+
+	menuItem = gtk_check_menu_item_new_with_mnemonic("_Ignore duplicates");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "ignoreduplicates");
 	g_signal_connect(menuItem, "toggled", toggleButtonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Help");
@@ -323,19 +329,24 @@ void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstL
 	unsigned startLine = mFoundLines;
 	if (mFoundLines > 0)
 		separator = "\n";
+    std::string prevLine = "";
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
 	auto TestLine = [&] (const std::string &str, unsigned line) {
-		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) != Evaluation::Nomatch) {
-			ss << separator;
-			if (mShowLineNumbers) {
-				ss << line+1 << "\t";
-			}
-			ss << str;
-			separator = "\n";
-			++mFoundLines;
-			return true;
-		}
-		return false;
+		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) == Evaluation::Nomatch)
+            return false;
+        if (mIgnoreDuplicateLines) {
+            if (str == prevLine)
+                return false;
+            prevLine = str;
+        }
+        ss << separator;
+        if (mShowLineNumbers) {
+            ss << line+1 << "\t";
+        }
+        ss << str;
+        separator = "\n";
+        ++mFoundLines;
+        return true;
 	};
 	doc->IterateLines(TestLine, restartFirstLine);
 	LPLOG("[%d] starting line %d, total lines %d", GetCurrentTabId(), startLine, mFoundLines);
@@ -721,7 +732,7 @@ void View::About() const {
 	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
 
 	gtk_show_about_dialog(NULL,
-		"version", "3.0 beta 1",
+		"version", "3.0 beta 3",
 		"website", "https://github.com/larspensjo/lplog",
 		"comments", "A program to display and filter a log file.",
 		"authors", authors,
