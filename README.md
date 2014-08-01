@@ -25,4 +25,8 @@ For Windows:
 * Make sure /local/bin is in the PATH if you use the MinGW shell
 * If CodeBlocks is used, start it from the MinGW shell (to get the PATH).
 
+Build for Linux:
+* Install ```sudo apt-get install libgtk-3-dev```
+* ```make```
+
 ![Pict](https://dl.dropboxusercontent.com/u/3471992/lplog1.png)
