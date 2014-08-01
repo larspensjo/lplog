@@ -28,5 +28,6 @@ For Windows:
 Build for Linux:
 * Install ```sudo apt-get install libgtk-3-dev```
 * ```make```
+* To create a debian install package, see "make debian" instructions in Makefile
 
 ![Pict](https://dl.dropboxusercontent.com/u/3471992/lplog1.png)
