@@ -1,4 +1,4 @@
-// Copyright 2013 Lars PensjÃ¶
+// Copyright 2013 Lars Pensjö
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 #include "View.h"
 #include "Document.h"
 
-class View;
 class SaveFile;
 
 class Controller

@@ -26,8 +26,6 @@
 #include <windows.h>
 #endif // _WIN32
 
-#include "View.h"
-#include "Document.h"
 #include "Controller.h"
 #include "SaveFile.h"
 #include "Debug.h"
