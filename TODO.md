@@ -14,6 +14,7 @@ The purpose is to show a read-only window to display status.
 * Move the pattern edit menu button to the Edit menu.
 * Quick search should restart when filter changes.
 * Add option to filter duplicate lines.
+* When switching between tabs, remember the previous position (today it jumps to the beginning).
 
 Medium priority
 ===============
