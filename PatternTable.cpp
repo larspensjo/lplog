@@ -66,8 +66,8 @@ void PatternTable::ExecuteCommand(const std::string &name) {
 bool PatternTable::Display(SaveFile &save) {
 	mDialog = gtk_dialog_new_with_buttons("Select pattern to use", mMainWindow,
 										GTK_DIALOG_MODAL,
-										GTK_STOCK_OK, GTK_RESPONSE_OK,
-										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+										"_OK", GTK_RESPONSE_OK,
+										"_Cancel", GTK_RESPONSE_CANCEL,
 										NULL);
 	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG (mDialog));
 
