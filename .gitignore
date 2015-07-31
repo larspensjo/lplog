@@ -3,8 +3,6 @@
 /*.depend
 /*.layout
 *~
-/*.d
-/*.o
 /lplog
 /lplog.exe
 /lplog.layout.save
@@ -14,3 +12,5 @@
 /distro
 /depends22_x86
 /*.deb
+/Debug
+/Release
