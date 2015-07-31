@@ -25,18 +25,17 @@ class PatternTable
 {
 public:
 	PatternTable(GtkWindow *win) : mMainWindow(win) {}
-	~PatternTable();
 	bool Display(SaveFile &); // Return true if a new pattern is selected
 
 	void ExecuteCommand(const std::string &name);
 private:
 	GtkWindow *mMainWindow = nullptr;
 	GtkTreeView *mTreeView = nullptr;
-	GtkWidget *mDialog = nullptr;
 	GtkTreeModel *mStore = nullptr;
 	std::vector<std::string> mOriginalNameList;
 	GtkTreeIter mIterFoundCurrent = { 0 };
 
 	bool Select(GtkTreeSelection *selection, SaveFile &save);
 	void UpdateList(SaveFile &);
+	bool DetectDuplicateNames() const;
 };

@@ -13,18 +13,14 @@
 // along with Lplog.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <set>
+
 #include "PatternTable.h"
 #include "SaveFile.h"
 #include "Defer.h"
 #include "Debug.h"
 
 using std::string;
-
-PatternTable::~PatternTable() {
-	if (mDialog != nullptr)
-		gtk_widget_destroy(mDialog);
-	mDialog = nullptr;
-}
 
 static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, GtkListStore *store) {
 	GtkTreeIter iter;
@@ -34,12 +30,12 @@ static void EditCell(GtkCellRenderer *renderer, gchar *path, gchar *newString, G
 }
 
 static void ButtonClicked(GtkButton *button, PatternTable *c) {
-	std::string name = gtk_widget_get_name(GTK_WIDGET(button));
+	string name = gtk_widget_get_name(GTK_WIDGET(button));
 	LPLOG("%s", name.c_str());
 	c->ExecuteCommand(name);
 }
 
-void PatternTable::ExecuteCommand(const std::string &name) {
+void PatternTable::ExecuteCommand(const string &name) {
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 	if (selection == nullptr)
 		return; // None selected
@@ -64,12 +60,12 @@ void PatternTable::ExecuteCommand(const std::string &name) {
 }
 
 bool PatternTable::Display(SaveFile &save) {
-	mDialog = gtk_dialog_new_with_buttons("Select pattern to use", mMainWindow,
+	GtkWidget *dialog = gtk_dialog_new_with_buttons("Select pattern to use", mMainWindow,
 										GTK_DIALOG_MODAL,
 										"_OK", GTK_RESPONSE_OK,
 										"_Cancel", GTK_RESPONSE_CANCEL,
 										NULL);
-	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG (mDialog));
+	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG (dialog));
 
 #if GTK_CHECK_VERSION(3,0,0)
 	GtkWidget *mainbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -139,8 +135,9 @@ bool PatternTable::Display(SaveFile &save) {
 	g_signal_connect (button, "clicked", G_CALLBACK(::ButtonClicked), this);
 	gtk_box_pack_start(GTK_BOX(buttonBox), button, FALSE, FALSE, 0);
 
-	gtk_widget_show_all(mDialog);
-	gint response = gtk_dialog_run(GTK_DIALOG(mDialog));
+retry:
+	gtk_widget_show_all(dialog);
+	gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 	LPLOG("response %d", response);
 	bool ret = false;
 	switch(response) {
@@ -149,6 +146,18 @@ bool PatternTable::Display(SaveFile &save) {
 		break;
 	case GTK_RESPONSE_OK: {
 		LPLOG("Ok");
+		if (DetectDuplicateNames()) {
+			LPLOG("Duplicates found, retry");
+			GtkWidget *popup = gtk_message_dialog_new(mMainWindow,
+													GTK_DIALOG_MODAL,
+													GTK_MESSAGE_ERROR,
+													GTK_BUTTONS_CLOSE,
+													"Duplicate pattern names\nnot allowed!");
+			gtk_widget_show_all(popup);
+			gtk_dialog_run(GTK_DIALOG(popup));
+			gtk_widget_destroy(popup);
+			goto retry;
+		}
 		UpdateList(save);
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(mTreeView);
 		if (selection != nullptr)
@@ -162,6 +171,7 @@ bool PatternTable::Display(SaveFile &save) {
 		g_warning("PatternTable::Display: Unknown return code");
 		break;
 	}
+	gtk_widget_destroy(dialog);
 	return ret;
 }
 
@@ -199,4 +209,27 @@ void PatternTable::UpdateList(SaveFile &save) {
 		g_free(patternName);
 		g_free(patternValue);
 	}
+}
+
+bool PatternTable::DetectDuplicateNames() const {
+	GtkTreeIter iter;
+	std::set<string> nameList;
+	bool ret = false;
+	for (bool valid = gtk_tree_model_get_iter_first(mStore, &iter); valid;
+		valid = gtk_tree_model_iter_next(mStore, &iter))
+	{
+		gchar *patternName, *patternValue;
+		gtk_tree_model_get(mStore, &iter,
+						   0, &patternName,
+						   1, &patternValue,
+						   -1);
+        if (nameList.find(string(patternName)) != nameList.end()) {
+			LPLOG("Set pattern %s is duplicate!", patternName);
+            ret = true;
+        }
+        nameList.insert(patternName);
+		g_free(patternName);
+		g_free(patternValue);
+	}
+	return ret;
 }
