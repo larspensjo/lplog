@@ -50,6 +50,8 @@ private:
 	void FileOpenDialog();
 	void Help() const;
 	gboolean KeyPressed(guint keyval);
+	void SaveCurrentPattern(); // Save it to mSaveFile
+
 	bool mValidSelectedPatternIter = false;
 	View mView;
 	Document *mCurrentDoc = 0;

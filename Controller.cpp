@@ -89,6 +89,7 @@ void Controller::ExecuteCommand(const std::string &name) {
 	else if (name == "paste")
 		TextViewKeyPress(GDK_KEY_Paste);
 	else if (name == "patternstore") {
+		SaveCurrentPattern(); // Ensure current pattern is in mSaveFile.
 		bool changed = mView.DisplayPatternStore(mSaveFile);
 		if (changed) {
 			mView.DeSerialize(mSaveFile);
@@ -390,6 +391,10 @@ void Controller::Run(int argc, char *argv[], GdkPixbuf *icon) {
 		mQueueAppend = false;
 		mQueueReplace = false;
 	}
+	SaveCurrentPattern();
+}
+
+void Controller::SaveCurrentPattern() {
 	std::stringstream ss;
 	mView.Serialize(ss);
 	auto current = mSaveFile.GetStringOption("CurrentPattern", "default"); // Find what current pattern name to use

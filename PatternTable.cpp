@@ -78,14 +78,20 @@ bool PatternTable::Display(SaveFile &save) {
 	// ====================================
 	GtkListStore *store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 	mStore = GTK_TREE_MODEL(store);
-	string currentSelectedName = save.GetStringOption("CurrentPattern");
+	const string currentSelectedName = save.GetStringOption("CurrentPattern");
+	// The save file may have changed by another instance. Load it, to make sure we have the latest.
+	const string currentPattern = save.GetPattern(currentSelectedName, "");
+	LPLOG("Current pattern %s: %s", currentSelectedName.c_str(), currentPattern.c_str());
+	save.ClearAllPatterns();
+	save.Read(true);
+	save.SetPattern(currentSelectedName, currentPattern); // Make sure we keep the current pattern in used
 	auto f = [store, this, currentSelectedName](const string &name, const string &pattern) {
 		GtkTreeIter iter;
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 0, name.c_str(), 1, pattern.c_str(), -1);
 		mOriginalNameList.push_back(name);
 		if (name == currentSelectedName) {
-			LPLOG("Detect current: %s", pattern.c_str());
+			LPLOG("Detect current %s: %s", currentSelectedName.c_str(), pattern.c_str());
 			mIterFoundCurrent = iter;
 		}
 	};

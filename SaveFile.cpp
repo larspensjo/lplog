@@ -52,7 +52,7 @@ const string sNumberPrefix = "NUM-";
 const string sPatternPrefix = "PAT-";
 const string sCommentPrefix = "#";
 
-void SaveFile::Read() {
+void SaveFile::Read(bool onlyPatterns) {
 	const string path = GetPath();
 	std::ifstream input(path);
 	if (!input.is_open()) {
@@ -84,7 +84,7 @@ void SaveFile::Read() {
 			LPLOG("pattern '%s' is '%s'", (const char *)p, val.c_str());
 			mPatterns[(const char *)p] = val;
 			g_free(p);
-		} else {
+		} else if (!onlyPatterns) {
 			LPLOG("key '%s' is '%s'", key.c_str(), val.c_str());
 			mData[key] = val;
 		}
@@ -215,6 +215,10 @@ std::string SaveFile::GetPattern(const std::string &id, const std::string &def)
 	if (it == mPatterns.end())
 		return def;
 	return it->second;
+}
+
+void SaveFile::ClearAllPatterns() {
+	mPatterns.clear();
 }
 
 void SaveFile::IteratePatterns(std::function<void (const std::string &name, const std::string &value)> f) {
