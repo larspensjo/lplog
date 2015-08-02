@@ -7,12 +7,13 @@
 #
 rm -r *.d
 make clean
-make -j CXXFLAGS=-O3
+make -j CXXFLAGS=-O3 GTK=gtk+-2.0
 mkdir -p distro
 depends22_x86/depends.exe -c -f:1 -ot:out.txt lplog.exe
-rm -f distro/*
-files=`cat out.txt | grep '^\[' | grep mingw | sed 's/^.*c://' | sed 's/\\.DLL.*/.DLL/' | sed 's/\\\\/\\//g'`
+rm -rf distro/*
+files=$(awk '/System Information/,/Module List/ { next;}; /^\[.*mingw/ {gsub("\\\\", "/");print $3;}' out.txt)
 rm out.txt
 cp $files distro
 cp lplog.exe distro
+cp -r gtk-themes-MinGW/* distro
 strip distro/lplog.exe

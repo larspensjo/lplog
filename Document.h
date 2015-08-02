@@ -1,4 +1,4 @@
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,12 +16,11 @@
 #pragma once
 
 #include <gtk/gtk.h>
-#include <iostream>
-#include <fstream>
 #include <vector>
 #include <string>
 #include <functional>
 #include <ctime>
+#include <cstdio>
 
 // This class represents the "model" of MVC.
 
@@ -46,16 +45,31 @@ public:
 
 	GtkScrolledWindow *mScrolledView = 0; // TODO: Should not be public, manage in a better way.
 	GtkTextView *mTextView = 0;           // TODO: Should not be public, manage in a better way.
-	unsigned mNextSearchLine = 0;          // To know where "find next" should continue
+	int mLastSearchLine = -1;             // To know where "find next" should continue. -1 means before first line.
+	void ResetSearch() { mLastSearchLine = -1; }
 private:
 	std::vector<std::string> mLines;        // The input document
 	std::string mFileName;
-	std::ifstream::pos_type mCurrentPosition = 0;
+	long mCurrentPosition = 0; // Position in input buffer where next read should start.
 	unsigned mFirstNewLine = 0; // After updating, this is the first line with new data
 	bool mStopUpdates = false;
 	std::string mIncompleteLastLine; // If the last line didn't end with a newline, stash it away for later
 	std::time_t mFileTime = {0};
+	long mFileSize = 0;
 	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
+	void SplitLines(char *, unsigned size); // This will modify the buffer content
 
-	void SplitLines(char *, unsigned size); // This will modify the argument
+	static const unsigned cTestSize = 4*1024; // Small enough to be quick to read, big enough to consistently detect changed file content
+	char mTestBuffer[cTestSize];
+	unsigned mTestBufferCurrentSize = 0;
+	void CopyToTestBuffer(std::FILE *input, unsigned size);
+	bool EqualToTestBuffer(std::FILE *input, unsigned size);
+
+	enum class InputType {
+		Ascii,
+		UTF16LittleEndian,
+		UTF16BigEndian,
+	};
+	InputType mInputType = InputType::Ascii;
+	void DetectFileType(const unsigned char *, unsigned size);
 };

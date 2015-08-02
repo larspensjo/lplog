@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{BBC896CB-86E5-4F63-9AA8-967AE0F9ECEB}
 AppName=LPLog
-AppVersion=2.1b
+AppVersion=3.0b3
 AppPublisher=LPLog
 AppPublisherURL=https://github.com/larspensjo/lplog
 AppSupportURL=https://github.com/larspensjo/lplog
@@ -29,14 +29,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "lplog.exe"; DestDir: "{app}"; DestName: "lplog.exe"; Flags: ignoreversion
-Source: "lplog.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "readme.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "distro/*.DLL"; DestDir: "{app}"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "distro\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\LPlog"; Filename: "{app}\lplog.exe"; IconFilename: "{app}\icon.bmp"
+Name: "{group}\LPlog"; Filename: "{app}\lplog.exe"; IconFilename: "{app}\lplog.exe"
 Name: "{group}\{cm:UninstallProgram,LPLog}"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\LPlog"; Filename: "{app}\lplog.exe"; Tasks: desktopicon; IconFilename: "{app}\icon.bmp"
 

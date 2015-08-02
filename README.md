@@ -20,8 +20,14 @@ Compiles for Windows and Linux, GTK+-2.0 and gtk+-3.0.
 
 For Windows:
 * install MinGW+MSYS
-* Download the gtk+ super bundle from http://www.gtk.org/download/win32.php and unpack it in /usr/local
+* Download the gtk3 super bundle from http://sourceforge.net/projects/gtk-mingw/
+(or GTK2 from http://www.gtk.org/download/win32.php) and unpack it in /usr/local
 * Make sure /local/bin is in the PATH if you use the MinGW shell
 * If CodeBlocks is used, start it from the MinGW shell (to get the PATH).
+
+Build for Linux:
+* Install ```sudo apt-get install libgtk-3-dev```
+* ```make```
+* To create a debian install package, see "make debian" instructions in Makefile
 
 ![Pict](https://dl.dropboxusercontent.com/u/3471992/lplog1.png)

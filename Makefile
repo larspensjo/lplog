@@ -66,7 +66,7 @@ MY_CFLAGS =
 MY_LIBS   := $(shell pkg-config --libs $(GTK))
 
 # The pre-processor options used by the cpp (man cpp for more).
-CPPFLAGS  := -Wall -std=c++11 $(shell pkg-config --cflags $(GTK))
+CPPFLAGS  := -Wuninitialized -Wall -std=c++11 $(shell pkg-config --cflags $(GTK))
 
 # The options used in linking as well as in any direct use of ld.
 ifeq ($(OS), Windows_NT)
@@ -158,7 +158,8 @@ LINK.cxx    = $(CXX) $(MY_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 all: $(PROGRAM)
 
-Debug: $(PROGRAM)
+Debug:
+	$(MAKE) CXXFLAGS='-g -DDEBUG' LDFLAGS=
 
 # Rules for creating dependency files (.d).
 #------------------------------------------
@@ -237,6 +238,7 @@ ctags: $(HEADERS) $(SOURCES)
 # Rules for generating the executable.
 #-------------------------------------
 $(PROGRAM):$(OBJS)
+	echo making for $(GTK)
 ifeq ($(SRC_CXX),)              # C program
 	$(LINK.c)   $(OBJS) $(MY_LIBS) -o $@
 	@echo Type ./$@ to execute the program.
@@ -250,6 +252,24 @@ ifneq ($(DEPS),)
   sinclude $(DEPS)
 endif
 endif
+
+# This uses fpm (https://github.com/jordansissel/fpm) to create a debian package.
+# Install ruby and fpm with:
+#    sudo apt-get install ruby1.9.1 ruby1.9.1-dev
+#    sudo gem install fpm
+DESTDIR := distro
+debian: $(PROGRAM)
+	rm -rf $(DESTDIR)
+	(umask 0022; mkdir --mode=0755 -p $(DESTDIR)/usr/bin $(DESTDIR)/usr/share/applications $(DESTDIR)/usr/share/lplog)
+	strip $(PROGRAM)
+	cp $(PROGRAM) $(DESTDIR)/usr/bin/
+	cp lplog.desktop $(DESTDIR)/usr/share/applications/
+	cp lplog.ico $(DESTDIR)/usr/share/lplog/
+	fpm --verbose -s dir -t deb -n lplog -v 3.0b3 -f\
+		-d libgtk-3-0 -d libstdc++6 -d libc6 -C distro --license GPL3.0 --category debug\
+		--description "Log viewer that supports easy filtering and will update automatcally."\
+		--deb-user root --deb-group root --vendor 'Lars Pensjö'\
+		--url https://github.com/larspensjo/lplog --maintainer "Lars Pensjö <lars.pensjo@gmail.com>" .
 
 clean:
 	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe
@@ -273,6 +293,7 @@ help:
 	@echo '  distclean clean objects, the executable and dependencies.'
 	@echo '  show      show variables (for debug use only).'
 	@echo '  help      print this message.'
+	@echo '  debian    create debian installation package.'
 	@echo
 	@echo 'Report bugs to <whyglinux AT gmail DOT com>.'
 

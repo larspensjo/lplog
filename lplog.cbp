@@ -76,15 +76,23 @@
 		<Unit filename=".gitignore" />
 		<Unit filename="Controller.cpp" />
 		<Unit filename="Controller.h" />
+		<Unit filename="Debug.cpp" />
+		<Unit filename="Debug.h" />
+		<Unit filename="Defer.h" />
 		<Unit filename="Document.cpp" />
 		<Unit filename="Document.h" />
 		<Unit filename="LPlog.iss" />
 		<Unit filename="Makefile" />
+		<Unit filename="PatternTable.cpp" />
+		<Unit filename="PatternTable.h" />
 		<Unit filename="README.md" />
+		<Unit filename="SaveFile.cpp" />
+		<Unit filename="SaveFile.h" />
 		<Unit filename="TODO.md" />
 		<Unit filename="View.cpp" />
 		<Unit filename="View.h" />
 		<Unit filename="extract_dep.sh" />
+		<Unit filename="lplog.desktop" />
 		<Unit filename="lplog.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>

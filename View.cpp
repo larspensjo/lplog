@@ -1,4 +1,4 @@
-// Copyright 2013 Lars Pensjö
+// Copyright 2013 Lars PensjÃ¶
 //
 // Lplog is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,9 +21,12 @@
 
 #include "Document.h"
 #include "View.h"
+#include "PatternTable.h"
+#include "Defer.h"
+#include "SaveFile.h"
+#include "Debug.h"
 
-using std::cout;
-using std::endl;
+using std::string;
 
 static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 	// I know, the proper way is to compare the iter to a path first.
@@ -34,7 +37,7 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	std::string newTitle = "LPlog 2.1b       " + str;
+	std::string newTitle = "LPlog 3.0b3     " + str;
 	gtk_window_set_title(mWindow, newTitle.c_str());
 }
 
@@ -43,8 +46,12 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	g_assert(list != nullptr);
 	GdkAtom target_type = GDK_POINTER_TO_ATOM(g_list_nth_data(list, 0));
 	gtk_drag_get_data(widget, context, target_type, time);
-	g_debug("DragDrop");
+	LPLOG("");
 	return true;
+}
+
+bool View::DisplayPatternStore(SaveFile &save) {
+	return PatternTable(mWindow).Display(save);
 }
 
 void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
@@ -84,6 +91,17 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	menu = this->AddMenu(menubar, "_Edit");
 	this->AddMenuButton(menu, "_Paste", "paste", buttonCB, cbData);
 	this->AddMenuButton(menu, "_Find", "find", buttonCB, cbData);
+	this->AddMenuButton(menu, "_Pattern storage", "patternstore", buttonCB, cbData);
+
+	GtkWidget *menuItem = gtk_check_menu_item_new_with_mnemonic("_Case sensitive");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "casesensitive");
+	g_signal_connect(menuItem, "toggled", toggleButtonCB, cbData);
+
+	menuItem = gtk_check_menu_item_new_with_mnemonic("_Ignore duplicates");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
+	gtk_widget_set_name(GTK_WIDGET(menuItem), "ignoreduplicates");
+	g_signal_connect(menuItem, "toggled", toggleButtonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Help");
 	this->AddMenuButton(menu, "_Help", "help", buttonCB, cbData);
@@ -118,11 +136,14 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_name(button, "findnext");
 	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
 
-	GtkWidget *toggleButton = gtk_check_button_new_with_label("Case sensitive");
-	gtk_button_set_focus_on_click(GTK_BUTTON(toggleButton), false);
-	gtk_widget_set_name(toggleButton, "casesensitive");
-	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
-	gtk_box_pack_start(GTK_BOX(statusBar), toggleButton, FALSE, FALSE, 0);
+	button = gtk_button_new_with_label("<");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(toggleButtonCB), cbData );
+	gtk_widget_set_name(button, "findprev");
+	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
+
+//	GClosure *findAgain = g_cclosure_new_swap(G_CALLBACK(mainwindow_new_tab), cbData, NULL);
+//	gtk_accel_group_connect(mAccelGroup, GDK_KEY_F3, GdkModifierType(0), GTK_ACCEL_VISIBLE, findAgain);
 
 	// Create left pane with buttons
 	// =============================
@@ -152,7 +173,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
-	toggleButton = gtk_toggle_button_new_with_label("Line numbers");
+	GtkWidget *toggleButton = gtk_toggle_button_new_with_label("Line numbers");
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
@@ -173,14 +194,9 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_size_request (frame2, 300, -1);
 	gtk_box_pack_start(GTK_BOX(hbox), hpaned, TRUE, TRUE, 0);
 
-	// Create the tree model and add some initial pattern
-	// ==================================================
+	// Create an empty tree model
+	// ==========================
 	mPattern = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_BOOLEAN);
-	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &mPatternRoot, 0, "|", 1, true, -1);
-	GtkTreeIter child;
-	gtk_tree_store_insert_after(mPattern, &child, &mPatternRoot, NULL);
-	gtk_tree_store_set(mPattern, &child, 0, "", 1, true, -1);
 
 	// Create the tree view
 	// ====================
@@ -188,6 +204,7 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
 	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressedTreeCB, cbData );
+	gtk_tree_view_set_enable_tree_lines(mTreeView, true);
 
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
@@ -208,7 +225,6 @@ void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB,
 	gtk_widget_set_size_request(scrollview, 150, -1);
 	gtk_container_add(GTK_CONTAINER(scrollview), tree);
 	gtk_container_add(GTK_CONTAINER(frame1), scrollview);
-	gtk_tree_view_expand_all(mTreeView);
 
 	// Create the notebook
 	// ===================
@@ -250,11 +266,15 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 	doc->mTextView = GTK_TEXT_VIEW(textview);
 	gtk_text_view_set_wrap_mode(doc->mTextView, GTK_WRAP_CHAR);
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
+#if GTK_CHECK_VERSION(3,0,0)
+	gtk_widget_override_font(textview, font);
+#else
 	gtk_widget_modify_font(textview, font);
+#endif
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	int page = gtk_notebook_prepend_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	gtk_widget_show_all(scrollview);
-	g_debug("[%d] View::AddTab id %d prev page %d new page %d switching %d", GetCurrentTabId(), nextId, gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook)), page, switchTab);
+	LPLOG("[%d] id %d prev page %d new page %d switching %d", GetCurrentTabId(), nextId, gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook)), page, switchTab);
 	if (switchTab)
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(mNotebook), page);
 
@@ -262,9 +282,8 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 }
 
 void View::CloseCurrentTab() {
-	int id = GetCurrentTabId();
 	int tab = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
-	g_debug("[%d] View::CloseCurrentTab tab %d", id, tab);
+	LPLOG("[%d] tab %d", GetCurrentTabId(), tab);
 	gtk_notebook_remove_page(GTK_NOTEBOOK(mNotebook), tab);
 }
 
@@ -293,13 +312,13 @@ void View::DimCurrentTab() {
 	color.red=128<<8; color.green=128<<8; color.blue=128<<8;
 	gtk_widget_modify_bg(labelWidget, GTK_STATE_NORMAL, &color);
 #endif
-	g_debug("[%d] View::DimCurrentTab page %d", GetCurrentTabId(), page);
+	LPLOG("[%d] page %d", GetCurrentTabId(), page);
 }
 
 GtkWidget *View::FileOpenDialog() {
 	return gtk_file_chooser_dialog_new("Open File", mWindow, GTK_FILE_CHOOSER_ACTION_OPEN,
-										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-										GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+										"_Cancel", GTK_RESPONSE_CANCEL,
+										"_OK", GTK_RESPONSE_ACCEPT,
 										NULL);
 }
 
@@ -312,30 +331,37 @@ void View::ToggleLineNumbers(Document *doc) {
 	this->Replace(doc);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
 		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
-	g_debug("[%d] View::ToggleLineNumbers scrollbar pos %f", GetCurrentTabId(), pos);
+	LPLOG("[%d] scrollbar pos %f", GetCurrentTabId(), pos);
 }
 
 void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine) {
-	std::string separator = ""; // Start empty
+	const char *separator = ""; // Start empty
+#ifdef DEBUG
 	unsigned startLine = mFoundLines;
+#endif
 	if (mFoundLines > 0)
-		separator = '\n';
+		separator = "\n";
+    std::string prevLine = "";
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
 	auto TestLine = [&] (const std::string &str, unsigned line) {
-		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) != Evaluation::Nomatch) {
-			ss << separator;
-			if (mShowLineNumbers) {
-				ss << line+1 << "\t";
-			}
-			ss << str;
-			separator = "\n";
-			++mFoundLines;
-			return true;
-		}
-		return false;
+		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) == Evaluation::Nomatch)
+            return false;
+        if (mIgnoreDuplicateLines) {
+            if (str == prevLine)
+                return false;
+            prevLine = str;
+        }
+        ss << separator;
+        if (mShowLineNumbers) {
+            ss << line+1 << "\t";
+        }
+        ss << str;
+        separator = "\n";
+        ++mFoundLines;
+        return true;
 	};
 	doc->IterateLines(TestLine, restartFirstLine);
-	g_debug("[%d] View::FilterString starting line %d, ending %d", GetCurrentTabId(), startLine, mFoundLines);
+	LPLOG("[%d] starting line %d, total lines %d", GetCurrentTabId(), startLine, mFoundLines);
 }
 
 void View::OpenPatternForEditing() {
@@ -369,6 +395,7 @@ View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, G
 	if (!active)
 		return Evaluation::Neither;
 	gtk_tree_model_get_value(pattern, iter, 0, &val);
+	Defer valFree([&val](){g_value_unset(&val);});
 	Evaluation ret = Evaluation::Neither; // Use this as default
 	const gchar *str = g_value_get_string(&val);
 	GtkTreeIter child;
@@ -417,8 +444,73 @@ View::Evaluation View::isShown(const std::string &line, GtkTreeModel *pattern, G
 		else
 			ret = Evaluation::Nomatch;
 	}
-	g_value_unset(&val);
 	return ret;
+}
+
+void View::Serialize(std::stringstream &ss) {
+	Serialize(ss, GTK_TREE_MODEL(mPattern), &mPatternRoot);
+}
+
+void View::Serialize(std::stringstream &ss, GtkTreeModel *pattern, GtkTreeIter *iter) const {
+	GValue val = { 0 };
+	gtk_tree_model_get_value(pattern, iter, 0, &val);
+	const gchar *str = g_value_get_string(&val);
+	GtkTreeIter child;
+	bool childFound = gtk_tree_model_iter_children(pattern, &child, iter);
+	if (str == 0) {
+	} else if ((strcmp(str, "|") == 0 || strcmp(str, "&") == 0) && childFound) {
+		ss << str << "(";
+		do {
+			Serialize(ss, pattern, &child);
+			childFound = gtk_tree_model_iter_next(pattern, &child);
+			if (childFound)
+				ss << ",";
+		} while (childFound);
+		ss << ")";
+	} else if (strcmp(str, "!") == 0 && childFound) {
+		ss << "!(";
+		Serialize(ss, pattern, &child);
+		ss << ")";
+	} else {
+		ss << str;
+	}
+	g_value_unset(&val);
+}
+
+void View::DeSerialize(SaveFile &save) {
+	gtk_tree_store_clear(mPattern); // Remove the old, if any.
+	gtk_tree_store_append(mPattern, &mPatternRoot, NULL);
+	// Use one step of indirection, to get the pattern to use.
+	auto current = save.GetStringOption("CurrentPattern", "default"); // Find what current pattern name to use
+	DeSerialize(save.GetPattern(current, "|(,)"), nullptr, &mPatternRoot, 0);
+	gtk_tree_view_expand_all(mTreeView);
+}
+
+// Input string will have one out of 4 possible patterns:
+// s
+// s(...)
+// s,
+// s)
+string::size_type View::DeSerialize(const string &str, GtkTreeIter *parent, GtkTreeIter *node, unsigned level) {
+	auto opening = str.find('(');
+	auto closing = str.find(')');
+	auto comma = str.find(',');
+	auto stopper = std::min(std::min(comma, str.size()), std::min(closing, opening));
+	LPLOG("%*s'%s'", level*2, "", str.substr(0, stopper).c_str());
+	gtk_tree_store_set(mPattern, node, 0, str.substr(0, stopper).c_str(), 1, true, -1);
+	if (opening > stopper)
+		return stopper;
+	// Now we know it is in the form "str(...".
+	string::size_type next = opening+1;
+	do {
+		// Use a do-while to make sure there is at least one search pattern
+		GtkTreeIter child;
+		gtk_tree_store_insert_before(mPattern, &child, node, nullptr);
+		next += DeSerialize(str.substr(next), node, &child, level+1);
+		if (str[next] == ',')
+			next++;
+	} while(str.size() > next && str[next] != ')');
+	return next+1; // Skipping parenthesis
 }
 
 void View::TogglePattern(gchar *path) {
@@ -437,7 +529,7 @@ void View::Append(Document *doc) {
 	g_assert(doc->mScrolledView != nullptr);
 	auto adj = gtk_scrolled_window_get_vadjustment(doc->mScrolledView);
 	gdouble pos = gtk_adjustment_get_value(adj);
-	g_debug("[%d] View::Append scrollbar %f", GetCurrentTabId(), pos);
+	LPLOG("[%d] scrollbar %f", GetCurrentTabId(), pos);
 	std::stringstream ss;
 	this->FilterString(ss, doc, false);
 	GtkTextIter last;
@@ -451,25 +543,23 @@ void View::Append(Document *doc) {
 
 void View::Replace(Document *doc) {
 	mFoundLines = 0;
-	g_debug("[%d] View::Replace", GetCurrentTabId());
+	LPLOG("[%d]", GetCurrentTabId());
 	std::stringstream ss;
 	this->FilterString(ss, doc, true);
 	g_assert(doc->mTextView != nullptr);
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }
 
-void View::FindNext(Document *doc, std::string str, bool restart) {
+void View::FindNext(Document *doc, std::string str, int direction) {
 	if (!mCaseSensitive)
 		std::transform(str.begin(), str.end(),str.begin(), ::tolower);
-	g_debug("[%d] View::FindNext '%s'", GetCurrentTabId(), str.c_str());
+	LPLOG("[%d] '%s'", GetCurrentTabId(), str.c_str());
 	GtkTextBuffer *buff = gtk_text_view_get_buffer(doc->mTextView);
-	unsigned lineCount = gtk_text_buffer_get_line_count(buff);
-	if (restart)
-		doc->mNextSearchLine = 0;
-	GtkTextIter lineStart;
-	gtk_text_buffer_get_iter_at_line(buff, &lineStart, doc->mNextSearchLine);
-	for (unsigned line=doc->mNextSearchLine; line < lineCount; line++) {
-		GtkTextIter lineEnd;
+	int lineCount = gtk_text_buffer_get_line_count(buff);
+	GtkTextIter lineStart = { 0 };
+	gtk_text_buffer_get_iter_at_line(buff, &lineStart, doc->mLastSearchLine+direction);
+	for (int line=doc->mLastSearchLine+direction; line < lineCount && line >= 0; line += direction) {
+		GtkTextIter lineEnd; // Find end of current line. Last line is special case.
 		if (line == lineCount-1)
 			gtk_text_buffer_get_iter_at_offset(buff, &lineEnd, -1);
 		else
@@ -479,24 +569,25 @@ void View::FindNext(Document *doc, std::string str, bool restart) {
 			std::transform(currentLine.begin(), currentLine.end(),currentLine.begin(), ::tolower);
 		std::string::size_type pos = currentLine.find(str);
 		if (pos != std::string::npos) {
-			g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
+			LPLOG("line %d", line);
 			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.0, 0.0); // Scroll the found line into view
 			GtkTextIter searchStart = { 0 }, searchEnd = { 0 };
 			gtk_text_buffer_get_iter_at_line_offset(buff, &searchStart, line, pos);
 			gtk_text_buffer_get_iter_at_line_offset(buff, &searchEnd, line, pos+str.size());
 			gtk_text_buffer_select_range(buff, &searchStart, &searchEnd); // Set selection on the found pattern
-			doc->mNextSearchLine = line+1;
-			if (doc->mNextSearchLine >= lineCount)
-				doc->mNextSearchLine = 0;
+			doc->mLastSearchLine = line;
+			if (doc->mLastSearchLine >= lineCount)
+				doc->mLastSearchLine = lineCount-1;
+			if (doc->mLastSearchLine < 0)
+				doc->mLastSearchLine = -1;
 			return;
 		}
 		lineStart = lineEnd;
 	}
 }
 
-void View::FindSetCaseSensitive(Document *doc) {
+void View::FindSetCaseSensitive() {
 	mCaseSensitive = !mCaseSensitive;
-	this->FindNext(doc, GetSearchString(), true);
 }
 
 const std::string View::GetSearchString() const {
@@ -583,24 +674,17 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData) {
 	GtkWidget *menuItem;
-	if (strcmp(name, "help") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_HELP, NULL);
-	else if (strcmp(name, "open") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, mAccelGroup);
+	if (strcmp(name, "open") == 0) {
+		menuItem = gtk_menu_item_new_with_mnemonic("_Open");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_o, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else if (strcmp(name, "close") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CLOSE, mAccelGroup);
+		menuItem = gtk_menu_item_new_with_mnemonic("_Close");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_F4, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
-	} else if (strcmp(name, "about") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
-	else if (strcmp(name, "quit") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, mAccelGroup);
+	} else if (strcmp(name, "quit") == 0) {
+		menuItem = gtk_menu_item_new_with_mnemonic("_Quit");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
-	} else if (strcmp(name, "paste") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, mAccelGroup);
-		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_v, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else if (strcmp(name, "find") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, mAccelGroup);
+		menuItem = gtk_menu_item_new_with_mnemonic("_Find");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_f, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else
 		menuItem = gtk_menu_item_new_with_mnemonic(label);
@@ -623,7 +707,7 @@ void View::Help(const std::string &message) const {
    dialog = gtk_dialog_new_with_buttons("Message",
                                          mWindow,
                                          GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         GTK_STOCK_OK,
+                                         "_OK",
                                          GTK_RESPONSE_NONE,
                                          NULL);
    content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
@@ -653,7 +737,7 @@ void View::About() const {
 	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
 
 	gtk_show_about_dialog(NULL,
-		"version", "2.1 beta",
+		"version", "3.0 beta 3",
 		"website", "https://github.com/larspensjo/lplog",
 		"comments", "A program to display and filter a log file.",
 		"authors", authors,
