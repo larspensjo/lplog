@@ -78,19 +78,19 @@ void Document::StopUpdate() {
 void Document::AddSourceFile(const std::string &fileName) {
 	mFileName = fileName;
 #ifdef _WIN32
-	if (mFileName[0] == '/')
+	// Change name path /C:/xx into C:/xx, but do not change //server/xx
+	if (mFileName[0] == '/' && mFileName[1] != '/')
 		mFileName = mFileName.substr(1);
 #endif
 	mStopUpdates = false;
-	mFileName = mFileName;
 	mCurrentPosition = 0;
 	mLines.clear();
-	struct stat st;
+	struct stat st = { 0 };
 	if (stat(mFileName.c_str(), &st) == 0) {
-		mFileTime = st.st_ctime;
-		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), st.st_size);
+		mFileTime = st.st_mtime;
+		g_debug("Document::AddSourceFile %s, size %u", mFileName.c_str(), (unsigned)st.st_size);
 	} else {
-		g_debug("Document::AddSourceFile failed to open (%d)", errno);
+		g_debug("Document::AddSourceFile failed to open '%s' (err %d)", mFileName.c_str(), errno);
 		mFileTime = 0;
 	}
 }
@@ -101,8 +101,8 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mCurrentPosition = 0;
 	mLines.clear();
 	this->SplitLines(text, size);
-	g_debug("Document::AddSourceText %d characters %lu lines", size, mLines.size());
-	std::localtime(&mFileTime);
+	g_debug("Document::AddSourceText %d characters %u lines", size, (unsigned)mLines.size());
+	mFileTime = std::time(nullptr);
 }
 
 Document::UpdateResult Document::UpdateInputData() {
@@ -119,6 +119,12 @@ Document::UpdateResult Document::UpdateInputData() {
 		}
 		return UpdateResult::NoChange;
 	}
+
+	// Update the time stamp of the file to latest
+	struct stat st = { 0 };
+	if (stat(mFileName.c_str(), &st) == 0)
+		mFileTime = st.st_mtime;
+
 	std::ifstream::pos_type startPos = mCurrentPosition;
 	input.seekg (0, ios::end);
 	std::ifstream::pos_type end = input.tellg();
@@ -141,12 +147,17 @@ Document::UpdateResult Document::UpdateInputData() {
 	return UpdateResult::Grow;
 }
 
-void Document::IterateLines(std::function<void (const std::string&, unsigned)> f, bool restartFirstLine) {
-	if (restartFirstLine)
+void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f, bool restartFirstLine) {
+	if (restartFirstLine) {
 		mFirstNewLine = 0;
-	g_debug("Document::IterateLines from line %d restart %d", mFirstNewLine, restartFirstLine);
+		mLineMap.clear();
+	}
+	g_debug("Document::IterateLines from line %u restart '%s' printed line# %u", mFirstNewLine, restartFirstLine?"true":"false", (unsigned)mLineMap.size());
 	for (unsigned line = mFirstNewLine; line < mLines.size(); line++) {
-		f(mLines[line], line);
+		bool accepted = f(mLines[line], line);
+		if (accepted) {
+			mLineMap.push_back(line);
+		}
 	}
 }
 
@@ -177,7 +188,7 @@ void Document::SplitLines(char *buff, unsigned size) {
 		mIncompleteLastLine = "";
 		p = next;
 	}
-	g_debug("Document::SplitLines total %lu, incomplete last %d in document %p", mLines.size(), mIncompleteLastLine != "", this);
+	g_debug("Document::SplitLines total %u, incomplete last %d in document %p", (unsigned)mLines.size(), mIncompleteLastLine != "", this);
 }
 
 std::string Document::GetFileNameShort() const {

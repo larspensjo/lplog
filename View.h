@@ -24,22 +24,26 @@ class Document;
 class View
 {
 public:
-	void Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+	void Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
 				GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData);
 	void SetWindowTitle(const std::string &);
 	void Append(Document *); // Append the new lines to the end of the view
 	void Replace(Document *); // Replace the lines in the view
 	void ToggleLineNumbers(Document *);
 	void FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine);
-	void About();
+	void About() const;
+	void Help(const std::string &message) const;
 	GtkWidget *FileOpenDialog();
 	void UpdateStatusBar(Document *doc);
 	int AddTab(Document *, gpointer cbData, GCallback dragReceived, GCallback textViewkeyPress, bool switchTab = false);
 	void DimCurrentTab();
 	void CloseCurrentTab();
 	int GetCurrentTabId() const;
+
 	void SetFocusFind();
-	void FindNext(Document *doc, const std::string &);
+	void FindNext(Document *, std::string, bool restart);
+	void FindSetCaseSensitive(Document *doc);
+	const std::string GetSearchString() const;
 
 	void TogglePattern(gchar *path);
 	void OpenPatternForEditing();
@@ -58,10 +62,14 @@ private:
 	GtkWidget *mFindEntry = 0;
 	unsigned mFoundLines = 0;
 	GtkWidget *mNotebook = 0;
+	bool mCaseSensitive = false;
+	GtkAccelGroup *mAccelGroup = 0;
 
 	GtkTreeStore *mPattern = 0;
 	GtkTreeView *mTreeView = 0;
 	GtkTreeIter mPatternRoot = { 0 };
+	GtkTextTagTable *mTextTagTable = 0;
+	GtkTextTag *mBoldTag = 0;
 
 	enum class Evaluation {
 		Match,

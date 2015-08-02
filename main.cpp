@@ -39,13 +39,13 @@ static std::string GetInstallDir() {
 	ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
 	auto path = std::string( result, (count > 0) ? count : 0 );
 	auto pos = path.rfind('/');
-	return path.substr(0,pos);
+	return path.substr(0,pos+1);
 #endif // unix
 #ifdef _WIN32
 	char result[ MAX_PATH ];
 	auto path = std::string( result, GetModuleFileName( NULL, result, MAX_PATH ) );
 	auto pos = path.rfind('\\');
-	return path.substr(0,pos);
+	return path.substr(0,pos+1);
 #endif // _WIN32
 }
 
@@ -59,15 +59,12 @@ int main (int argc, char *argv[])
 	gtk_init(&argc, &argv);
 	g_debug("main: Argc after %d", argc);
 
-	View view;
-	Document doc;
 	GError *err = 0;
-	auto icon = gdk_pixbuf_new_from_file((GetInstallDir() + "/icon.bmp").c_str(), &err); // Name of file must be lplog.bmp
-	if (icon != nullptr && err == 0)
-		gtk_window_set_default_icon(icon);
-	else
-		cout << err->message << endl;
+	const std::string iconFile = GetInstallDir() + "lplog.ico";
+	auto icon = gdk_pixbuf_new_from_file(iconFile.c_str(), &err); // Name of file must be lplog.bmp
+	if (icon == nullptr)
+		g_debug("main: Failed to load icon %s (%s)", iconFile.c_str(), err->message);
 	Controller c;
-	c.Run(argc, argv);
+	c.Run(argc, argv, icon);
 	return 0;
 }

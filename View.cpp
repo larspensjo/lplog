@@ -16,6 +16,8 @@
 #include <string.h>
 #include <iostream>
 #include <stdlib.h>
+#include <algorithm>
+#include <gdk/gdkkeysyms.h> // Needed for GTK+-2.0
 
 #include "Document.h"
 #include "View.h"
@@ -32,7 +34,7 @@ static bool IterEqual(GtkTreeIter *a, GtkTreeIter *b) {
 }
 
 void View::SetWindowTitle(const std::string &str) {
-	std::string newTitle = "LPlog 1.1b       " + str;
+	std::string newTitle = "LPlog 2.1b       " + str;
 	gtk_window_set_title(mWindow, newTitle.c_str());
 }
 
@@ -45,17 +47,22 @@ static gboolean DragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gin
 	return true;
 }
 
-void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressed, GCallback editCell,
+void View::Create(GdkPixbuf *icon, GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPressedTreeCB, GCallback keyPressOtherCB, GCallback editCell,
 				  GCallback togglePattern, GCallback changePage, GCallback quitCB, GCallback findCB, gpointer cbData)
 {
 	// Create the main window
 	// ======================
 	GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	mWindow = GTK_WINDOW(win);
+	if (icon != nullptr)
+		gtk_window_set_icon(mWindow, icon);
 	gtk_container_set_border_width(GTK_CONTAINER (win), 1);
 	gtk_widget_realize (win);
 	g_signal_connect(win, "destroy", quitCB, cbData);
 	gtk_window_set_default_size(mWindow, 1024, 480);
+
+	mAccelGroup = gtk_accel_group_new();
+	gtk_window_add_accel_group(mWindow, mAccelGroup);
 
 #if GTK_CHECK_VERSION(3,0,0)
 	GtkWidget *mainbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -66,7 +73,6 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	// Create menus
 	// ============
-
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX (mainbox), GTK_WIDGET(menubar), FALSE, FALSE, 0);
 
@@ -80,6 +86,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	this->AddMenuButton(menu, "_Find", "find", buttonCB, cbData);
 
 	menu = this->AddMenu(menubar, "_Help");
+	this->AddMenuButton(menu, "_Help", "help", buttonCB, cbData);
 	this->AddMenuButton(menu, "_About", "about", buttonCB, cbData);
 
 	// Create the status bar
@@ -97,12 +104,25 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 #if GTK_CHECK_VERSION(3,6,0)
 	mFindEntry = gtk_search_entry_new();
 #else
-	GtkWidget *findLabel = gtk_label_new("Find:");
-	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(findLabel), FALSE, FALSE, 0);
 	mFindEntry = gtk_entry_new();
+	gtk_entry_set_icon_from_stock(GTK_ENTRY(mFindEntry), GTK_ENTRY_ICON_SECONDARY, GTK_STOCK_FIND);
 #endif
+	gtk_widget_set_name(mFindEntry, "findentry");
 	g_signal_connect(G_OBJECT(mFindEntry), "changed", findCB, cbData);
-	gtk_box_pack_start(GTK_BOX (statusBar), GTK_WIDGET(mFindEntry), FALSE, FALSE, 0);
+	g_signal_connect(G_OBJECT(mFindEntry), "key-press-event", keyPressOtherCB, cbData);
+	gtk_box_pack_start(GTK_BOX (statusBar), mFindEntry, FALSE, FALSE, 0);
+
+	GtkWidget *button = gtk_button_new_with_label(">");
+	gtk_button_set_focus_on_click(GTK_BUTTON(button), false);
+	g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(toggleButtonCB), cbData );
+	gtk_widget_set_name(button, "findnext");
+	gtk_box_pack_start(GTK_BOX (statusBar), button, FALSE, FALSE, 0);
+
+	GtkWidget *toggleButton = gtk_check_button_new_with_label("Case sensitive");
+	gtk_button_set_focus_on_click(GTK_BUTTON(toggleButton), false);
+	gtk_widget_set_name(toggleButton, "casesensitive");
+	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
+	gtk_box_pack_start(GTK_BOX(statusBar), toggleButton, FALSE, FALSE, 0);
 
 	// Create left pane with buttons
 	// =============================
@@ -132,7 +152,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	g_signal_connect(G_OBJECT(mAutoScroll), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), mAutoScroll, FALSE, FALSE, 0);
 
-	auto toggleButton = gtk_toggle_button_new_with_label("Line numbers");
+	toggleButton = gtk_toggle_button_new_with_label("Line numbers");
 	gtk_widget_set_name(GTK_WIDGET(toggleButton), "linenumbers");
 	g_signal_connect(G_OBJECT(toggleButton), "toggled", G_CALLBACK(toggleButtonCB), cbData );
 	gtk_box_pack_start(GTK_BOX(buttonBox), toggleButton, FALSE, FALSE, 0);
@@ -167,7 +187,7 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 	GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(mPattern));
 	mTreeView = GTK_TREE_VIEW(tree);
 	gtk_tree_view_set_enable_search(mTreeView, false);
-	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressed, cbData );
+	g_signal_connect(G_OBJECT(tree), "key-press-event", keyPressedTreeCB, cbData );
 
 	auto renderer = gtk_cell_renderer_text_new();
 	g_object_set(G_OBJECT(renderer), "editable", TRUE, "mode", GTK_CELL_RENDERER_MODE_EDITABLE, NULL);
@@ -198,8 +218,10 @@ void View::Create(GCallback buttonCB, GCallback toggleButtonCB, GCallback keyPre
 
 	// Create tags
 	// ===========
-	GtkTextTagTable *mTextTagTable = gtk_text_tag_table_new();
-	GtkTextTag *mBoldTag = gtk_text_tag_new("bold");
+	mTextTagTable = gtk_text_tag_table_new();
+	mBoldTag = gtk_text_tag_new("bold");
+	g_object_set(mBoldTag, "weight", PANGO_WEIGHT_BOLD, NULL);
+	gtk_text_tag_table_add(mTextTagTable, mBoldTag);
 
 	gtk_widget_show_all(win);
 }
@@ -294,26 +316,23 @@ void View::ToggleLineNumbers(Document *doc) {
 }
 
 void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine) {
-	GtkTreeIter iter;
-	bool empty = !gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mPattern), &iter);
-	g_assert(!empty);
 	std::string separator = ""; // Start empty
 	unsigned startLine = mFoundLines;
 	if (mFoundLines > 0)
 		separator = '\n';
 	// Add the lines to ss, one at a time. The last line shall not have a newline.
 	auto TestLine = [&] (const std::string &str, unsigned line) {
-		if (isShown(str, GTK_TREE_MODEL(mPattern), &iter) != Evaluation::Nomatch) {
+		if (isShown(str, GTK_TREE_MODEL(mPattern), &mPatternRoot) != Evaluation::Nomatch) {
 			ss << separator;
 			if (mShowLineNumbers) {
-				ss.width(5);
-				ss.setf(ss.left);
-				ss << line+1 << " ";
+				ss << line+1 << "\t";
 			}
 			ss << str;
 			separator = "\n";
 			++mFoundLines;
+			return true;
 		}
+		return false;
 	};
 	doc->IterateLines(TestLine, restartFirstLine);
 	g_debug("[%d] View::FilterString starting line %d, ending %d", GetCurrentTabId(), startLine, mFoundLines);
@@ -439,25 +458,49 @@ void View::Replace(Document *doc) {
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
 }
 
-void View::FindNext(Document *doc, const std::string &str) {
+void View::FindNext(Document *doc, std::string str, bool restart) {
+	if (!mCaseSensitive)
+		std::transform(str.begin(), str.end(),str.begin(), ::tolower);
+	g_debug("[%d] View::FindNext '%s'", GetCurrentTabId(), str.c_str());
 	GtkTextBuffer *buff = gtk_text_view_get_buffer(doc->mTextView);
 	unsigned lineCount = gtk_text_buffer_get_line_count(buff);
+	if (restart)
+		doc->mNextSearchLine = 0;
 	GtkTextIter lineStart;
-	gtk_text_buffer_get_iter_at_offset(buff, &lineStart, 0);
-	for (unsigned line=0; line < lineCount; line++) {
+	gtk_text_buffer_get_iter_at_line(buff, &lineStart, doc->mNextSearchLine);
+	for (unsigned line=doc->mNextSearchLine; line < lineCount; line++) {
 		GtkTextIter lineEnd;
 		if (line == lineCount-1)
 			gtk_text_buffer_get_iter_at_offset(buff, &lineEnd, -1);
 		else
 			gtk_text_buffer_get_iter_at_line(buff, &lineEnd, line+1);
-		const std::string currentLine = gtk_text_buffer_get_text(buff, &lineStart, &lineEnd, FALSE);
-		if (currentLine.find(str) != std::string::npos) {
-			// g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
-			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.5, 0.5);
+		std::string currentLine = gtk_text_buffer_get_text(buff, &lineStart, &lineEnd, FALSE);
+		if (!mCaseSensitive)
+			std::transform(currentLine.begin(), currentLine.end(),currentLine.begin(), ::tolower);
+		std::string::size_type pos = currentLine.find(str);
+		if (pos != std::string::npos) {
+			g_debug("FindNext: line %d: '%s'", line, currentLine.c_str());
+			gtk_text_view_scroll_to_iter(doc->mTextView, &lineStart, 0.0, true, 0.0, 0.0); // Scroll the found line into view
+			GtkTextIter searchStart = { 0 }, searchEnd = { 0 };
+			gtk_text_buffer_get_iter_at_line_offset(buff, &searchStart, line, pos);
+			gtk_text_buffer_get_iter_at_line_offset(buff, &searchEnd, line, pos+str.size());
+			gtk_text_buffer_select_range(buff, &searchStart, &searchEnd); // Set selection on the found pattern
+			doc->mNextSearchLine = line+1;
+			if (doc->mNextSearchLine >= lineCount)
+				doc->mNextSearchLine = 0;
 			return;
 		}
 		lineStart = lineEnd;
 	}
+}
+
+void View::FindSetCaseSensitive(Document *doc) {
+	mCaseSensitive = !mCaseSensitive;
+	this->FindNext(doc, GetSearchString(), true);
+}
+
+const std::string View::GetSearchString() const {
+	return gtk_editable_get_chars(GTK_EDITABLE(mFindEntry), 0, -1);
 }
 
 void View::UpdateStatusBar(Document *doc) {
@@ -539,7 +582,28 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 }
 
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData) {
-	auto menuItem = gtk_menu_item_new_with_mnemonic(label);
+	GtkWidget *menuItem;
+	if (strcmp(name, "help") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_HELP, NULL);
+	else if (strcmp(name, "open") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_o, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "close") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CLOSE, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_F4, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "about") == 0)
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
+	else if (strcmp(name, "quit") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "paste") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_v, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else if (strcmp(name, "find") == 0) {
+		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, mAccelGroup);
+		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_f, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
+	} else
+		menuItem = gtk_menu_item_new_with_mnemonic(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuItem);
 	gtk_widget_set_name(GTK_WIDGET(menuItem), name);
 	g_signal_connect(menuItem, "activate", cb, cbData);
@@ -553,7 +617,25 @@ void View::AddButton(GtkWidget *box, const gchar *label, const gchar *name, GCal
 	gtk_box_pack_start(GTK_BOX(box), button, FALSE, FALSE, 0);
 }
 
-void View::About() {
+void View::Help(const std::string &message) const {
+   GtkWidget *dialog, *label, *content_area;
+   /* Create the widgets */
+   dialog = gtk_dialog_new_with_buttons("Message",
+                                         mWindow,
+                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                         GTK_STOCK_OK,
+                                         GTK_RESPONSE_NONE,
+                                         NULL);
+   content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+   label = gtk_label_new (message.c_str());
+   /* Ensure that the dialog box is destroyed when the user responds. */
+   g_signal_connect_swapped(dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
+   /* Add the label, and show everything we've added to the dialog. */
+   gtk_container_add (GTK_CONTAINER(content_area), label);
+   gtk_widget_show_all(dialog);
+}
+
+void View::About() const {
 	const char *license =
 		"LPlog is free software: you can redistribute it and/or modify\n"
 		"it under the terms of the GNU General Public License as published by\n"
@@ -571,7 +653,7 @@ void View::About() {
 	const gchar* copyright = { "Copyright (c) Lars Pensj\303\266" };
 
 	gtk_show_about_dialog(NULL,
-		"version", "1.1 beta",
+		"version", "2.1 beta",
 		"website", "https://github.com/larspensjo/lplog",
 		"comments", "A program to display and filter a log file.",
 		"authors", authors,

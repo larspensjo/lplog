@@ -78,14 +78,23 @@
 		<Unit filename="Controller.h" />
 		<Unit filename="Document.cpp" />
 		<Unit filename="Document.h" />
+		<Unit filename="LPlog.iss" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
 		<Unit filename="TODO.md" />
 		<Unit filename="View.cpp" />
 		<Unit filename="View.h" />
+		<Unit filename="extract_dep.sh" />
+		<Unit filename="lplog.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
 		<Unit filename="main.cpp" />
 		<Extensions>
-			<code_completion />
+			<code_completion>
+				<search_path add="C:\MinGW\msys\1.0\local\include\gtk-2.0" />
+				<search_path add="C:\MinGW\msys\1.0\local\include\glib-2.0" />
+				<search_path add="C:\MinGW\msys\1.0\local\include\gdk-pixbuf-2.0" />
+			</code_completion>
 			<debugger />
 			<DoxyBlocks>
 				<comment_style block="0" line="0" />
