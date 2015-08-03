@@ -259,7 +259,11 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 	doc->mTextView = GTK_TEXT_VIEW(textview);
 	gtk_text_view_set_wrap_mode(doc->mTextView, GTK_WRAP_CHAR);
 	PangoFontDescription *font = pango_font_description_from_string("Monospace Regular 8");
+#if GTK_CHECK_VERSION(3,0,0)
+	gtk_widget_override_font(textview, font);
+#else
 	gtk_widget_modify_font(textview, font);
+#endif
 	gtk_container_add(GTK_CONTAINER (scrollview), textview);
 	int page = gtk_notebook_prepend_page(GTK_NOTEBOOK(mNotebook), scrollview, labelWidget);
 	gtk_widget_show_all(scrollview);
@@ -271,9 +275,8 @@ int View::AddTab(Document *doc, gpointer cbData, GCallback dragReceived, GCallba
 }
 
 void View::CloseCurrentTab() {
-	int id = GetCurrentTabId();
 	int tab = gtk_notebook_get_current_page(GTK_NOTEBOOK(mNotebook));
-	LPLOG("[%d] tab %d", id, tab);
+	LPLOG("[%d] tab %d", GetCurrentTabId(), tab);
 	gtk_notebook_remove_page(GTK_NOTEBOOK(mNotebook), tab);
 }
 
@@ -307,8 +310,8 @@ void View::DimCurrentTab() {
 
 GtkWidget *View::FileOpenDialog() {
 	return gtk_file_chooser_dialog_new("Open File", mWindow, GTK_FILE_CHOOSER_ACTION_OPEN,
-										GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-										GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+										"_Cancel", GTK_RESPONSE_CANCEL,
+										"_OK", GTK_RESPONSE_ACCEPT,
 										NULL);
 }
 
@@ -326,7 +329,9 @@ void View::ToggleLineNumbers(Document *doc) {
 
 void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstLine) {
 	const char *separator = ""; // Start empty
+#ifdef DEBUG
 	unsigned startLine = mFoundLines;
+#endif
 	if (mFoundLines > 0)
 		separator = "\n";
     std::string prevLine = "";
@@ -662,24 +667,17 @@ GtkWidget *View::AddMenu(GtkWidget *menubar, const gchar *label) {
 
 void View::AddMenuButton(GtkWidget *menu, const gchar *label, const gchar *name, GCallback cb, gpointer cbData) {
 	GtkWidget *menuItem;
-	if (strcmp(name, "help") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_HELP, NULL);
-	else if (strcmp(name, "open") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN, mAccelGroup);
+	if (strcmp(name, "open") == 0) {
+		menuItem = gtk_menu_item_new_with_mnemonic("_Open");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_o, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else if (strcmp(name, "close") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_CLOSE, mAccelGroup);
+		menuItem = gtk_menu_item_new_with_mnemonic("_Close");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_F4, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
-	} else if (strcmp(name, "about") == 0)
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_ABOUT, NULL);
-	else if (strcmp(name, "quit") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, mAccelGroup);
+	} else if (strcmp(name, "quit") == 0) {
+		menuItem = gtk_menu_item_new_with_mnemonic("_Quit");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_q, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
-	} else if (strcmp(name, "paste") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
-		// gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_v, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else if (strcmp(name, "find") == 0) {
-		menuItem = gtk_image_menu_item_new_from_stock(GTK_STOCK_FIND, mAccelGroup);
+		menuItem = gtk_menu_item_new_with_mnemonic("_Find");
 		gtk_widget_add_accelerator(menuItem, "activate", mAccelGroup, GDK_KEY_f, GDK_CONTROL_MASK, GTK_ACCEL_VISIBLE);
 	} else
 		menuItem = gtk_menu_item_new_with_mnemonic(label);
@@ -702,7 +700,7 @@ void View::Help(const std::string &message) const {
    dialog = gtk_dialog_new_with_buttons("Message",
                                          mWindow,
                                          GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         GTK_STOCK_OK,
+                                         "_OK",
                                          GTK_RESPONSE_NONE,
                                          NULL);
    content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));

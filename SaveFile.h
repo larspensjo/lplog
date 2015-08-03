@@ -23,7 +23,7 @@ class SaveFile
 {
 public:
 	SaveFile(const std::string &fn) : mFileName(fn) {}
-	void Read();
+	void Read(bool onlyPatterns = false); // Load a save file.
 	void Write();
 
 	void SetStringOption(const std::string &id, const std::string&val);
@@ -34,6 +34,7 @@ public:
 
 	void SetPattern(const std::string &id, const std::string&val);
 	std::string GetPattern(const std::string &id, const std::string &def = "");
+	void ClearAllPatterns();
 	// Iterate a function for each pair of pattern name and pattern content.
 	void IteratePatterns(std::function<void (const std::string &name, const std::string &value)>);
 private:

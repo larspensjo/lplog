@@ -14,3 +14,5 @@
 /distro
 /depends22_x86
 /*.deb
+/Debug
+/Release
