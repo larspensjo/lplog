@@ -38,7 +38,7 @@ public:
 	const std::string &GetFileName() const;
 	std::string GetFileNameShort() const; // Get the last part of the filename
 	// Iterate a function over the lines in the input document. 'f' shall return true for lines that were added.
-	void IterateLines(std::function<bool (const std::string&, unsigned)> f, bool restartFirstLine);
+	void IterateLines(std::function<bool (std::string&, unsigned)> f, bool restartFirstLine);
 	unsigned GetNumLines() { return mLines.size(); }
 	std::string Date() const;
 	void StopUpdate();
@@ -58,6 +58,7 @@ private:
 	long mFileSize = 0;
 	std::vector<unsigned> mLineMap;         // Map from printed line number to document line number
 	void SplitLines(char *, unsigned size); // This will modify the buffer content
+	void RemoveColorEscapeSequences();
 
 	static const unsigned cTestSize = 4*1024; // Small enough to be quick to read, big enough to consistently detect changed file content
 	char mTestBuffer[cTestSize];
