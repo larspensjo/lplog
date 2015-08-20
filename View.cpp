@@ -353,8 +353,8 @@ void View::FilterString(std::stringstream &ss, Document *doc, bool restartFirstL
         ++mFoundLines;
         return true;
 	};
-	doc->IterateLines(TestLine, restartFirstLine);
 	LPLOG("[%d] starting line %d, total lines %d", GetCurrentTabId(), startLine, mFoundLines);
+	doc->IterateLines(TestLine, restartFirstLine);
 }
 
 void View::OpenPatternForEditing() {
@@ -531,16 +531,19 @@ void View::Append(Document *doc) {
 	gtk_text_buffer_get_end_iter(buffer, &last);
 	gtk_text_buffer_insert(buffer, &last, ss.str().c_str(), -1);
 	if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mAutoScroll)))
-		gtk_adjustment_set_value(adj, pos+0.1); // A delta is needed, or it will be a noop!
+		gtk_adjustment_set_value(adj, pos-0.01); // A delta is needed, or it will be a noop!
 }
 
 void View::Replace(Document *doc) {
 	mFoundLines = 0;
-	LPLOG("[%d]", GetCurrentTabId());
+	auto adj = gtk_scrolled_window_get_vadjustment(doc->mScrolledView);
+	gdouble pos = gtk_adjustment_get_value(adj);
+	LPLOG("[%d] old position %f", GetCurrentTabId(), pos);
 	std::stringstream ss;
 	this->FilterString(ss, doc, true);
 	g_assert(doc->mTextView != nullptr);
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(doc->mTextView), ss.str().c_str(), -1);
+	gtk_adjustment_set_value(adj, pos-0.01); // A delta is needed, or it will be a noop!
 }
 
 void View::FindNext(Document *doc, std::string str, int direction) {
