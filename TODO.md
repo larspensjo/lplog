@@ -1,8 +1,6 @@
 High priority
 =============
 * Enable switching between case sensitive and insensitive mode.
-* The Replace executed from Controller after an event should restore position, depending on autoscrolling.
-There should be no Replace() initiated from View.
 * Use Ctrl-g to jump to a line.
 * Windows header doesn't get updated sometimes.
 * Create a mode which maximises the test window and hides all other widgets (using the expander widget).
@@ -14,7 +12,6 @@ The purpose is to show a read-only window to display status.
 * Move the pattern edit menu button to the Edit menu.
 * Quick search should restart when filter changes.
 * Add option to filter duplicate lines.
-* When switching between tabs, remember the previous position (today it jumps to the beginning).
 
 Medium priority
 ===============
@@ -36,6 +33,6 @@ This may lead to failed searches.
 Low priority
 ============
 * Deselected patterns should be gray (including sub tree).
-* Some log files contains escape characters to get colors in terminal output. These escape characters should be removed, or used to actually create colors.
+* Some log files contains escape characters to get colors in terminal output. These escape characters should be used to actually create colors.
 * Actually allow editing of the file.
 This shall correctly identify the line that is edited, and update the original.

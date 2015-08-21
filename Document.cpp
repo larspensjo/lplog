@@ -191,10 +191,11 @@ Document::UpdateResult Document::UpdateInputData() {
 	LPLOG("start %u size %u, got %u", (unsigned)mCurrentPosition, (unsigned)addedSize, n);
 	mCurrentPosition += n;
 	this->SplitLines(buff, n);
+	this->RemoveColorEscapeSequences();
 	return UpdateResult::Grow;
 }
 
-void Document::IterateLines(std::function<bool (const std::string&, unsigned)> f, bool restartFirstLine) {
+void Document::IterateLines(std::function<bool (std::string&, unsigned)> f, bool restartFirstLine) {
 	if (restartFirstLine) {
 		mFirstNewLine = 0;
 		mLineMap.clear();
@@ -260,6 +261,23 @@ void Document::SplitLines(char *buff, unsigned size) {
 		p = next;
 	}
 	LPLOG("total %u,%s document %p", (unsigned)mLines.size(), mIncompleteLastLine != "" ? " incomplete last, " : "", this);
+}
+
+// A color marking is ESC + [, two digits and a character. 5 Characters in total.
+void Document::RemoveColorEscapeSequences() {
+	auto f = [](std::string& line, unsigned){
+		for (size_t pos = 0; pos < line.size();) {
+			pos = line.find("\033[", pos);
+			if (pos <= line.size()) {
+				if (line[pos+2] == '0')
+					line = line.erase(pos, 4);
+				else
+					line = line.erase(pos, 5);
+			}
+		}
+		return false;
+	};
+	this->IterateLines(f, false);
 }
 
 std::string Document::GetFileNameShort() const {
