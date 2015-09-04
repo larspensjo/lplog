@@ -63,7 +63,8 @@ private:
 	static const unsigned cTestSize = 4*1024; // Small enough to be quick to read, big enough to consistently detect changed file content
 	char mTestBuffer[cTestSize];
 	unsigned mTestBufferCurrentSize = 0;
-	void CopyToTestBuffer(std::FILE *input, unsigned size);
+	// Copy some initial data to a test buffer. Return 'true' if successful.
+	bool CopyToTestBuffer(std::FILE *input, unsigned size);
 	bool EqualToTestBuffer(std::FILE *input, unsigned size);
 
 	enum class InputType {

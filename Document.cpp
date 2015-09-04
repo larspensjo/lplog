@@ -103,11 +103,14 @@ void Document::AddSourceText(char *text, unsigned size) {
 	mFileTime = std::time(nullptr);
 }
 
-void Document::CopyToTestBuffer(std::FILE *input, unsigned size) {
+bool Document::CopyToTestBuffer(std::FILE *input, unsigned size) {
 	std::fseek(input, 0, SEEK_SET);
 	mTestBufferCurrentSize = std::min(unsigned(sizeof mTestBuffer), size);
 	unsigned count = std::fread(mTestBuffer, 1, mTestBufferCurrentSize, input);
+	if (count == 0)
+		return false;
 	g_assert(count == mTestBufferCurrentSize);
+	return true;
 }
 
 bool Document::EqualToTestBuffer(std::FILE *input, unsigned size) {
@@ -180,7 +183,9 @@ Document::UpdateResult Document::UpdateInputData() {
 	}
 
 	if (documentIsModified && mTestBufferCurrentSize < sizeof mTestBuffer) {
-		CopyToTestBuffer(input, st.st_size);
+		bool ok = CopyToTestBuffer(input, st.st_size);
+		if (!ok)
+			return UpdateResult::NoChange; // Give it up for now, try again later
 		DetectFileType((const unsigned char *)mTestBuffer, mTestBufferCurrentSize);
 	}
 	auto addedSize = st.st_size - mCurrentPosition;
