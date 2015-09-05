@@ -145,14 +145,15 @@ Document::UpdateResult Document::UpdateInputData() {
 
 	// Update the time stamp of the file to latest
 	struct stat st = { 0 };
-	bool statFailed = stat(mFileName.c_str(), &st) != 0;
+	if (stat(mFileName.c_str(), &st) != 0)
+		return UpdateResult::NoChange; // We don't know, the file couldn't be access just now.
 
 	std::FILE *input = std::fopen(mFileName.c_str(), "rb");
 	Defer close([input]() { if (input != nullptr) std::fclose(input);});
-	if (statFailed || input == nullptr) {
+	if (input == nullptr) {
 		// There is no file
 		if (mCurrentPosition != 0) {
-			LPLOG("file removed");
+			LPLOG("file unreadable");
 			mStopUpdates = true;
 			return UpdateResult::Replaced;
 		}
